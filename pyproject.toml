@@ -1,0 +1,52 @@
+[project]
+name = "dqm-workspace"
+version = "0.0.1"
+requires-python = ">=3.9"
+dependencies = ["dqm-ml-core","dqm-ml-pipeline"]
+
+[tool.uv.sources]
+dqm-ml-core = { workspace = true }
+dqm-ml-pipeline = { workspace = true }
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+default-groups = "all"
+# Non-package applications can uncomment the following line and delete [build-system] section to
+# avoid being built or installed: https://docs.astral.sh/uv/reference/settings/#package
+package = false
+
+
+[dependency-groups]
+nox = [
+    "nox-uv",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-randomly",
+]
+type_check = [
+    "mypy",
+    # Add "types-" stub packages as needed: https://github.com/python/typeshed/tree/main/stubs
+]
+lint = [
+    "ruff",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocs-htmlproofer-plugin",
+
+    # Python API documentation (not neccessary for applications).
+    "mkdocstrings[python]",
+    # Autodoc.
+    "mkdocs-api-autonav",
+]
+licenses = [
+    "pip-licenses-cli",
+]
