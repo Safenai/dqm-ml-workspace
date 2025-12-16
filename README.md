@@ -7,7 +7,7 @@ Documentation still remain in the main repository as we only deliver partial mig
 The library was originally developped in the programme
 
 <div align="center">
-    <img src="_static/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
     <h1 style="font-size: large; font-weight: bold;">dqm-ml</h1>
 </div>
 
