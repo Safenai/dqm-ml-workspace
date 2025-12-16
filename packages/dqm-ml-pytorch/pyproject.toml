@@ -1,0 +1,48 @@
+[project]
+name = "dqm-ml-pytorch"
+dynamic = ["dependencies", "version"]
+description = "Python library designed to provide core dqml domain gap metrics, as well as common API shared by metrics"
+authors = [
+  {name = "Safenai", email="support@safenai.io"},
+  {name = "IRT SystemX", email="support@irt-systemx.fr"},
+]
+
+license ="Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["ml", "metrics", "data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://irt-systemx.github.io/dqm-ml"
+Documentation = "https://irt-systemx.github.io/dqm-ml"
+Repository = "https://github.com/IRT-SystemX/dqm-ml"
+
+
+# Registry of exported metrics
+[project.entry-points."dqm_ml.metrics"]
+domain_gap = "dqm_ml_pytorch.domain_gap:DomainGapProcessor"
+image_embedding = "dqm_ml_pytorch.image_embedding:ImageEmbeddingProcessor"
+
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools_scm]
+version_file = "src/dqm_ml_pytorch/_version_.py"
+root= "../.."

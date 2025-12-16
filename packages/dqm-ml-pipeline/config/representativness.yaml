@@ -9,8 +9,8 @@ pipeline_config:
   # Le gap sera calculé entre source et target
   dataloaders:
     source_dataset:
-      type: "parquet"
-      path: output/samples_raw.parquet
+      type: parquet
+      path: data/large_test_2m.parquet
       batch_size: 50000
       memory_limit: 2GB
       threads: 4
@@ -19,11 +19,11 @@ pipeline_config:
 
     #Représentativité (distribution fitting) : voir aussi la comparaison entre deux distributions
     representativeness:
-      type: "representativeness"
-      columns: ["contrast","img_lantent_vector"] # TODO : remove for homogeneity
-      metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
+      type: representativeness
+      columns: [m_luminosity,m_contrast,m_blur_level,m_entropy] # TODO : remove for homogeneity
+      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
 
-      input_columns: ["contrast"] # As for all metrics we define the input columns we are processing
+      input_columns: [m_luminosity,m_contrast,m_blur_level,m_entropy] # As for all metrics we define the input columns we are processing
 
       output_features:  None
 
@@ -37,7 +37,7 @@ pipeline_config:
         shannon-entropy: shannon-entropy-{}
         kolmogorov-smirnov: kolmogorov-smirnov-{}
 
-      distribution: "normal"  # ou "uniform"
+      distribution: normal  # ou uniform
       bins: 20
       distribution_params:  # optionnel : forcer mean/std et si uniforme min/max
         # mean: 128.0
@@ -46,10 +46,11 @@ pipeline_config:
   outputs :
       
     metrics:
-      type: "parquet" 
-      path_pattern: "output/metrics_{}-{}.parquet"
+      type: parquet 
+      path_pattern: output/metrics_{}-{}.parquet
       # All metrics shall not be a dictionarry, but scalars, 
       # TODO : add wildcart in columns name here (ex [*] => all metrics are exported)
       # TODO : not use currently
-      columns: ['*']
+      #columns: ['*']
+      columns: []
       

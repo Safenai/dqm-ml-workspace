@@ -1,0 +1,46 @@
+[project]
+name = "dqm-ml-images"
+dynamic = ["dependencies", "version"]
+description = "Python library designed provide core dqml metrics without huge dependencies, as well as common API shared by metrics"
+authors = [
+  {name = "Safenai", email="support@safenai.io"}, 
+]
+
+license ="Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["ml", "metrics", "data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://irt-systemx.github.io/dqm-ml"
+Documentation = "https://irt-systemx.github.io/dqm-ml"
+Repository = "https://github.com/IRT-SystemX/dqm-ml"
+
+
+# Registry of exported metrics
+[project.entry-points."dqm_ml.metrics"]
+visual_metrique = "dqm_ml_images.visual_features:VisualFeaturesProcessor"
+
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools_scm]
+version_file = "src/dqm_ml_images/_version_.py"
+root= "../.."
