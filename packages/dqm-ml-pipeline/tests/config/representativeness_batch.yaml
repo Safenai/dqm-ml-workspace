@@ -1,0 +1,55 @@
+## Yaml pipeline configuration
+
+---
+# A really basic pipeline configuration
+pipeline_config:
+
+  # Configuration for the data loader
+  # Pour Domain Gap, on utilise PLUSIEURS dataloaders
+  # Le gap sera calculé entre source et target
+  dataloaders:
+    source_dataset:
+      type: parquet
+      path: data/large_test_2m.parquet
+      batch_size: 50000
+      memory_limit: 2GB
+      threads: 4
+
+  metrics_processor:
+
+    #Représentativité (distribution fitting) : voir aussi la comparaison entre deux distributions
+    representativeness:
+      type: representativeness
+      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
+
+      input_columns: [brightness,contrast,blur_score,sharpness] # As for all metrics we define the input columns we are processing
+
+      output_features:  None
+
+      # List of output columns to compute associate to metric processor capabilities
+      # As for all Metrics, we can difine a dictionary between internal metric nam (here the metrics)
+      # And define how many placeolder can be use in column name (here the column name for example)
+      # TODO : not use currently
+      output_metrics:
+        chi-quare: chi-square-{}
+        grte: grte-{}
+        shannon-entropy: shannon-entropy-{}
+        kolmogorov-smirnov: kolmogorov-smirnov-{}
+
+      distribution: normal  # ou uniform
+      bins: 10
+      distribution_params:  # optionnel : forcer mean/std et si uniforme min/max
+        # mean: 128.0
+        # std: 50.0
+
+  outputs :
+
+    metrics:
+      type: parquet
+      path_pattern: packages/dqm-ml-pipeline/tests/output/metrics_representativeness_batch_{}-{}.parquet
+      # All metrics shall not be a dictionarry, but scalars,
+      # TODO : add wildcart in columns name here (ex [*] => all metrics are exported)
+      # TODO : not use currently
+      #columns: ['*']
+      columns: []
+

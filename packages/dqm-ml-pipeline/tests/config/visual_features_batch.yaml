@@ -1,0 +1,53 @@
+## Yaml pipeline configuration
+
+---
+# A really basic pipeline configuration
+pipeline_config:
+
+  # Configuration for the data loader
+  # Pour Domain Gap, on utilise PLUSIEURS dataloaders
+  # Le gap sera calculé entre source et target
+  dataloaders:
+    source_dataset:
+      type: parquet
+      path: packages/dqm-ml-pipeline/tests/data/visual_features.parquet
+      batch_size: 100
+      memory_limit: 2GB
+      threads: 4
+
+
+  metrics_processor:
+
+    visual_features:
+      type: visual_metrique
+      input_columns: [image_bytes]
+      output_features:  # List of output columns to compute associate to metric processor capabilities
+        blur_level : m_blur_level
+        entropy : m_entropy
+        contrast : m_contrast
+        luminosity : m_luminosity
+
+      output_metrics: None
+
+      metrics: [luminosity, contrast, blur, entropy]
+
+      # Image processing settings
+      grayscale: true
+      normalize: true
+      entropy_bins: 256
+      laplacian_kernel: 3x3  # or 5x5 for more accuracy
+
+  outputs :
+    features :
+      type: parquet
+      path_pattern: packages/dqm-ml-pipeline/tests/output/metrics_visual_features_batch.parquet
+      columns: [
+
+        # Features visuelles calculées
+        m_blur_level,
+        m_entropy,
+        m_contrast,
+        m_luminosity
+      ]
+      compression: snappy
+

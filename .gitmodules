@@ -1,0 +1,3 @@
+[submodule "packages/dqm-ml"]
+	path = packages/dqm-ml
+	url = https://github.com/IRT-SystemX/dqm-ml.git

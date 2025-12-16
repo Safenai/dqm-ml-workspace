@@ -1,0 +1,46 @@
+## Example pipeline configuration with completeness metric
+
+---
+pipeline_config:
+
+  # Configuration for the data loader
+  dataloaders:
+    source_dataset:
+      type: parquet
+      path: packages/dqm-ml-pipeline/tests/data/completeness.parquet
+      batch_size: 100
+      memory_limit: 1GB
+      threads: 2
+
+  metrics_processor:
+    completeness:
+      type: completeness
+      #Columns to analyze for completeness : take numerical and categorical columns
+      input_columns: [column_1, column_3, column_6, column_9]
+
+      # configuration options
+      include_per_column: true    # column completeness scores
+      include_overall: true       # overall dataset completeness score
+
+      # custom output column mappings
+      output_metrics:
+        overall_completeness: completeness_overall
+        completeness_column_1: completeness_column_1
+        completeness_column_3: completeness_column_3
+        completeness_column_6: completeness_column_6
+        completeness_column_9: completeness_column_9
+
+
+  outputs:
+    # output dataset-level completeness metrics only
+    metrics:
+      type: parquet
+      path_pattern: packages/dqm-ml-pipeline/tests/output/metrics_completeness_batch_{}-{}.parquet
+      columns: [
+        completeness_overall,
+        completeness_column_1,
+        completeness_column_3,
+        completeness_column_6,
+        completeness_column_9
+      ]
+      compression: snappy

@@ -1,0 +1,60 @@
+## Example pipeline configuration with completeness metric
+
+---
+pipeline_config:
+
+  # Configuration for the data loader
+  dataloaders:
+    source_dataset:
+      type: "csv"
+      path: packages/dqm-ml-pipeline/tests/data/challenge_welding.csv
+
+
+
+  metrics_processor:
+    completeness:
+      type: "completeness"
+      #Columns to analyze for completeness : take numerical and categorical columns
+      input_columns: ["blur_level", "welding-seams", "blur_level", "blur_class", "luminosity_level"]
+
+      # configuration options
+      include_per_column: true    # column completeness scores
+      include_overall: true       # overall dataset completeness score
+      include_metadata: true       # include meta for tests
+
+      # custom output column mappings
+      output_metrics:
+        overall_completeness: "completeness_overall"
+        completeness_column_1: "completeness_blur_level"
+
+    #Représentativité (distribution fitting) : voir aussi la comparaison entre deux distributions
+    representativeness:
+      type: "representativeness"
+      input_columns: ["blur_level", "luminosity_level"]
+      metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
+
+      output_features:  None
+      
+      # List of output columns to compute associate to metric processor capabilities
+      # As for all Metrics, we can difine a dictionary between internal metric nam (here the metrics)
+      # And define how many placeolder can be use in column name (here the column name for example)
+      # TODO : not use currently
+      output_metrics:
+        chi-quare: chi-square-{}
+        grte: grte-{}
+        shannon-entropy: shannon-entropy-{}
+        kolmogorov-smirnov: kolmogorov-smirnov-{}
+
+      distribution: "normal"  # ou "uniform"
+      bins: 10
+      distribution_params:  # optionnel : forcer mean/std et si uniforme min/max
+        # mean: 128.0
+        # std: 50.0
+        
+  outputs:
+    # output dataset-level completeness metrics only
+    metrics:
+      type: "parquet"
+      path_pattern: "packages/dqm-ml-pipeline/tests/output/metrics_pandas_welding_{}-{}.parquet"
+      columns: [ ]
+      compression: "snappy"

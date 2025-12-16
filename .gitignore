@@ -1,3 +1,4 @@
+# Generic ignores files
 .idea
 .mypy_cache
 .nox
@@ -12,3 +13,20 @@ __pycache__
 .coverage
 .coverage.*
 .ipynb_checkpoints
+.ruff_cache
+.venv
+# Pytest report
+pytest_report.html
+assets
+# Test images
+packages/dqm-ml-pipeline/tests/data/img
+
+# Dynamic versioning
+**/_version_.py
+
+# DQML specific ignores
+output
+*.parquet
+
+# https://github.com/firecow/gitlab-ci-local
+.gitlab-ci-local/

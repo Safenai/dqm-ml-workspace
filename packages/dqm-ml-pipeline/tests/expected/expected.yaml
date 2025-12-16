@@ -1,0 +1,343 @@
+# This file contains the configuration for unit tests of DQM-ML library
+# For each metrics each col_name present in "columns_names" field shall be present as key in expected_scores
+
+completeness:
+
+    params:
+        tolerance: 0.1
+        columns_names : [
+            "completeness_column_1",
+            "completeness_column_3",
+            "completeness_column_6",
+            "completeness_column_9",
+            "completeness_overall"
+
+        ]
+
+    expected_scores:
+        completeness_column_1 : 1
+        completeness_column_3 : 0.78
+        completeness_column_6 : 0.48
+        completeness_column_9: 0.211
+        completeness_overall : 0.618
+
+representativeness:
+    params:
+        tolerance: 0.1
+        distribution : normal
+        columns_names : ["brightness","contrast","blur_score","sharpness"]
+        metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
+        value_names: ["p_value", "grte_value", "entropy", "p_value"]
+        thresholds: [0.05, 0.5, 2.0, 0.05]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+       chi-square:
+           brightness : 0
+           contrast : 0
+           blur_score : 0
+           sharpness : 0
+
+       kolmogorov-smirnov:
+           brightness : 0
+           contrast : 0
+           blur_score : 0
+           sharpness : 0.1
+
+       shannon-entropy:
+           brightness : 2.3
+           contrast : 2.3
+           blur_score : 2.3
+           sharpness : 2.3
+
+       grte:
+           brightness : 0.5
+           contrast : 0.7
+           blur_score : 0.7
+           sharpness : 0.9
+
+visual_features:
+    params:
+        tolerance: 0.0001
+        columns_names : [
+            "m_luminosity",
+            "m_contrast",
+            "m_blur_level",
+            "m_entropy",
+
+        ]
+
+    expected_scores:
+        m_luminosity: [
+            0.4169,
+            0.5386,
+            0.2706,
+            0.2192,
+            0.5364,
+            0.4098,
+            0.2483,
+            0.5060,
+            0.6001,
+            0.5671,
+            0.6101,
+            0.7546,
+            0.4019,
+            0.5260,
+            0.3026,
+            0.6828,
+            0.3888,
+            0.4022,
+            0.5383,
+            0.3225,
+            0.7164,
+            0.5917,
+            0.3375,
+            0.4891,
+            0.7582,
+            0.4976,
+            0.6145,
+            0.2787,
+            0.5457,
+            0.1811,
+        ]
+        m_contrast: [
+            0.3456,
+            0.2808,
+            0.2917,
+            0.1727,
+            0.3004,
+            0.1970,
+            0.2795,
+            0.2614,
+            0.2437,
+            0.2811,
+            0.3113,
+            0.2855,
+            0.1665,
+            0.3126,
+            0.1797,
+            0.3770,
+            0.2618,
+            0.2471,
+            0.2472,
+            0.1541,
+            0.2143,
+            0.2038,
+            0.3183,
+            0.2788,
+            0.1656,
+            0.2492,
+            0.1533,
+            0.1460,
+            0.2733,
+            0.1760,
+        ]
+        m_blur_level: [
+            0.0942,
+            0.0266,
+            0.0590,
+            0.0064,
+            0.0722,
+            0.0424,
+            0.0564,
+            0.0154,
+            0.0185,
+            0.0359,
+            0.0282,
+            0.0379,
+            0.0539,
+            0.0130,
+            0.0414,
+            0.0265,
+            0.0401,
+            0.0628,
+            0.0274,
+            0.0457,
+            0.0639,
+            0.0305,
+            0.1136,
+            0.0317,
+            0.0261,
+            0.0586,
+            0.0180,
+            0.0559,
+            0.0203,
+            0.0432,
+        ]
+        m_entropy: [
+            5.2827,
+            5.1235,
+            4.9170,
+            4.7150,
+            5.2457,
+            5.2070,
+            4.4730,
+            5.0446,
+            4.9573,
+            5.0288,
+            5.2301,
+            4.6578,
+            5.0516,
+            4.9958,
+            4.8758,
+            3.8651,
+            5.0739,
+            5.4151,
+            5.0273,
+            4.6504,
+            5.0101,
+            5.2637,
+            5.0293,
+            5.2703,
+            4.8459,
+            5.2385,
+            5.0063,
+            4.2253,
+            5.1738,
+            4.3631,
+        ]
+
+
+
+domain_gap:
+    wasserstein_bytes:
+        params:
+            tolerance: 0.01
+            columns_names : [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric : "wasserstein_1d"
+            value: 0.45
+
+    wasserstein:
+        params:
+            tolerance: 0.001
+            columns_names : [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric : "wasserstein_1d"
+            value: 0.026
+
+    fid:
+        params:
+            tolerance: 0.1
+            columns_names : [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric : "fid"
+            value: 37.5
+
+    klmvn:
+        params:
+            tolerance: 0.1
+            columns_names : [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric : "klmvn_diag"
+            value: 3.7
+
+    mmd:
+        params:
+            tolerance: 0.01
+            columns_names : [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric : "mmd_linear"
+            value: 0.76
+
+    # pad:
+    #     params:
+    #         tolerance: 0.01
+    #         method_config:
+    #             DATA:
+    #                 batch_size: 10
+    #                 height: 224
+    #                 width: 224
+    #                 norm_mean: [0.485,0.456,0.406]
+    #                 norm_std: [0.229,0.224,0.225]
+
+    #             MODEL:
+    #                 arch: ["efficientnet_b0","vgg16"]
+    #                 device: "cpu"
+    #                 n_layer_feature: -2
+
+    #             METHOD:
+    #                 name: "proxy"
+    #                 evaluator: "mse"
+
+    #     expected_score: 1.95
+
+    # cmd:
+    #     params:
+    #         tolerance: 0.01
+    #         method_config:
+    #             DATA:
+    #                 batch_size: 10
+    #                 height: 224
+    #                 width: 224
+    #                 norm_mean: [0.485,0.456,0.406]
+    #                 norm_std: [0.229,0.224,0.225]
+
+    #             MODEL:
+    #                 arch: "resnet18"
+    #                 n_layer_feature : ["maxpool","layer1.1.relu_1","layer2.1.relu_1", "layer3.1.relu_1", "layer4.1.relu_1"]
+    #                 feature_extractors_layers_weights : [1, 1, 1, 1, 1]
+    #                 device: "cpu"
+
+    #             METHOD:
+    #                 name: "cmd"
+    #                 k: 5
+
+    #     expected_score: 0.13
+
+
+pandas_welding:
+    params:
+        tolerance: 0.1
+        distribution : normal
+        columns_names : ["blur_level","luminosity_level"]
+        metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
+        value_names: ["p_value", "grte_value", "entropy", "p_value"]
+        thresholds: [0.05, 0.5, 2.0, 0.05]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+       chi-square:
+           blur_level : 0
+           luminosity_level : 0
+
+
+       kolmogorov-smirnov:
+           blur_level : 0
+           luminosity_level : 0
+
+       shannon-entropy:
+           blur_level : 2.3
+           luminosity_level : 2.3       
+
+       grte:
+           blur_level : 0.86658204454891
+           luminosity_level : 0.8927838432119461
