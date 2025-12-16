@@ -27,9 +27,9 @@ WORKDIR ${WORKDIR}
 
 # Install any system dependencies required to build wheels, such as C compilers or system packages
 # For example:
-#RUN apt-get update && apt-get install -y \
-#    gcc \
-#    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install uv into the global environment to isolate it from the venv it creates.
 RUN pip install "uv==${UV_VERSION}"
@@ -41,7 +41,11 @@ RUN pip install "uv==${UV_VERSION}"
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv
 
 # Copy in project dependency specification.
-COPY pyproject.toml uv.lock data packages ./
+COPY pyproject.toml uv.lock data  ./
+
+# We copy packages for build
+COPY packages packages
+COPY .git/ .git/
 
 # Install only project dependencies, as this is cached until pyproject.toml uv.lock are updated.
 RUN uv sync --locked --no-default-groups --no-install-project
@@ -50,6 +54,7 @@ RUN uv sync --locked --no-default-groups --no-install-project
 # README.md is required for the package to build. It can be ommited for non-package applications.
 COPY README.md ./
 COPY src src
+
 
 # Install the rest of the application into the virtual environment.
 # Omit this step if your project is a non-package application and copy the source in the second
