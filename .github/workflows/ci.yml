@@ -12,70 +12,6 @@ env:
   UV_VERSION: "0.8.17"
 
 jobs:
-  test:
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        python-version: ["3.12"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          lfs: true
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        # Caching is enabled by default for GitHub-hosted runners:
-        #   https://github.com/astral-sh/setup-uv?tab=readme-ov-file#enable-caching
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Nox
-        run: uv sync --locked --only-group nox
-
-      - name: Test with Nox
-        run: uv run nox -s test-${{ matrix.python-version }}
-
-  compatibility:
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-
-        # dqml v1 requires python >= 3.11
-        # 3.11: ImportError: cannot import name 'override' from 'typing'
-        python-version: [ "3.12", "3.13" ]
-        # python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          lfs: true
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        # Caching is enabled by default for GitHub-hosted runners:
-        #   https://github.com/astral-sh/setup-uv?tab=readme-ov-file#enable-caching
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Nox
-        run: uv sync --locked --only-group nox
-
-      - name: Compatibility with Nox
-        run: uv run nox -s compatibility-${{ matrix.python-version }}  
-
   quality:
     runs-on: ubuntu-24.04
     strategy:
@@ -88,17 +24,15 @@ jobs:
           submodules: recursive
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
+          enable-cache: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
-
-      - name: Install dependencies
-        run: uv sync --locked
 
       - name: Test with Nox
         run: uv run nox -s ${{ matrix.nox-session }}
