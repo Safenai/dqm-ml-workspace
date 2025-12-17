@@ -1,5 +1,25 @@
 # DQM ML repository
 
+[![License: Apache 2.0][license-badge]](https://opensource.org/license/apache-2-0)
+![Python][python-badge]
+![Repo Size][size-badge]
+[![PyPI version][pypi-badge]](https://badge.fury.io/py/dqm-workspace)
+[![CI][github-actions-badge]](https://github.com/Safenai/dqm-ml-workspace/actions)
+[![Ruff][ruff-badge]](https://github.com/astral-sh/ruff)
+[![uv][uv-badge]](https://github.com/astral-sh/uv)
+[![Nox][nox-badge]](https://nox.thea.codes/en/stable/)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+
+[license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
+[size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
+[python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
+[pypi-badge]: https://badge.fury.io/py/dqm-workspace.svg
+[github-actions-badge]: https://github.com/Safenai/dqm-ml-workspace/actions/workflows/ci.yml/badge.svg
+[uv-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json
+[nox-badge]: https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg
+[ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
+
 This repository group all package derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to intiate what shall become dqm-ml v2.0.0
 
 Documentation still remain in the main repository as we only deliver partial migration to the new API [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md)
@@ -7,7 +27,7 @@ Documentation still remain in the main repository as we only deliver partial mig
 The library was originally developped in the programme
 
 <div align="center">
-    <img src="_static/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
     <h1 style="font-size: large; font-weight: bold;">dqm-ml</h1>
 </div>
 

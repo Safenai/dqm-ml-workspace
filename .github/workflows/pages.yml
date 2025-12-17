@@ -5,7 +5,14 @@ name: pages
 
 on:
   push:
-    branches: [main]
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+permissions:
+  contents: write
 
 env:
   UV_VERSION: "0.8.17"
@@ -16,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
