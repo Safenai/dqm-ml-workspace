@@ -7,7 +7,7 @@ options.sessions = ["lint", "test", "type_check"]
 
 
 @session(
-    python=["3.10", "3.11", "3.12", "3.13"],
+    python=["3.9", "3.10", "3.11", "3.12", "3.13"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
@@ -18,7 +18,8 @@ def compatibility(s: Session) -> None:
     )
     s.run(
         "pytest",
-        "packages/dqm-ml-pipeline/tests",
+        # Only quick tests for compatibility
+        "packages/dqm-ml-pipeline/tests/test_cli.py",
         *s.posargs,
     )
     # TODO reactivate when tests are availables

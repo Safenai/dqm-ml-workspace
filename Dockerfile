@@ -45,7 +45,7 @@ COPY pyproject.toml uv.lock data  ./
 
 # We copy packages for build
 COPY packages packages
-COPY .git/ .git/
+COPY .git .git
 
 # Install only project dependencies, as this is cached until pyproject.toml uv.lock are updated.
 RUN uv sync --locked --no-default-groups --no-install-project
