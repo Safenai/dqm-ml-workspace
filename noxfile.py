@@ -142,6 +142,20 @@ def type_check(s: Session) -> None:
     s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")
 
 
+# Environment variable needed for mkdocstrings-python to locate source files.
+doc_env = {"PYTHONPATH": "packages"}
+
+@session(venv_backend="none")
+def docs_offline(s: Session) -> None:
+    s.run("mkdocs", "build", "--no-strict", env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)})
+
+# Environment variable needed for mkdocstrings-python to locate source files.
+doc_env = {"PYTHONPATH": "packages"}
+
+@session(venv_backend="none")
+def docs_github_pages(s: Session) -> None:
+    s.run("mkdocs", "gh-deploy", "--force", env=doc_env)
+
 # Install only main dependencies for the license report.
 @session(uv_groups=["licenses"], uv_no_install_project=True)
 def licenses(s: Session) -> None:
