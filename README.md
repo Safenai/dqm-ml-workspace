@@ -1,5 +1,12 @@
 # DQM ML repository
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg)](https://opensource.org/license/apache-2-0)![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue.svg)
+![Repo Size](https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace)
+[![PyPI version](https://badge.fury.io/py/dqm-workspace.svg)](https://badge.fury.io/py/dqm-workspace)
+[![CI](https://github.com/Safenai/dqm-ml-workspace/actions/workflows/ci.yml/badge.svg)](https://github.com/Safenai/dqm-ml-workspace/actions)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+
 This repository group all package derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to intiate what shall become dqm-ml v2.0.0
 
 Documentation still remain in the main repository as we only deliver partial migration to the new API [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md)
