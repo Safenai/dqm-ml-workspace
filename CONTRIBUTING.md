@@ -8,8 +8,8 @@ We’re thrilled that you want to contribute to our project! Your contributions 
 2. [Reporting Bugs](#reporting-bugs)
 3. [Suggesting Enhancements](#suggesting-enhancements)
 4. [Code Contributions](#code-contributions)
-5. [Style Guide](#style-guide) # TODO
-6. [Submission](#Submission) # TODO
+5. [Style Guide](#style-guide)
+6. [Submission](#submission)
 
 ## How Can I Contribute?
 
@@ -29,7 +29,7 @@ When reporting bugs, please be as detailed as possible so we can help resolve th
 - **Expected behavior:** What should have happened?
 - **Screenshots or logs:** Attach any relevant screenshots or logs that can help in identifying the issue.
 
-Please use the [issue tracker](TODO) to report bugs.
+Please use the [issue tracker](https://github.com/Safenai/dqm-ml-workspace/issues) to report bugs.
 
 ## Suggesting Enhancements
 
@@ -50,9 +50,13 @@ To contribute code, please follow these steps:
    git checkout -b feature/your-feature
    ```
 
+## Style guide
+
+TODO
+
 ## Submission
 
-To submit your code, please make a pull request to our [main](TODO) branch. For those just getting started, Github has a [how to](https://help.github.com/articles/using-pull-requests/) about pull requests.
+To submit your code, please make a pull request to our [main](https://github.com/Safenai/dqm-ml-workspace) branch. For those just getting started, Github has a [how to](https://help.github.com/articles/using-pull-requests/) about pull requests.
 
 You will be asked to sign [our CLA (Contributing License Agreement)](CLA.md) before we can merge your code. Please read it before you start working on the project.
 

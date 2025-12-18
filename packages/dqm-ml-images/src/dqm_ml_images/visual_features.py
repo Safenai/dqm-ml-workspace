@@ -49,12 +49,11 @@ class VisualFeaturesProcessor(DatametricProcessor):
             )
 
         # param
-        # TODO : see with Loic how to define parameters in the pipeline.yaml
         self.grayscale: bool = bool(cfg.get("grayscale", True))
         self.normalize: bool = bool(cfg.get("normalize", True))
         self.entropy_bins: int = int(cfg.get("entropy_bins", 256))
 
-        # TODO written to remove noqa 501 and type check error, to be fixed properly later
+        # TODO written to remove noqa 501 and type check error in same line, to be fixed properly later
         if cfg.get("clip_percentiles") is not None:
             self.clip_percentiles = tuple(cfg.get("clip_percentiles"))  # type: ignore
         else:
@@ -126,8 +125,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
     def reset(self) -> None:
         pass
 
-    # les différentes fonctions de calcul des features
-    # TODO :     voir si on peut les vectoriser
+    # TODO : voir si on peut les vectoriser / paralleliser
 
     def _compute_luminosity_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
         """Compute luminosity (mean gray level) for each image."""
@@ -279,6 +277,6 @@ class VisualFeaturesProcessor(DatametricProcessor):
         kf = np.flipud(np.fliplr(kernel)).astype(np.float32)
         for i in range(ih):
             for j in range(iw):
-                region = padded[i : i + kh, j : j + kw]
+                region = padded[i : i + kh, j : j + kw]  # noqa 501
                 out[i, j] = float(np.sum(region * kf))
         return out

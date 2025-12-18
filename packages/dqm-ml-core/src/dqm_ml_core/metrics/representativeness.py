@@ -15,6 +15,8 @@ class RepresentativenessProcessor(DatametricProcessor):
     """
     TODO: this metric is compute for juste one colomn : only performs a one-sample test —
           it compares your data to a target distribution (normal or uniform).
+          We might extend this metrics to support multi dimensionnal representativeness in the future.
+
     Dataset-level representativeness metrics:
       - Chi-square
       - Kolmogorov-Smirnov
@@ -142,11 +144,9 @@ class RepresentativenessProcessor(DatametricProcessor):
                 hist_counts, list_size=hist_counts.shape[0]
             )
 
-            # TODO  create hist as fixed array
-            # fs_arr =
-
             # sampling for KS test approximation
-            # TODO: KS need to have all the data un memory to compute
+            # TODO: KS need to have all the data un memory to compute,
+            # this metrics need to rely on other metrics prior computation of mean, std, min, max computation
             if "kolmogorov-smirnov" in self.metrics or "chi-square" in self.metrics:
                 sample_per_batch = min(
                     self.ks_sample_size, max(self.ks_min_sample_size, len(values) // self.ks_sample_divisor)
@@ -199,6 +199,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 continue
 
             # TODO : maybe we need a try ? as in batch or not as na already removed
+            # N/A handling shall be documented, and logs added
             hist_batch_arrays = np.asarray(batch_metrics[hist_key].to_numpy(zero_copy_only=False))
             if hist_batch_arrays.shape[0] == 0:
                 logger.warning(f"[{self.name}] no histograme batch for '{col}'")
@@ -398,7 +399,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 }
 
             # Stupid way to flatten tree of keys
-            # TODO : refactor the implementation
+            # TODO : refactor the implementation,for omptimizations
             if col_res:
                 for key, value in col_res.items():
                     if isinstance(value, dict):
@@ -406,9 +407,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                             out[key + "_" + col + "_" + prop] = content
                     else:
                         out[key + "_" + col] = value
-            # TODO : we generate here the following column names
-            # grte_*, ...
-
+        # TODO make optional export of metadata
         meta_data = {
             "bins": self.bins,
             "distribution": self.distribution,
