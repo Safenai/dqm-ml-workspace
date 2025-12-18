@@ -120,6 +120,7 @@ select = [
 ]
 extend-ignore = [
     "RUF005",
+    "RUF100",
     "RUF012",
     "I001"
 ]
