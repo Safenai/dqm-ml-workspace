@@ -58,7 +58,7 @@ class CompletenessProcessor(DatametricProcessor):
         Returns:
             List of output metric column names
         """
-        # TODO : manage output metrics names
+        # TODO : manage output metrics names with configuration
         metrics = []
 
         if self.include_overall:

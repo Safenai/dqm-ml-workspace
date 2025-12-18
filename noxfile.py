@@ -22,7 +22,6 @@ def compatibility(s: Session) -> None:
         "packages/dqm-ml-pipeline/tests/test_cli.py",
         *s.posargs,
     )
-    # TODO reactivate when tests are availables
     # s.run(
     #    "pytest",
     #    "packages/dqm-ml/tests",
@@ -48,13 +47,12 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-pipeline/src",
         "--cov=packages/dqm-ml-core/src",
         "--cov-report=html",
-        "--cov-report=term",  
+        "--cov-report=term",
         "--cov-fail-under=1",
         "packages/dqm-ml-pipeline/tests",
         *s.posargs,
     )
 
-    # TODO re-enable when tests are available
     # s.run(
     #    "pytest",
     #    "--cov-append",
@@ -80,7 +78,10 @@ def test_dev(s: Session) -> None:
         *s.posargs,
     )
 
-# TODO add a way to iterate on package and update level to 100%
+# TODO Test management improvment
+# - add a way to iterate on package tests and update coverage level to 100%
+# - move test to repository level
+# - create tests with session not including all packages to validate dependency managment
 
 # For some sessions, set venv_backend="none" to simply execute scripts within the existing outer
 # uv-generated virtual environment, rather than have nox create a new one for each session. This
@@ -155,6 +156,7 @@ doc_env = {"PYTHONPATH": "packages"}
 @session(venv_backend="none")
 def docs_github_pages(s: Session) -> None:
     s.run("mkdocs", "gh-deploy", "--force", env=doc_env)
+
 
 # Install only main dependencies for the license report.
 @session(uv_groups=["licenses"], uv_no_install_project=True)

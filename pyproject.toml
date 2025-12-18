@@ -1,6 +1,6 @@
 [project]
 name = "dqm-workspace"
-version = "0.0.1"
+version = "1.1.4"
 requires-python = ">=3.10"
 dependencies = [
     "dqm-ml-core",
@@ -12,11 +12,11 @@ dependencies = [
     "pycocotools>=2.0.10",
 ]
 
-# TODO : change URLs
+
 [project.urls]
-Homepage = "https://irt-systemx.github.io/dqm-ml"
-Documentation = "https://irt-systemx.github.io/dqm-ml"
-Repository = "https://github.com/IRT-SystemX/dqm-ml"
+Homepage = "https://github.com/Safenai/dqm-ml-workspace"
+Documentation = "https://safenai.github.io/dqm-ml-workspace"
+Repository = "https://github.com/Safenai/dqm-ml-workspace"
 
 [build-system]
 requires = ["uv_build>=0.8.0,<0.9.0"]
@@ -32,7 +32,6 @@ dqm-ml-pytorch = { workspace = true }
 dqm-ml = { workspace = true }
 
 [tool.uv]
-# TODO : only install defautl group, add contraint in nox.py
 default-groups = "all"
 
 [tool.uv.workspace]
@@ -96,7 +95,7 @@ enable_error_code = ["deprecated", "exhaustive-match", "explicit-override"]
 
 [tool.ruff]
 line-length = 120
-src = ["src", "packages/dqm-ml-core/src", "packages/dqm-ml-pipeline/src"] # TODO "packages/dqm-ml/src",
+src = ["src", "packages/dqm-ml-core/src", "packages/dqm-ml-pipeline/src"]
 extend-exclude = ["packages/dqm-ml/*"]
 # Ruff will automatically exclude all files listed in .gitignore as well as common temporary Python
 # tool directories.
@@ -121,6 +120,7 @@ select = [
 ]
 extend-ignore = [
     "RUF005",
+    "RUF100",
     "RUF012",
     "I001"
 ]

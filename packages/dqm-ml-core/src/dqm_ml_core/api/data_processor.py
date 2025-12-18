@@ -24,15 +24,6 @@ class DatametricProcessor:
         self.name = name
         self.config = config or {}
 
-        # self.input_columns = config['input_columns']
-
-        # if 'output_columns' not in config.keys() and type(config['output_columns']) is not dict:
-        #     raise ValueError("Metric {name} configuration must contain a dictionary of 'outputs_columns'")
-
-        # # We instanciate the differents dataloaders
-        # self.outputs_columns = config['output_columns']
-        # # TODO check that the request metrics are computable
-
         # Validate input_columns if present
         if "input_columns" in self.config:
             if not isinstance(self.config["input_columns"], list):
