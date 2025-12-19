@@ -3,7 +3,6 @@
 [![License: Apache 2.0][license-badge]](https://opensource.org/license/apache-2-0)
 ![Python][python-badge]
 ![Repo Size][size-badge]
-[![PyPI version][pypi-badge]](https://badge.fury.io/py/dqm-workspace)
 [![CI][github-actions-badge]](https://github.com/Safenai/dqm-ml-workspace/actions)
 [![Ruff][ruff-badge]](https://github.com/astral-sh/ruff)
 [![uv][uv-badge]](https://github.com/astral-sh/uv)
@@ -13,12 +12,21 @@
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 [size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
 [python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
-[pypi-badge]: https://badge.fury.io/py/dqm-workspace.svg
 [github-actions-badge]: https://github.com/Safenai/dqm-ml-workspace/actions/workflows/ci.yml/badge.svg
 [uv-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json
 [nox-badge]: https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
+
+[![PyPI version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
+[![PyPI version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline)
+[![PyPI version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images)
+[![PyPI version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-)
+
+[pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
+[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
+[pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
+[pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
 
 This repository group all package derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to intiate what shall become dqm-ml v2.0.0
 
