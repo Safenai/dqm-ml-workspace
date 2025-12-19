@@ -8,7 +8,7 @@ We identify during refactoring several limitation for an industrial usage that m
 
 ### known issues
 
-- not all V1 metrics are implemented, the following metrics are missing 
+- not all V1 metrics are re-implemented with the following API, the following metrics are missing 
   - diversity
   - domain gap
     - PAD
@@ -38,7 +38,7 @@ We identify during refactoring several limitation for an industrial usage that m
 
 ### Improve identified limit in current metrics implementation
 
-- Rationalize level of parametrization between metrics, 
+- Rationalize level of parametrization between metrics,
 - request with scientific commity an improvement in allocation of method between
   - diversity (specific to class problems ?, clarity outputs)
   - representativness
@@ -46,9 +46,19 @@ We identify during refactoring several limitation for an industrial usage that m
     - extend current distribution propose to other kind of expected real life distribution
     - use based metrics to improve precision of batch implementation (min,max,mean,std)
 
+- Improve performance of image feature computation
+- Integrate feedback from community, and architectural concept document realize in Q4 2025
+
+### Extend the proposed content of the library
+
+- extend dqm-ml-workspace with a package dedicated to time series features
+- Propose a performance improvement, and document how to configure dqml usage
+
 - Support of other format as inputs and outputs than parquet
   - write output in json / yaml format for metrics
   - read from csv
   - read / write to/from database
+
+- Create a documentation "How to create a new metric"
 
 - New metrics, and improvement of current metrics configurations, base on next month experimentations.
