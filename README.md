@@ -18,10 +18,10 @@
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
 
-[![PyPI version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
-[![PyPI version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline)
-[![PyPI version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images)
-[![PyPI version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-)
+[![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
+[![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline)
+[![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images)
+[![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch)
 
 [pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
 [pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
