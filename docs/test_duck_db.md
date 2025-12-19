@@ -21,11 +21,13 @@ dqm-ml process -p packages/dqm-ml-pipeline/config/visual_features.yaml
 ```
 
 **Entrée :**
-- Fichier source : `/Users/checkkoutame/Desktop/Renare/kc-data-sampling/raw_samples/samples_raw_with_inference.parquet`
+
+- Fichier source : `kc-data-sampling/raw_samples/samples_raw_with_inference.parquet`
   - ou tout autre parquet
 - Colonnes requises : `image_bytes`, métadonnées des échantillons
 
 **Sortie :**
+
 - Fichier : `features/samples_raw_with_inference.parquet`
 - Nouvelles colonnes : `m_luminosity`, `m_contrast`, `m_blur_level`, `m_entropy`
 
@@ -45,6 +47,7 @@ python scripts/duckdb_subsets.py \
 ```
 
 **Paramètres :**
+
 - `-i` : Fichier d'entrée avec les features visuelles
 - `-c` : Configuration des métriques de représentativité
 - `-g` : Groupement par colonne (`split`)
@@ -52,6 +55,7 @@ python scripts/duckdb_subsets.py \
 - `-j` : Sortie jointe (données + métriques par échantillon)
 
 **Sorties :**
+
 - `all_metrics.parquet` : Métriques agrégées par split
 - `data_with_metrics.parquet` : Données originales + colonnes de métriques
 

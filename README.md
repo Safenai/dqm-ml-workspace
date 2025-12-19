@@ -92,16 +92,3 @@ Other configuration exemple files can be found in this [directory](packages/dqm-
 ## Usage from your python code
 
 - [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
-
-## ROADMAP
-
-- Finalize dqm-ml migration
-  - doc integration in this repository
-  - mark original repository as deprecated and reference this one
-  - integrate the last metrics not implemented
-  - put version as V2.0.0
-
-- Support of other format as inputs and outputs
-  - write output in json / yaml format for metrics
-
-- New metrics, and improvement of current metrics configurations, base on next month experimentations.
