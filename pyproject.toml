@@ -77,6 +77,8 @@ docs = [
     "mkdocstrings[python]",
     # Autodoc.
     "mkdocs-api-autonav",
+    "mkdocs-jupyter",
+    "mkdocs-simple-hooks",
 ]
 
 licenses = [

@@ -27,6 +27,8 @@ packages/dqm-ml-pipeline/tests/data/img
 # DQML specific ignores
 output
 *.parquet
+# Readme is copied during doc pre build
+docs/index.md
 
 # https://github.com/firecow/gitlab-ci-local
 .gitlab-ci-local/
