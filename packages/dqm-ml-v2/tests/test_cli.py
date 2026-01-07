@@ -2,9 +2,8 @@ import shlex
 import subprocess
 
 from dqm_ml.__main__ import execute, parse_args
-import pytest
-
 from dqm_ml._version_ import version
+import pytest
 
 test_cases = [
     ("version", f"DQML version : {version}"),  # no args

@@ -78,7 +78,7 @@ Other configuration exemple files can be found in this [directory](packages/dqm-
 - uv sync : install workspace dependency (with --no-sync if you want to rely on uv.lock file)
 - uv build --package <package_name> : build the define package
 - uv run nox : execute by default the following sessions [lint, type_check, test]
-- uv run nos -s <session_name> whith one of the available sessions
+- uv run nox -s <session_name> whith one of the available sessions
   - lint : check lint issues
   - lint_fix : use to correct several lint (TODO : check complementarity with fmt)
   - fmt : auto reformat code (use to correct lint warnings)

@@ -1,5 +1,5 @@
-import shutil
 from pathlib import Path
+import shutil
 
 
 def update_readme_relative_links():

@@ -3,11 +3,11 @@ name: Tests
 # TODO: Move back to ci.yml with branch main once LFS quota reset
 on:
   push:
-    tags:        
-      - '*' 
+    branches:
+    - main
   pull_request:
-    tags:        
-      - '*'
+    branches:
+    - main
 
 env:
   UV_VERSION: "0.8.17"
@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          lfs: false
 
       - name: Create Git LFS file list
         run: git lfs ls-files -l |cut -d' ' -f1 |sort >.git/lfs-hashes.txt
@@ -69,6 +70,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          lfs: false
 
       - name: Create Git LFS file list
         run: git lfs ls-files -l |cut -d' ' -f1 |sort >.git/lfs-hashes.txt
