@@ -70,9 +70,8 @@ def test_representativeness(
             expected_interpretation = interpretation[0] if computed_score >= threshold else interpretation[1]
             computed_interpretation = table.to_pandas()[column_interpretation].tolist()[0]
 
-            if (
-                metric not in ["kolmogorov-smirnov", "chi-square"] 
-                and computed_score != pytest.approx(expected_score, abs=epsilon)
+            if metric not in ["kolmogorov-smirnov", "chi-square"] and computed_score != pytest.approx(
+                expected_score, abs=epsilon
             ):
                 error_msg = (
                     f"For {column_value}, the distance between computed value : {computed_score}",
