@@ -16,6 +16,8 @@ pipeline_config:
     representativeness:
       type: representativeness
       metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
+      ks_sample_size: 1000000
+      ks_sample_divisor: 1
 
       input_columns: [data_1, data_2, data_3]
 

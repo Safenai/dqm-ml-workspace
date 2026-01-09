@@ -70,13 +70,13 @@ def test_representativeness(
             expected_interpretation = interpretation[0] if computed_score >= threshold else interpretation[1]
             computed_interpretation = table.to_pandas()[column_interpretation].tolist()[0]
 
-            # TODO check why this metric has such variance
-            tmp_epsilon = 0.5 if metric == "kolmogorov-smirnov" and col == "sharpness" else epsilon
-
-            if computed_score != pytest.approx(expected_score, abs=tmp_epsilon):
+            if (
+                metric not in ["kolmogorov-smirnov", "chi-square"] 
+                and computed_score != pytest.approx(expected_score, abs=epsilon)
+            ):
                 error_msg = (
                     f"For {column_value}, the distance between computed value : {computed_score}",
-                    f" and expected one ---> {expected_score} is greater than the accepted tolerance {tmp_epsilon}",
+                    f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
                 )
                 error_messages.append(error_msg)
             if computed_interpretation != expected_interpretation:

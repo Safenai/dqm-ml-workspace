@@ -45,6 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          lfs: false
 
       - name: Validate build configuration
         uses: docker/build-push-action@v6
