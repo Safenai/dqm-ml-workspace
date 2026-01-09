@@ -201,6 +201,7 @@ class DomainGapProcessor(DatametricProcessor):
                 val = float(np.dot(diff, diff))
                 return {"metric": pa.array([metric]), "value": pa.array([val], type=pa.float64())}
 
+            # Compute and regularize variances by returning a small value in case variance is null
             v1 = np.maximum(vec(source["sum_sq"]) / n1 - mu1 * mu1, 1e-9)
             v2 = np.maximum(vec(target["sum_sq"]) / n2 - mu2 * mu2, 1e-9)
 
