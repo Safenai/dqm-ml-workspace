@@ -3,7 +3,7 @@
 [![License: Apache 2.0][license-badge]](https://opensource.org/license/apache-2-0)
 ![Python][python-badge]
 ![Repo Size][size-badge]
-[![PyPI core][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
+
 [![CI][github-actions-badge]](https://github.com/Safenai/dqm-ml-workspace/actions)
 [![Ruff][ruff-badge]](https://github.com/astral-sh/ruff)
 [![uv][uv-badge]](https://github.com/astral-sh/uv)
