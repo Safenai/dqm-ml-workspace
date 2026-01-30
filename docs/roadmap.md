@@ -61,4 +61,6 @@ We identify during refactoring several limitation for an industrial usage that m
 
 - Create a documentation "How to create a new metric"
 
+- extend in pipeline the experimental usage of duckdb to allow computation of metric directly on groups in the input without the need of creating several configuratons / parquet files.
+
 - New metrics, and improvement of current metrics configurations, base on next month experimentations.
