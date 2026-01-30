@@ -56,6 +56,11 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/Safenai/dqm-ml-workspace
 plugins:
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "docs.hooks:pre_build"
+  - mkdocs-jupyter:
+      theme: dark
   - search
   - offline:
       enabled: !ENV [MKDOCS_MATERIAL_OFFLINE, false]
@@ -91,3 +96,4 @@ repo_url: https://github.com/Safenai/dqm-ml-workspace
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - index.md
+  - Example: examples/multiple_metrics_tests_v2.ipynb

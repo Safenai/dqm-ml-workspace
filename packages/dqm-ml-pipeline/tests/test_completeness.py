@@ -9,8 +9,14 @@ from dqm_ml_pipeline.cli import execute
 
 
 @pytest.mark.parametrize("test_name", ["completeness", "completeness_batch"])
-def test_completeness(tests_config: Any, test_path: Path, output_path: Path, test_name: str) -> None:
-    command = f"-p packages/dqm-ml-pipeline/tests/config/{test_name}.yaml"
+def test_completeness(
+    tests_config: Any,
+    test_path: Path,
+    output_path: Path,
+    test_name: str,
+    pipeline_completeness: Any,
+) -> None:
+    command = f"-p packages/dqm-ml-pipeline/tests/config_generated/{test_name}.yaml"
     execute(shlex.split(command))
 
     expected_scores = tests_config["completeness"]["expected_scores"]
@@ -18,7 +24,7 @@ def test_completeness(tests_config: Any, test_path: Path, output_path: Path, tes
     col_names = tests_config["completeness"]["params"]["columns_names"]
 
     # # Test completeness by columns and overall
-    output_filename = f"metrics_{test_name}_source_dataset-0.parquet"
+    output_filename = f"metrics_{test_name}.parquet"
 
     table = pq.read_table(Path(output_path) / output_filename)
     for col in col_names:

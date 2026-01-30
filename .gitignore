@@ -20,6 +20,8 @@ pytest_report.html
 assets
 # Test images
 packages/dqm-ml-pipeline/tests/data/img
+packages/dqm-ml-pipeline/tests/config_generated
+packages/dqm-ml-pipeline/tests/data_generated
 
 # Dynamic versioning
 **/_version_.py
@@ -27,6 +29,10 @@ packages/dqm-ml-pipeline/tests/data/img
 # DQML specific ignores
 output
 *.parquet
+# Readme is copied during doc pre build
+docs/index.md
+.github/workflows/tests_act.yml
+
 
 # https://github.com/firecow/gitlab-ci-local
 .gitlab-ci-local/

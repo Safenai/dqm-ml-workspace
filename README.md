@@ -3,7 +3,7 @@
 [![License: Apache 2.0][license-badge]](https://opensource.org/license/apache-2-0)
 ![Python][python-badge]
 ![Repo Size][size-badge]
-[![PyPI version][pypi-badge]](https://badge.fury.io/py/dqm-workspace)
+[![PyPI core][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
 [![CI][github-actions-badge]](https://github.com/Safenai/dqm-ml-workspace/actions)
 [![Ruff][ruff-badge]](https://github.com/astral-sh/ruff)
 [![uv][uv-badge]](https://github.com/astral-sh/uv)
@@ -13,7 +13,7 @@
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 [size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
 [python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
-[pypi-badge]: https://badge.fury.io/py/dqm-workspace.svg
+[pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
 [github-actions-badge]: https://github.com/Safenai/dqm-ml-workspace/actions/workflows/ci.yml/badge.svg
 [uv-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json
 [nox-badge]: https://img.shields.io/badge/%F0%9F%A6%8A-Nox-D85E00.svg
@@ -27,7 +27,7 @@ Documentation still remain in the main repository as we only deliver partial mig
 The library was originally developped in the programme
 
 <div align="center">
-    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+    <img src="static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
     <h1 style="font-size: large; font-weight: bold;">dqm-ml</h1>
 </div>
 
@@ -78,7 +78,7 @@ Other configuration exemple files can be found in this [directory](packages/dqm-
 - uv sync : install workspace dependency (with --no-sync if you want to rely on uv.lock file)
 - uv build --package <package_name> : build the define package
 - uv run nox : execute by default the following sessions [lint, type_check, test]
-- uv run nos -s <session_name> whith one of the available sessions
+- uv run nox -s <session_name> whith one of the available sessions
   - lint : check lint issues
   - lint_fix : use to correct several lint (TODO : check complementarity with fmt)
   - fmt : auto reformat code (use to correct lint warnings)

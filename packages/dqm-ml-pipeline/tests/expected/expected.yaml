@@ -5,7 +5,7 @@ completeness:
 
     params:
         tolerance: 0.1
-        columns_names : [
+        columns_names: [
             "completeness_column_1",
             "completeness_column_3",
             "completeness_column_6",
@@ -15,20 +15,40 @@ completeness:
         ]
 
     expected_scores:
-        completeness_column_1 : 1
-        completeness_column_3 : 0.78
-        completeness_column_6 : 0.48
+        completeness_column_1: 1
+        completeness_column_3: 0.78
+        completeness_column_6: 0.48
         completeness_column_9: 0.211
-        completeness_overall : 0.618
+        completeness_overall: 0.618
 
-representativeness:
+representativeness_not_normal_distribution:
     params:
-        tolerance: 0.1
-        distribution : normal
-        columns_names : ["brightness","contrast","blur_score","sharpness"]
-        metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
-        value_names: ["p_value", "grte_value", "entropy", "p_value"]
-        thresholds: [0.05, 0.5, 2.0, 0.05]
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: normal
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
         interpretations: [
             ["follows_distribution", "does_not_follow_distribution"],
             ["high_representativeness", "low_representativeness"],
@@ -36,34 +56,197 @@ representativeness:
             ["follows_distribution", "does_not_follow_distribution"],
         ]
     expected_scores:
-       chi-square:
-           brightness : 0
-           contrast : 0
-           blur_score : 0
-           sharpness : 0
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
 
-       kolmogorov-smirnov:
-           brightness : 0
-           contrast : 0
-           blur_score : 0
-           sharpness : 0.1
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
 
-       shannon-entropy:
-           brightness : 2.3
-           contrast : 2.3
-           blur_score : 2.3
-           sharpness : 2.3
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
 
-       grte:
-           brightness : 0.5
-           contrast : 0.7
-           blur_score : 0.7
-           sharpness : 0.9
+        grte:
+            data_1: 0.2
+            data_2: 0.2
+            data_3: 0.2
+
+
+representativeness_not_uniform_distribution:
+    params:
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: uniform
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
+
+        grte:
+            data_1: 0.3
+            data_2: 0.9
+            data_3: 0.9
+
+representativeness_normal_distribution:
+    params:
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: normal
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
+
+        grte:
+            data_1: 0.9
+            data_2: 0.9
+            data_3: 0.9
+
+
+representativeness_uniform_distribution:
+    params:
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: uniform
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
+
+        grte:
+            data_1: 0.9
+            data_2: 0.9
+            data_3: 0.9
 
 visual_features:
     params:
         tolerance: 0.0001
-        columns_names : [
+        columns_names: [
             "m_luminosity",
             "m_contrast",
             "m_blur_level",
@@ -207,61 +390,61 @@ domain_gap:
     wasserstein_bytes:
         params:
             tolerance: 0.01
-            columns_names : [
+            columns_names: [
                 "metric",
                 "value",
             ]
 
         expected_scores:
-            metric : "wasserstein_1d"
+            metric: "wasserstein_1d"
             value: 0.45
 
-    wasserstein:
+    wasserstein_1d:
         params:
             tolerance: 0.001
-            columns_names : [
+            columns_names: [
                 "metric",
                 "value",
             ]
 
         expected_scores:
-            metric : "wasserstein_1d"
-            value: 0.026
+            metric: "wasserstein_1d"
+            value: 0.024
 
     fid:
         params:
             tolerance: 0.1
-            columns_names : [
+            columns_names: [
                 "metric",
                 "value",
             ]
 
         expected_scores:
-            metric : "fid"
+            metric: "fid"
             value: 37.5
 
-    klmvn:
+    klmvn_diag:
         params:
             tolerance: 0.1
-            columns_names : [
+            columns_names: [
                 "metric",
                 "value",
             ]
 
         expected_scores:
-            metric : "klmvn_diag"
-            value: 3.7
+            metric: "klmvn_diag"
+            value: 2
 
-    mmd:
+    mmd_linear:
         params:
             tolerance: 0.01
-            columns_names : [
+            columns_names: [
                 "metric",
                 "value",
             ]
 
         expected_scores:
-            metric : "mmd_linear"
+            metric: "mmd_linear"
             value: 0.76
 
     # pad:
@@ -299,8 +482,8 @@ domain_gap:
 
     #             MODEL:
     #                 arch: "resnet18"
-    #                 n_layer_feature : ["maxpool","layer1.1.relu_1","layer2.1.relu_1", "layer3.1.relu_1", "layer4.1.relu_1"]
-    #                 feature_extractors_layers_weights : [1, 1, 1, 1, 1]
+    #                 n_layer_feature: ["maxpool","layer1.1.relu_1","layer2.1.relu_1", "layer3.1.relu_1", "layer4.1.relu_1"]
+    #                 feature_extractors_layers_weights: [1, 1, 1, 1, 1]
     #                 device: "cpu"
 
     #             METHOD:
@@ -313,11 +496,26 @@ domain_gap:
 pandas_welding:
     params:
         tolerance: 0.1
-        distribution : normal
-        columns_names : ["blur_level","luminosity_level"]
-        metrics: ["chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"]
-        value_names: ["p_value", "grte_value", "entropy", "p_value"]
-        thresholds: [0.05, 0.5, 2.0, 0.05]
+        distribution: normal
+        columns_names: ["blur_level","luminosity_level"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
         interpretations: [
             ["follows_distribution", "does_not_follow_distribution"],
             ["high_representativeness", "low_representativeness"],
@@ -326,18 +524,18 @@ pandas_welding:
         ]
     expected_scores:
        chi-square:
-           blur_level : 0
-           luminosity_level : 0
+           blur_level: 0
+           luminosity_level: 0
 
 
        kolmogorov-smirnov:
-           blur_level : 0
-           luminosity_level : 0
+           blur_level: 0
+           luminosity_level: 0
 
        shannon-entropy:
-           blur_level : 2.3
-           luminosity_level : 2.3       
+           blur_level: 2.3
+           luminosity_level: 2.3       
 
        grte:
-           blur_level : 0.86658204454891
-           luminosity_level : 0.8927838432119461
+           blur_level: 0.86658204454891
+           luminosity_level: 0.8927838432119461

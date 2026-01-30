@@ -129,12 +129,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             edges = self._bin_edges[col]
 
-            # Ddebeug
+            # Debug
             logger.debug(f"[{self.name}] edges shape: {edges.shape}, values shape: {values.shape}")
 
             hist_counts = np.histogram(values, bins=edges)[0].astype(np.int64)
 
-            # debeug: vérifier l'histogramme
+            # debug: check histogram
             logger.debug(f"[{self.name}] hist_counts shape: {hist_counts.shape}, expected: {self.bins}")
 
             # store as Arrow arrays for aggregation
@@ -145,7 +145,7 @@ class RepresentativenessProcessor(DatametricProcessor):
             )
 
             # sampling for KS test approximation
-            # TODO: KS need to have all the data un memory to compute,
+            # TODO: KS need to have all the data in memory to compute,
             # this metrics need to rely on other metrics prior computation of mean, std, min, max computation
             if "kolmogorov-smirnov" in self.metrics or "chi-square" in self.metrics:
                 sample_per_batch = min(
@@ -222,16 +222,16 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             # sum histogram counts across batches
             if hist_arrays.ndim == 1:
-                # Single histogram
+                logger.debug("Single histogram")
                 obs_counts = hist_arrays.astype(float)
             else:
-                # Multiple histograms from different batches
                 # Ensure we're summing along the right axis
+                logger.debug("Multiple histograms from different batches")
                 if hist_arrays.shape[1] == self.bins:
-                    # Sum along batch dimension (axis=0)
+                    logger.debug("Sum along batch dimension (axis=0)")
                     obs_counts = np.sum(hist_arrays, axis=0).astype(float)
                 else:
-                    # Flatten and create a single histogram
+                    logger.debug("Flatten and create a single histogram")
                     logger.warning(f"[{self.name}] Unexpected histogram shape {hist_arrays.shape}, flattening")
                     obs_counts = hist_arrays.flatten().astype(float)
 
@@ -250,10 +250,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             # theoretical probabilities - Aligné sur DQM-ML officiel
             if self.distribution == "normal":
+                logger.debug("Generate normal distribution")
                 # Utilise les MÊMES paramètres que ceux utilisés pour générer les bins
 
                 sample_key = f"{col}_ks_sample"
                 if sample_key in batch_metrics:
+                    logger.debug("Use sampled meand and std")
                     sample_arrays = batch_metrics[sample_key].to_numpy()
                     if sample_arrays.ndim > 1:
                         sample_arrays = sample_arrays.flatten()
@@ -261,15 +263,20 @@ class RepresentativenessProcessor(DatametricProcessor):
                     std = float(self.dist_params.get("std", np.std(sample_arrays, ddof=0)))
                     std = std if std > 0.0 else self.epsilon
                 else:
-                    # Fallback: use default or configured parameters
+                    logger.debug("Fallback: use default or configured mean and std")
                     mean = float(self.dist_params.get("mean", 0.0))
                     std = float(self.dist_params.get("std", 1.0))
+                logger.debug(f"mean={mean}")
+                logger.debug(f"std={mean}")
                 # génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
                 expected_values = np.random.normal(mean, std, total_count)
                 exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
             else:  # uniform
+                logger.debug("Generate uniform distribution")
                 mn = float(self.dist_params.get("min", edges[0]))
                 mx = float(self.dist_params.get("max", edges[-1]))
+                logger.debug(f"min={mn}")
+                logger.debug(f"max={mx}")
                 # Génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
                 expected_values = np.random.uniform(mn, mx, total_count)
                 exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
@@ -284,7 +291,7 @@ class RepresentativenessProcessor(DatametricProcessor):
 
                 mask = exp_counts > 0
                 if mask.sum() >= 2:
-                    # Normalize expected counts to match observed sum
+                    logger.debug("Normalize expected counts to match observed sum")
                     obs_sum = obs_counts[mask].sum()
                     exp_sum = exp_counts[mask].sum()
 
@@ -292,8 +299,14 @@ class RepresentativenessProcessor(DatametricProcessor):
                         # Scale expected counts to match observed sum
                         exp_counts_normalized = exp_counts[mask] * (obs_sum / exp_sum)
 
+                        logger.debug("Expected frequencies:")
+                        logger.debug(exp_counts_normalized)
+                        logger.debug("Observed frequencies: ")
+                        logger.debug(obs_counts[mask])
+
                         try:
-                            chi = stats.chisquare(obs_counts[mask], f_exp=exp_counts_normalized)
+                            chi = stats.chisquare(f_obs=obs_counts[mask], f_exp=exp_counts_normalized)
+                            logger.debug(f"Chi P value: {chi.pvalue}")
                             col_res["chi-square"] = {
                                 "p_value": float(chi.pvalue),
                                 "statistic": float(chi.statistic),
