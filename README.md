@@ -20,6 +20,16 @@
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
 
+[![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core)
+[![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline)
+[![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images)
+[![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch)
+
+[pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
+[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
+[pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
+[pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
+
 This repository group all package derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to intiate what shall become dqm-ml v2.0.0
 
 Documentation still remain in the main repository as we only deliver partial migration to the new API [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md)
