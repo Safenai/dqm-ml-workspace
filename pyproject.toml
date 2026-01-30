@@ -10,6 +10,7 @@ dependencies = [
     "dqm-ml-pytorch",
     "pre-commit>=4.5.0",
     "pycocotools>=2.0.10",
+    "ruamel-yaml>=0.19.1",
 ]
 
 
@@ -77,6 +78,8 @@ docs = [
     "mkdocstrings[python]",
     # Autodoc.
     "mkdocs-api-autonav",
+    "mkdocs-jupyter",
+    "mkdocs-simple-hooks",
 ]
 
 licenses = [
