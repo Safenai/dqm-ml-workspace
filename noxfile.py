@@ -19,7 +19,7 @@ def compatibility(s: Session) -> None:
     s.run(
         "pytest",
         # Only quick tests for compatibility
-        "packages/dqm-ml-pipeline/tests/test_cli.py",
+        "tests/test_cli.py",
         *s.posargs,
     )
     # s.run(
@@ -49,7 +49,7 @@ def test(s: Session) -> None:
         "--cov-report=html",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "packages/dqm-ml-pipeline/tests",
+        "tests",
         *s.posargs,
     )
 
@@ -74,7 +74,7 @@ def test(s: Session) -> None:
 def test_dev(s: Session) -> None:
     s.run(
         "pytest",
-        "packages/dqm-ml-pipeline/tests",
+        "tests",
         *s.posargs,
     )
 

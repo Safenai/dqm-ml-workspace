@@ -19,9 +19,9 @@ __pycache__
 pytest_report.html
 assets
 # Test images
-packages/dqm-ml-pipeline/tests/data/img
-packages/dqm-ml-pipeline/tests/config_generated
-packages/dqm-ml-pipeline/tests/data_generated
+tests/data/img
+tests/config_generated
+tests/data_generated
 
 # Dynamic versioning
 **/_version_.py

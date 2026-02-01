@@ -7,8 +7,8 @@ import pytest
 from dqm_ml_pipeline.cli import execute, parse_args
 
 test_cases = [
-    ("-p packages/dqm-ml-pipeline/config/completeness.yaml", ""),  # no args
-    ("-p packages/dqm-ml-pipeline/config/representativness.yaml", ""),  # no args
+    ("-p examples/config/completeness.yaml", ""),  # no args
+    ("-p examples/config/representativness.yaml", ""),  # no args
 ]
 
 
@@ -34,10 +34,8 @@ def test_app(command: str, expected_output: str) -> None:
 @pytest.mark.parametrize(
     ("prompt", "pipeline"),
     [
-        # no params
-        ("", "pipeline.yaml"),
         # short params
-        ("-p dummy.yaml", "dummy.yaml"),
+        ("-p dummy.yaml", ["dummy.yaml"]),
         # long params TODO
     ],
 )

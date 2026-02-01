@@ -48,6 +48,24 @@ class PandasDataLoader:
 
         self.data = pd.read_csv(self.path, sep=",")
 
+    def __len__(self) -> int:
+        """
+        Get the total number of rows in the csv file.
+
+        Returns:
+            int: Total number of rows.
+        """
+        return len(self.data)
+
+    def get_nb_batches(self) -> int:
+        """
+        Get the total number of batches in the csv file.
+
+        Returns:
+            int: Total number of batches.
+        """
+        return 1
+
     @override
     def __repr__(self) -> str:
         return f"Dataload for {self.path}"

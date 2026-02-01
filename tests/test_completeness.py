@@ -8,27 +8,27 @@ import pytest
 from dqm_ml_pipeline.cli import execute
 
 
-@pytest.mark.parametrize("test_name", ["visual_features", "visual_features_batch", "visual_features_path"])
-def test_visual_features(
+@pytest.mark.parametrize("test_name", ["completeness", "completeness_batch"])
+def test_completeness(
     tests_config: Any,
-    test_path: str,
-    output_path: str,
+    test_path: Path,
+    output_path: Path,
     test_name: str,
-    pipeline_visual_features: Any,
+    pipeline_completeness: Any,
 ) -> None:
-    command = f"-p packages/dqm-ml-pipeline/tests/config_generated/{test_name}.yaml"
+    command = f"-p tests/config_generated/{test_name}.yaml"
     execute(shlex.split(command))
 
-    expected_scores = tests_config["visual_features"]["expected_scores"]
-    col_names = tests_config["visual_features"]["params"]["columns_names"]
-    epsilon = tests_config["visual_features"]["params"]["tolerance"]
+    expected_scores = tests_config["completeness"]["expected_scores"]
+    epsilon = tests_config["completeness"]["params"]["tolerance"]
+    col_names = tests_config["completeness"]["params"]["columns_names"]
 
+    # # Test completeness by columns and overall
     output_filename = f"metrics_{test_name}.parquet"
 
+    table = pq.read_table(Path(output_path) / output_filename)
     for col in col_names:
-        table = pq.read_table(Path(output_path) / output_filename)
-
-        computed_score = table.to_pandas()[col].tolist()
+        computed_score = table.to_pandas()[col].tolist()[0]
         expected_score = expected_scores[col]
         assert computed_score == pytest.approx(expected_score, abs=epsilon), (
             f"For {col}, the distance between computed value : {computed_score}",

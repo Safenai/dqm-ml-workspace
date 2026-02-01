@@ -10,7 +10,7 @@ from dqm_ml_pipeline.cli import execute
 
 @pytest.mark.parametrize("test_name", ["pandas_welding"])
 def test_representativeness_pandas(tests_config: Any, test_path: Path, output_path: Path, test_name: str) -> None:
-    command = f"-p packages/dqm-ml-pipeline/tests/config/{test_name}.yaml"
+    command = f"-p tests/config/{test_name}.yaml"
     execute(shlex.split(command))
 
     # load test configuration

@@ -1,52 +1,54 @@
+import itertools
 import logging
 from typing import Any
 
 import pyarrow as pa
+from tqdm import tqdm
 
-from dqm_ml_core import PluginLoadedRegistry
+from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_pipeline.dataloaders import DataLoader
+from dqm_ml_pipeline.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
 
 
 class DatasetPipeline:
     """
-    Main class for processing datasets through a configurable pipeline
-    of data loaders, metrics processors, and output writers.
+    Main class for processing datasets through a configurable pipeline.
+
+    This class orchestrates the data loading, metric computation, and result writing
+    processes. It supports dynamically loaded plugins for data loaders, metrics, and
+    output writers.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None) -> None:
+    def __init__(self,
+                 dataloaders: dict[str, DataLoader],
+                 metrics: dict[str, DatametricProcessor],
+                 features_output: OutputWriter | None, progress_bar: bool = True) -> None:
         """
         Initialize the pipeline with a given configuration.
 
         Args:
-            config: Dictionary containing:
-                - dataloaders (dict)
-                - metrics_processor (dict)
-                - outputs (dict)
+            config: Dictionary containing the pipeline configuration:
+                - dataloaders: Dict of data loader configurations.
+                - metrics_processor: Dict of metric processor configurations.
+                - outputs: Dict of output writer configurations.
+                - compute_delta: Boolean, whether to compute delta metrics between datasets.
+                - progress_bar: Boolean, whether to show progress bars.
+
+        Raises:
+            ValueError: If the configuration is missing or invalid.
         """
-        dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
-        metrics_registry = PluginLoadedRegistry.get_metrics_registry()
-        outputs_registry = PluginLoadedRegistry.get_outputwiter_registry()
-
-        if not config:
-            raise ValueError("Pipeline requires a configuration dictionary.")
-
-        # Load data loaders
-        if "dataloaders" not in config or not isinstance(config["dataloaders"], dict):
-            raise ValueError("'dataloaders' must be provided as a dictionary")
-        self.dataloaders = self._init_components(config["dataloaders"], dataloaders_registry, "dataloader")
-
-        # Load metrics
-        if "metrics_processor" not in config or not isinstance(config["metrics_processor"], dict):
-            raise ValueError("'metrics_processor' must be provided as a dictionary")
-        self.metrics = self._init_components(config["metrics_processor"], metrics_registry, "metric")
-
-        self.compute_delta = config.get("compute_delta", False)
+        # We initialize loaded pluging elements
+        self.dataloaders = dataloaders
+        self.metrics = metrics
+        self.features_output = features_output
+        self.progress_bar = progress_bar
 
         # Determine needed input/generated columns
-        self.needed_input_columns = []
-        self.generated_features = []
-        self.generated_metrics = []
+        self.needed_input_columns: list[str] = []
+        self.generated_features: list[str] = []
+        self.generated_metrics: list[str] = []
         for metric in self.metrics.values():
             self.needed_input_columns.extend(metric.needed_columns())
             self.generated_features.extend(metric.generated_features())
@@ -57,23 +59,6 @@ class DatasetPipeline:
         self.generated_features = list(dict.fromkeys(self.generated_features))
         self.generated_metrics = list(dict.fromkeys(self.generated_metrics))
 
-        # Load output writers
-        if "outputs" not in config or not isinstance(config["outputs"], dict):
-            raise ValueError("'outputs' must be provided as a dictionary")
-
-        self.metrics_output = None
-        self.features_output = None
-        for key, output_config in config["outputs"].items():
-            if output_config["type"] not in outputs_registry:
-                raise ValueError(f"Output '{key}' must have a valid 'type' in {list(outputs_registry.keys())}")
-            writer = outputs_registry[output_config["type"]](name=key, config=output_config)
-            if key == "metrics":
-                self.metrics_output = writer
-            elif key == "features":
-                self.features_output = writer
-            else:
-                raise ValueError(f"Unsupported output key '{key}'. Only 'features' and 'metrics' are allowed.")
-
         # Ensure output columns are included in needed input columns
         if self.features_output:
             for col in self.features_output.columns:
@@ -81,132 +66,211 @@ class DatasetPipeline:
                     logger.info(f"Adding required output column '{col}' to input columns")
                     self.needed_input_columns.insert(0, col)
 
-    def _init_components(
-        self, config_dict: dict[str, Any], registry: dict[str, Any], component_name: str
-    ) -> dict[str, Any]:
-        """Initialize pipeline components from a registry."""
-        components = {}
-        for key, comp_config in config_dict.items():
-            if "type" not in comp_config:
-                raise ValueError(f"Configuration for {component_name} '{key}' must contain 'type'")
-            comp_type = comp_config["type"]
-            if comp_type not in registry:
-                raise ValueError(f"{component_name.capitalize()} '{key}' has invalid type '{comp_type}'")
-            components[key] = registry[comp_type](name=key, config=comp_config)
-        return components
+        logger.info(
+            f"DQM job pipeline initiazed will process {len(self.dataloaders)} dataloaders, "  # noqa: E501
+            f"{len(self.metrics)} metrics processors, "
+            f"outputting features to '{self.features_output.name if self.features_output else 'None'}' "
+        )
 
-    def get_ordered_metrics(self) -> list[Any]:
-        """Return the ordered list of metrics processors."""
-        # TODO: Implement proper ordering
+    def get_ordered_metrics(self) -> list[DatametricProcessor]:
+        """
+        Return the ordered list of metrics processors.
+
+        Returns:
+            List of ordered DatametricProcessor instances.
+        """
+        # TODO: Implement proper ordering based on dependencies
         return list(self.metrics.values())
 
-    def run(self) -> None:
+    def describe(self) -> None:
+        """
+        Log a description of the pipeline configuration.
+        """
+        logger.info(f"Executing dqm-ml-job on {len(self.dataloaders)}, using {len(self.metrics)} metrics ")
+        for dataloader_name, dataloader in self.dataloaders.items():
+            logger.info(f"  Dataloader: {dataloader_name} -> {dataloader}")
+
+        for metric_name, metric in self.metrics.items():
+            logger.info(f"  Metric: {metric_name} -> {metric}")
+            logger.info(f"    Needed columns: {metric.needed_columns()}")
+            logger.info(f"    Generated features: {metric.generated_features()}")
+            logger.info(f"    Generated metrics: {metric.generated_metrics()}")
+
+    def run(self) -> tuple[dict[Any, dict[str, Any]], dict[str, Any] | None]:
         """
         Execute the dataset processing pipeline.
+
+        Iterates through configured data loaders, computes metrics, and writes outputs.
         """
-        # TODO: Check key uniqueness between batch, feature and metrics
+
         # TODO: Check with needed input order of metric computation
         metrics_processors = self.get_ordered_metrics()
+
         columns_list = self.needed_input_columns
 
-        if self.compute_delta:
-            dataset_metrics_list = []
-            dataloader_names = []
+        dataselection_metrics_list = {}
 
-        for dataloader_name, dataloader in self.dataloaders.items():
+        if self.progress_bar:
+            pipeline_iter = tqdm(self.dataloaders.items(), desc="loader", position=0)
+        else:
+            pipeline_iter = self.dataloaders.items()
+
+        # TODO : add as a specific command line argument
+        self.describe()
+
+        for dataloader_name, dataloader in pipeline_iter:
             logger.info(f"Processing dataloader '{dataloader_name}'")
 
-            # TODO : We can add a progress bar here
-            # TODO : wa can check available columns in the dataloader and check with needed columns
-
-            metrics_array: dict[str, Any] = {}
-            features_array: dict[str, Any] = {}
-
-            # TODO : increment if multiple tables
-            # we compute the fefature size to enable partial writing of features
-            feature_array_size = 0
-            part_index = 0
-
+            # TODO add filter for parquet columns if supported by dataloader
             dataloader.bootstrap(columns_list)
 
-            for batch in dataloader:
-                batch_features: dict[str, Any] = {}
-                batch_metrics: dict[str, Any] = {}
-
-                # Compute features and batch-level metrics
-                for metric in metrics_processors:
-                    logger.debug(f"Processing metric {metric.__class__.__name__} for dataloader {dataloader_name}")
-                    batch_features |= metric.compute_features(batch, prev_features=batch_features)
-                    batch_metrics |= metric.compute_batch_metric(batch_features)
-
-                # Merge batch metrics
-                for k, v in batch_metrics.items():
-                    if k in metrics_array:
-                        metrics_array[k] = pa.concat_arrays([metrics_array[k], v])
-                    else:
-                        metrics_array[k] = v
-
-                # Copy required columns from source dataset
-                for i, col_name in enumerate(batch.column_names):
-                    # If we do not generate features we can skip it
-                    if self.features_output is None:
-                        continue
-
-                    # If the feature is only use for internal computation, and not serialize in outputs, we skip it
-                    if col_name not in self.features_output.columns:
-                        continue
-
-                    col_data = batch.column(i)
-                    features_array[col_name] = (
-                        pa.concat_arrays([features_array[col_name], col_data])
-                        if col_name in features_array
-                        else col_data
-                    )
-                    feature_array_size += col_data.get_total_buffer_size()
-
-                # Merge features for output
-                for k, v in batch_features.items():
-                    # If we do not generate features we can skip it
-                    if self.features_output is None:
-                        continue
-                    # If the feature is also in the batch_metrics, no need to duplicate
-                    if k not in self.features_output.columns or k in batch_metrics:
-                        continue
-
-                    features_array[k] = pa.concat_arrays([features_array[k], v]) if k in features_array else v
-                    feature_array_size += v.get_total_buffer_size()
-
-                # TODO: If feature_array_size > memory_limit, write features to disk and reset features_array
-                # self.features_output(features_array, metrics_array)
-                # TODO: In metrics we can have more data => handle in a dedicated function
-
-            # Write features to disk
-            # TODO: If too big parquet, save arrays, and start a new parquet file
-            # If we have several feature to store
-            if self.features_output and features_array:
-                self.features_output.write_table(dataloader_name, features_array, part_index)
+            # Compute features and metrics for all batches
+            batches_metrics_array = self._compute_batches_metrics(dataloader_name, dataloader, metrics_processors)
 
             # Compute dataset-level metrics
             dataset_metrics: dict[str, Any] = {}
             for metric in metrics_processors:
-                logger.debug(
-                    f"Processing metric computation {metric.__class__.__name__} for dataloader {dataloader_name}"
-                )
-                dataset_metrics |= metric.compute(batch_metrics=metrics_array)
+                if logging.getLogger().level == logging.DEBUG:
+                    logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {dataloader_name}")
+                dataset_metrics.update(metric.compute(batch_metrics=batches_metrics_array))
+                if logging.getLogger().level == logging.DEBUG:
+                    logger.debug(f"Available metrics  {list(dataset_metrics.keys())}")
 
-            if self.compute_delta:
-                dataset_metrics_list.append(dataset_metrics)
-                dataloader_names.append(dataloader_name)
+            dataselection_metrics_list[dataloader_name] = dataset_metrics
 
-            # TODO : write to parquet, not implemented yet (done to test the pipeline with representativeness)
-            if self.metrics_output and dataset_metrics and not self.compute_delta:
-                logger.debug(f"Writing metrics for dataloader {dataloader_name}")
-                outputs = {}
-                for key, values in dataset_metrics.items():
-                    outputs[key] = pa.array([values])
-                self.metrics_output.write_table(dataloader_name, outputs, part_index)
+        # If we have to compute delta metrics
+        delta_metrics_table = self._compute_delta_metrics(metrics_processors, dataselection_metrics_list)
 
-        if self.compute_delta and self.metrics_output:
-            delta_metrics = metric.compute_delta(dataset_metrics_list[0], dataset_metrics_list[1])
-            logger.debug(f"Writing delta metrics for dataloader {dataloader_name}")
-            self.metrics_output.write_table("_".join(dataloader_names), delta_metrics, part_index)
+        return dataselection_metrics_list, delta_metrics_table
+
+    def _compute_delta_metrics(self, metrics_processors: list[DatametricProcessor],
+                               dataselection_metrics_list: dict[str, dict[str, pa.Array]]) -> dict[str, Any] | None:
+        """
+        Compute delta metrics between all combinations of dataselections.
+        Args:
+            metrics_processors: List of metric processors to use for delta computation.
+            dataselection_metrics_list: A dictionary mapping dataselection names to their computed metrics.
+        Returns:
+            A dictionary containing delta metrics for each combination of dataselections.
+        """
+
+        selection_combinaisons = itertools.combinations(dataselection_metrics_list, 2)
+
+        delta_metrics_table = None
+        for combinaison in selection_combinaisons:
+            src_metrics = dataselection_metrics_list[combinaison[0]]
+            target_metrics = dataselection_metrics_list[combinaison[1]]
+
+            for metric in metrics_processors:
+                delta_metrics = metric.compute_delta(src_metrics, target_metrics)
+                # TODO : check format of classical metrics / delta metrics for combinaison of format
+                if len(delta_metrics) == 0:
+                    continue
+
+                if delta_metrics_table is None:
+                    delta_metrics_table = delta_metrics
+                    delta_metrics_table["selection_source"] = pa.array([combinaison[0]])
+                    delta_metrics_table["selection_target"] = pa.array([combinaison[1]])
+                else:
+                    for m_name, value in delta_metrics.items():
+                        delta_metrics_table[m_name] = pa.concat_arrays([delta_metrics_table[m_name], pa.array([value])])
+
+                    delta_metrics_table["selection_source"] = pa.concat_arrays([delta_metrics_table["selection_source"], pa.array([combinaison[0]])])  # noqa: E501
+                    delta_metrics_table["selection_target"] = pa.concat_arrays([delta_metrics_table["selection_target"], pa.array([combinaison[1]])])  # noqa: E501
+                    logger.debug(f"Writing delta metrics for dataloader {'_'.join(combinaison)}")
+
+        return delta_metrics_table
+
+    def _compute_batches_metrics(self, dataloader_name: str, dataloader: DataLoader,
+                                 metrics_processors: list[DatametricProcessor]) -> dict[str, Any]:
+        """
+        Compute metrics and features for all batches in a dataloader.
+
+        This method optimizes performance by accumulating batch results in lists
+        and concatenating them once at the end, avoiding O(N^2) complexity.
+
+        Args:
+            dataloader_name: Name of the dataloader.
+            dataloader: The dataloader instance.
+            metrics_processors: List of metric processors to apply.
+
+        Returns:
+            A tuple containing:
+                - batches_metrics_array: Dictionary of computed batch metrics (concatenated).
+        """
+        # Use lists for O(1) appending, then concat once at the end.
+        batch_metrics_accumulator: dict[str, list[Any]] = {}
+        features_accumulator: dict[str, list[Any]] = {}
+
+        # Track memory size for potential chunking (not fully implemented yet)
+        feature_array_size = 0
+        part_index = 0
+
+        if self.progress_bar:
+            dataloader_iter = tqdm(
+                dataloader, total=dataloader.get_nb_batches(), desc="batches", position=1, leave=False
+            )
+        else:
+            dataloader_iter = dataloader
+
+        for batch in dataloader_iter:
+            batch_features: dict[str, Any] = {}
+            batch_metrics: dict[str, Any] = {}
+
+            # Compute features and batch-level metrics
+            for metric in metrics_processors:
+                batch_features.update(metric.compute_features(batch, prev_features=batch_features))
+                batch_metrics.update(metric.compute_batch_metric(batch_features))
+                if logging.getLogger().level == logging.DEBUG:
+                    m_keys, m_features = list(batch_metrics.keys()), list(batch_features.keys())
+                    logger.debug(f"{metric.name} - Available batch_metrics  {m_keys} - features {m_features}")
+
+            #  Accumulate batch metrics
+            for k, v in batch_metrics.items():
+                if k not in batch_metrics_accumulator:
+                    batch_metrics_accumulator[k] = []
+                batch_metrics_accumulator[k].append(v)
+
+            # Accumulate features from source dataset
+            for i, col_name in enumerate(batch.column_names):
+                if self.features_output is None:
+                    continue
+                if col_name not in self.features_output.columns:
+                    continue
+
+                col_data = batch.column(i)
+                if col_name not in features_accumulator:
+                    features_accumulator[col_name] = []
+                features_accumulator[col_name].append(col_data)
+                feature_array_size += col_data.get_total_buffer_size()
+
+            # Accumulate generated features
+            for k, v in batch_features.items():
+                if self.features_output is None:
+                    continue
+                # Avoid duplication if feature is also a metric or not required
+                if k not in self.features_output.columns or k in batch_metrics:
+                    continue
+
+                if k not in features_accumulator:
+                    features_accumulator[k] = []
+                features_accumulator[k].append(v)
+                feature_array_size += v.get_total_buffer_size()
+
+            # TODO: If feature_array_size > memory_limit, write features to disk and reset accumulators
+
+        # Concatenate all accumulated arrays
+        batches_metrics_array: dict[str, Any] = {}
+        for k, v_list in batch_metrics_accumulator.items():
+            batches_metrics_array[k] = pa.concat_arrays(v_list)
+
+        features_array: dict[str, Any] = {}
+        for k, v_list in features_accumulator.items():
+            features_array[k] = pa.concat_arrays(v_list)
+
+        # Write features to disk
+        # TODO: If too big parquet, save arrays, and start a new parquet file (chunking)
+        if self.features_output and features_array:
+            self.features_output.write_table(dataloader_name, features_array, part_index)
+
+        return batches_metrics_array

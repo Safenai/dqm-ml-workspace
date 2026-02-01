@@ -42,7 +42,6 @@ requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-dqm-ml-pipeline = "dqm_ml_pipeline.__main__:execute"
 dqm-ml-split = "dqm_ml_pipeline.duckdb_subsets:execute"
 
 [tool.setuptools.dynamic]

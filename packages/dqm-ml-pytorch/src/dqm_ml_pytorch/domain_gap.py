@@ -244,8 +244,8 @@ class DomainGapProcessor(DatametricProcessor):
             total = 0.0
             used = 0
             for j in range(use_dims):
-                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)
-                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)
+                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
+                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
                 if h1.sum() == 0 and h2.sum() == 0:
                     continue
                 p = h1 / max(1.0, h1.sum())

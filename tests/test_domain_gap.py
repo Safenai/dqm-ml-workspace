@@ -21,7 +21,7 @@ def test_domain_gap(
 ) -> None:
     # pad and cmd not implemented
 
-    command = f"-p packages/dqm-ml-pipeline/tests/config_generated/domain_gap_{test_name}.yaml"
+    command = f"-p tests/config_generated/domain_gap_{test_name}.yaml"
     start = timer()
     execute(shlex.split(command))
     end = timer()

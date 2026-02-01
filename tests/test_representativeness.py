@@ -25,7 +25,7 @@ def test_representativeness(
     test_name: str,
     pipeline_representativeness: Any,
 ) -> None:
-    command = f"-p packages/dqm-ml-pipeline/tests/config_generated/{test_name}.yaml"
+    command = f"-p tests/config_generated/{test_name}.yaml"
 
     start = timer()
     execute(shlex.split(command))

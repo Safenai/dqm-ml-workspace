@@ -2,10 +2,10 @@ from contextlib import contextmanager
 import logging
 from typing import Any
 
-from dqm_ml_core.registry import PluginLoadedRegistry
-
-from dqm_ml._version_ import version
+from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core._version_ import version as core_version
+
+from dqm_ml._version_ import version as version
 
 logger = logging.getLogger(__name__)
 

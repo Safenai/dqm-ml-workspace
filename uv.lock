@@ -23,6 +23,7 @@ members = [
     "dqm-ml-images",
     "dqm-ml-pipeline",
     "dqm-ml-pytorch",
+    "dqm-ml-v2",
     "dqm-workspace",
 ]
 
@@ -1131,6 +1132,39 @@ requires-dist = [
 ]
 
 [[package]]
+name = "dqm-ml-v2"
+source = { editable = "packages/dqm-ml-v2" }
+dependencies = [
+    { name = "dqm-ml-core" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "dqm-ml", extra = ["notebooks", "pipeline"] },
+]
+notebooks = [
+    { name = "jupyter" },
+    { name = "matplotlib" },
+    { name = "plotly" },
+    { name = "seaborn" },
+]
+pipeline = [
+    { name = "dqm-ml-pipeline" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dqm-ml", extras = ["notebooks", "pipeline"], marker = "extra == 'all'", editable = "packages/dqm-ml" },
+    { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
+    { name = "dqm-ml-pipeline", marker = "extra == 'pipeline'", editable = "packages/dqm-ml-pipeline" },
+    { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
+    { name = "matplotlib", marker = "extra == 'notebooks'", specifier = ">=3.3.0" },
+    { name = "plotly", marker = "extra == 'notebooks'", specifier = ">=5.0.0" },
+    { name = "seaborn", marker = "extra == 'notebooks'", specifier = ">=0.11.0" },
+]
+provides-extras = ["notebooks", "pipeline", "all"]
+
+[[package]]
 name = "dqm-workspace"
 version = "1.1.4"
 source = { editable = "." }
@@ -1140,6 +1174,7 @@ dependencies = [
     { name = "dqm-ml-images" },
     { name = "dqm-ml-pipeline" },
     { name = "dqm-ml-pytorch" },
+    { name = "dqm-ml-v2" },
     { name = "pre-commit" },
     { name = "pycocotools" },
     { name = "ruamel-yaml" },
@@ -1184,6 +1219,7 @@ requires-dist = [
     { name = "dqm-ml-images", editable = "packages/dqm-ml-images" },
     { name = "dqm-ml-pipeline", editable = "packages/dqm-ml-pipeline" },
     { name = "dqm-ml-pytorch", editable = "packages/dqm-ml-pytorch" },
+    { name = "dqm-ml-v2", editable = "packages/dqm-ml-v2" },
     { name = "pre-commit", specifier = ">=4.5.0" },
     { name = "pycocotools", specifier = ">=2.0.10" },
     { name = "ruamel-yaml", specifier = ">=0.19.1" },

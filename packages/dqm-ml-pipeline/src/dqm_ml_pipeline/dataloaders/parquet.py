@@ -3,6 +3,7 @@ from typing import Any, override
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pyarrow.compute as pc
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class ParquetDataLoader:
         self.memory_limit: str = config.get("memory_limit", "2GB")
         self.threads: int = config.get("threads", 4)
         self.name = name
+        self.filters_dict = config.get("filter", None)
 
     def bootstrap(self, columns_list: list[str] | None = None) -> None:
         """
@@ -54,12 +56,49 @@ class ParquetDataLoader:
             ValueError: Missing informations.
         """
 
-        self.parquet_file = pq.ParquetFile(self.path)
         self.columns_list = columns_list
+
+        filter_expr = None
+        # Building parametric filter expr
+        if self.filters_dict is not None:
+            expr = None
+            for col, val in self.filters_dict.items():
+                col_expr = pc.equal(pc.field(col), val)
+                expr = col_expr if expr is None else pc.and_(expr, col_expr)
+            filter_expr = expr
+
+        self.dataset = pq.ParquetDataset(self.path, filters=filter_expr)
+
+        # If schema was not provided, we read it from the first file
+        if len(self.dataset.files) > 0:
+            self.schema = pq.read_schema(self.dataset.files[0])
+            # self.samples_count = sum(p.metadata.num_rows for p in self.dataset.files)
+            self.samples_count = sum(p.count_rows() for p in self.dataset.fragments)
+        else:
+            self.schema = None
+            self.samples_count = 0
 
     @override
     def __repr__(self) -> str:
         return f"Dataload for {self.path}"
+
+    def __len__(self) -> int:
+        """
+        Get the total number of rows in the parquet file.
+
+        Returns:
+            int: Total number of rows.
+        """
+        return int(self.samples_count)
+
+    def get_nb_batches(self) -> int:
+        """
+        Get the total number of batches in the parquet file.
+
+        Returns:
+            int: Total number of batches.
+        """
+        return int(len(self) / self.batch_size) + (len(self) % self.batch_size > 0)
 
     def __iter__(self) -> pa.RecordBatch:
         """
@@ -71,7 +110,9 @@ class ParquetDataLoader:
         Yields:
             pyarrow.RecordBatch: A batch of data.
         """
-        batch_iterator = self.parquet_file.iter_batches(
-            batch_size=self.batch_size, columns=self.columns_list, use_threads=self.threads
-        )
-        yield from batch_iterator
+        for file in self.dataset.files:
+            parquet_file = pq.ParquetFile(file)
+            batch_iterator = parquet_file.iter_batches(
+              batch_size=self.batch_size, columns=self.columns_list, use_threads=self.threads
+            )
+            yield from batch_iterator

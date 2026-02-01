@@ -73,7 +73,7 @@ dqm-ml process -p packages/dqm-ml-pipeline/config/completeness.yaml
 
 ```
 
-Other configuration exemple files can be found in this [directory](packages/dqm-ml-pipeline/tests/config/)
+Other configuration exemple files can be found in this [directory](tests/config/)
 
 ## Contents
 

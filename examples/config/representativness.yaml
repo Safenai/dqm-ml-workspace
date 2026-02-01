@@ -20,10 +20,10 @@ pipeline_config:
     #Représentativité (distribution fitting) : voir aussi la comparaison entre deux distributions
     representativeness:
       type: representativeness
-      columns: [m_luminosity,m_contrast,m_blur_level,m_entropy] # TODO : remove for homogeneity
-      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
 
-      input_columns: [m_luminosity,m_contrast,m_blur_level,m_entropy] # As for all metrics we define the input columns we are processing
+      input_columns: [blur_score, contrast, quality_score] # As for all metrics we define the input columns we are processing
+
+      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
 
       output_features:  None
 

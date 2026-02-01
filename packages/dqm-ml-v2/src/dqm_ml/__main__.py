@@ -2,15 +2,35 @@ import argparse
 import logging
 from typing import Any
 
+from dqm_ml.cli_tools import CustomFormatter
 from dqm_ml.dependancy import get_available_command
 
 logger = logging.getLogger(__name__)
 
 
+class _HelpAction(argparse._HelpAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if namespace.command:
+            # print help for the specific command
+            command_list = get_available_command()
+            if namespace.command in command_list and command_list[namespace.command] is not None:
+                command_list[namespace.command](["-h"])
+            else:
+                raise ValueError(f"Unkow comand {namespace.command}")
+        else:
+            parser.print_help()
+            parser.exit()
+
+
 def parse_args(arg_list: list[str] | None, command_list: str) -> Any:
     parser = argparse.ArgumentParser(
-        prog="dqm-ml", description="DQM-ML Pipeline client", epilog="for more informations see README"
+        prog="dqm-ml-v2",
+        description="DQM-ML Pipeline client",
+        epilog="for more informations see README",
+        add_help=False,
     )
+
+    parser.add_argument("-h", "--help", action=_HelpAction, help="help for help if you need some help")
 
     parser.add_argument("command", choices=command_list, help="Available command for your dqm-ml installation")
 
@@ -33,14 +53,11 @@ def execute(arg_list: list[str] | None = None) -> None:
     args, remaining = parse_args(arg_list, command_list)
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        # CustomFormatter.init_log(format="%(name)s - %(message)s (%(filename)s:%(lineno)d)", level=logging.DEBUG)  # noqa: E501
+        CustomFormatter.init_log(format="%(name)s - %(message)s (%(filename)s:%(lineno)d)", level=logging.DEBUG)  # noqa: E501
     elif args.quiet:
-        logging.basicConfig(level=logging.ERROR)
-        # CustomFormatter.init_log(format="%(message)s", level=logging.ERROR)
+        CustomFormatter.init_log(format="%(message)s", level=logging.ERROR)
     else:
-        logging.basicConfig(level=logging.INFO)
-        # CustomFormatter.init_log(format="%(message)s", level=logging.INFO)
+        CustomFormatter.init_log(format="%(message)s", level=logging.INFO)
 
     logger.debug(f"Execution dqm-ml with {arg_list}")
 

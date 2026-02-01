@@ -4,7 +4,7 @@ pipeline_config:
   dataloaders:
     source_dataset:
       type: parquet
-      path: packages/dqm-ml-pipeline/tests/data/completeness.parquet
+      path: tests/data/completeness.parquet
       batch_size: 10000
       memory_limit: 1GB
       threads: 2
