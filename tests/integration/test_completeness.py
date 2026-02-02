@@ -16,7 +16,7 @@ def test_completeness(
     test_name: str,
     pipeline_completeness: Any,
 ) -> None:
-    command = f"-p tests/config_generated/{test_name}.yaml"
+    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))
 
     expected_scores = tests_config["completeness"]["expected_scores"]
@@ -24,7 +24,7 @@ def test_completeness(
     col_names = tests_config["completeness"]["params"]["columns_names"]
 
     # # Test completeness by columns and overall
-    output_filename = f"metrics_{test_name}.parquet"
+    output_filename = f"metrics_{test_name}_all-0.parquet"
 
     table = pq.read_table(Path(output_path) / output_filename)
     for col in col_names:

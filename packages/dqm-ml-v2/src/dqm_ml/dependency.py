@@ -1,17 +1,17 @@
+from collections.abc import Generator
 from contextlib import contextmanager
 import logging
 from typing import Any
 
+from dqm_ml._version_ import version as version
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core._version_ import version as core_version
-
-from dqm_ml._version_ import version as version
 
 logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def optional_dependencies(error: str = "ignore"):
+def optional_dependencies(error: str = "ignore") -> Generator[None, None, None]:
     assert error in {"raise", "warn", "ignore"}
     try:
         yield None
@@ -23,13 +23,13 @@ def optional_dependencies(error: str = "ignore"):
             print(f"Warning: {msg}")
 
 
-def display_version(arg_list: list[str] | None = None):
+def display_version(arg_list: list[str] | None = None) -> None:
     if core_version != version:
-        logger.warning(f"Different dqm-ml-core version {core_version} fro dqm-ml version {version}")
+        logger.warning(f"Different dqm-ml-core version {core_version} from dqm-ml version {version}")
     print(f"DQML version : {version}")
 
 
-def display_list_of(arg_list: list[str] | None = None):
+def display_list_of(arg_list: list[str] | None = None) -> None:
     # TODO : we display all but we can filter / use extra parameters
     print("Available data metrics_registry")
     for key, value in PluginLoadedRegistry.get_metrics_registry().items():
@@ -39,8 +39,8 @@ def display_list_of(arg_list: list[str] | None = None):
     for key, value in PluginLoadedRegistry.get_dataloaders_registry().items():
         print(f"- {key} - {value}")
 
-    print("Available outputs writter")
-    for key, value in PluginLoadedRegistry.get_outputwiter_registry().items():
+    print("Available outputs writers")
+    for key, value in PluginLoadedRegistry.get_outputwriter_registry().items():
         print(f"- {key} - {value}")
 
 

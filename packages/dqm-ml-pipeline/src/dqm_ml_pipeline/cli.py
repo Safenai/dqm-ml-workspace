@@ -6,11 +6,10 @@ from typing import Any
 import yaml
 
 from dqm_ml_core import PluginLoadedRegistry
-from dqm_ml_pipeline.pipeline import DatasetPipeline
-
 from dqm_ml_core.api.data_processor import DatametricProcessor
 from dqm_ml_pipeline.dataloaders import DataLoader
 from dqm_ml_pipeline.outputwriter import OutputWriter
+from dqm_ml_pipeline.pipeline import DatasetPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -79,13 +78,12 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
 
 
 def run(file_config: dict[str, Any]) -> None:
-
     config = file_config["pipeline_config"]
     # TODO : get parameters from config
 
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
-    outputs_registry = PluginLoadedRegistry.get_outputwiter_registry()
+    outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
 
     if not config:
         raise ValueError("Pipeline requires a configuration dictionary.")
@@ -128,10 +126,9 @@ def run(file_config: dict[str, Any]) -> None:
 
     progress_bar = config.get("progress_bar", True)
 
-    pipeline = DatasetPipeline(dataloaders=dataloaders,
-                               metrics=metrics,
-                               features_output=features_output,
-                               progress_bar=progress_bar)
+    pipeline = DatasetPipeline(
+        dataloaders=dataloaders, metrics=metrics, features_output=features_output, progress_bar=progress_bar
+    )
 
     dataselection_metrics_list, delta_metrics_table = pipeline.run()
 
@@ -140,8 +137,8 @@ def run(file_config: dict[str, Any]) -> None:
         metrics_output.write_metrics_dict(dataselection_metrics_list)
 
     # If we have to compute delta metrics
-    if delta_output:
-        delta_output.write_table("", delta_metrics_table)
+    if delta_output and delta_metrics_table:
+        delta_output.write_table("delta", delta_metrics_table)
 
 
 if __name__ == "__main__":

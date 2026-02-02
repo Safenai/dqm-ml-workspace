@@ -41,9 +41,9 @@ The library was originally developped in the programme
     <h1 style="font-size: large; font-weight: bold;">dqm-ml</h1>
 </div>
 
-## other usefull documentations
+## other useful documentations
 
-- The [Rational](./docs/dqm-ml-v2.md) behind creation of V2 fro [dqm-ml](https://github.com/IRT-SystemX/dqm-ml)
+- The [Rational](./docs/dqm-ml-v2.md) behind creation of V2 from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml)
 - A [demonstration](TODO) of dqm usage to generate informations regarding exinsting datas using welding challenge results.
 - [known limitation and evolution roadmap](./docs/roadmap.md)
 

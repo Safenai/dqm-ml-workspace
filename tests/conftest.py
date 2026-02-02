@@ -52,7 +52,7 @@ def test_path() -> str:
 
 @pytest.fixture(scope="session")
 def tests_config(test_path: str) -> Any:
-    config_path = Path(test_path) / "expected" / "expected.yaml"
+    config_path = Path(test_path) / "fixtures" / "expected" / "expected.yaml"
 
     # Load global unit tests configuration
     with Path.open(config_path, "r") as stream:
@@ -63,18 +63,11 @@ def tests_config(test_path: str) -> Any:
 
 @pytest.fixture(scope="session")
 def output_path(test_path: str) -> Path:
-    path = Path(test_path) / "output"
+    path = Path(test_path) / "outputs" / "data"
 
-    Path.mkdir(path, exist_ok=True)
+    Path.mkdir(path, exist_ok=True, parents=True)
 
     return path
-
-    # yield path
-
-    # files = list(Path(path).glob("*"))
-    # for f in files:
-    #     Path.unlink(f)
-    # Path.rmdir(path)
 
 
 def write_path_list_to_parquet(path_list: list[Path], save_path: Path) -> None:
@@ -87,7 +80,7 @@ def write_path_list_to_parquet(path_list: list[Path], save_path: Path) -> None:
 
 @pytest.fixture(scope="session")
 def coco_data(test_path: str) -> list[Path]:
-    gen_path = Path(test_path) / "data_generated"
+    gen_path = Path(test_path) / "outputs" / "data"
     Path.mkdir(gen_path, exist_ok=True, parents=True)
     source_path = Path(gen_path) / "source_1000.parquet"
     target_path = Path(gen_path) / "target_1000.parquet"
@@ -128,9 +121,9 @@ def coco_data(test_path: str) -> list[Path]:
 
 @pytest.fixture(scope="session")
 def uniform_dist(test_path: str) -> Any:
-    plot_path = Path(test_path) / "data_generated/plot"
+    plot_path = Path(test_path) / "outputs/plots"
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "data_generated/uniform_distribution.parquet"
+    path = Path(test_path) / "outputs/data/uniform_distribution.parquet"
 
     data_1 = np.random.uniform(0, 0.05, 1000000)
     data_2 = np.random.uniform(1, 0.1, 1000000)
@@ -141,20 +134,18 @@ def uniform_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "data_generated",
+        Path(test_path) / "outputs/data",
         "uniform_distribution.parquet",
     )
 
     return
 
-    # Path.unlink(path)
-
 
 @pytest.fixture(scope="session")
 def not_uniform_dist(test_path: str) -> Any:
-    plot_path = Path(test_path) / "data_generated/plot"
+    plot_path = Path(test_path) / "outputs/plots"
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "data_generated/not_uniform_distribution.parquet"
+    path = Path(test_path) / "outputs/data/not_uniform_distribution.parquet"
 
     a = np.random.uniform(0, 0.05, 500000)
     b = np.random.uniform(2, 0.05, 500000)
@@ -172,7 +163,7 @@ def not_uniform_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "data_generated",
+        Path(test_path) / "outputs/data",
         "not_uniform_distribution.parquet",
     )
 
@@ -181,9 +172,9 @@ def not_uniform_dist(test_path: str) -> Any:
 
 @pytest.fixture(scope="session")
 def normal_dist(test_path: str) -> Any:
-    plot_path = Path(test_path) / "data_generated/plot"
+    plot_path = Path(test_path) / "outputs/plots"
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "data_generated/normal_distribution.parquet"
+    path = Path(test_path) / "outputs/data/normal_distribution.parquet"
 
     mu, sigma = 0, 0.5
     data_1 = np.random.normal(mu, sigma, 1000000)
@@ -197,7 +188,7 @@ def normal_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "data_generated",
+        Path(test_path) / "outputs/data",
         "normal_distribution.parquet",
     )
 
@@ -206,9 +197,9 @@ def normal_dist(test_path: str) -> Any:
 
 @pytest.fixture(scope="session")
 def not_normal_dist(test_path: str) -> Any:
-    plot_path = Path(test_path) / "data_generated/plot"
+    plot_path = Path(test_path) / "outputs/plots"
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "data_generated/not_normal_distribution.parquet"
+    path = Path(test_path) / "outputs/data/not_normal_distribution.parquet"
 
     mu, sigma = 0, 0.5
     a = np.random.normal(mu, sigma, 500000)
@@ -231,7 +222,7 @@ def not_normal_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "data_generated",
+        Path(test_path) / "outputs/data",
         "not_normal_distribution.parquet",
     )
 
@@ -248,8 +239,8 @@ def generate_pipeline(
     metric_name: str | None = None,
     parquet_source_path: Path | None = None,
 ) -> None:
-    configs_path = Path(test_path) / "config_generated"
-    output_path = Path(test_path) / "output"
+    configs_path = Path(test_path) / "fixtures/config/generated"
+    output_path = Path(test_path) / "outputs/data"
 
     domain_gap_infer_params = {
         "fid": {"batch_size": 32, "width": 299, "height": 299},
@@ -273,7 +264,7 @@ def generate_pipeline(
 
         config_path = Path(f"{configs_path}/{config_name}.yaml")
 
-        template_path = Path(test_path) / f"config_templates/{processor_name}.yaml"
+        template_path = Path(test_path) / f"fixtures/config/templates/{processor_name}.yaml"
         with Path(template_path).open() as file:
             config, ind, bsi = ruamel.yaml.util.load_yaml_guess_indent(file)
 
@@ -315,11 +306,11 @@ def generate_pipeline(
 
         if processor_name == "domain_gap":
             pipeline_config["outputs"][output_category]["path_pattern"] = (
-                f"{output_path!s}/metrics_{config_name}" + "_{}-{}.parquet"
+                f"{output_path!s}/metrics_{config_name}_" + "{}-{}.parquet"
             )
         else:
             pipeline_config["outputs"][output_category]["path_pattern"] = (
-                f"{output_path!s}/metrics_{config_name}.parquet"
+                f"{output_path!s}/metrics_{config_name}_" + "{}-{}.parquet"
             )
 
         yaml_config = ruamel.yaml.YAML()
@@ -346,7 +337,7 @@ def pipeline_representativeness(
 
     generate_pipeline(
         processor_name="representativeness",
-        parquets_path=Path(test_path) / "data_generated",
+        parquets_path=Path(test_path) / "outputs/data",
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
@@ -364,7 +355,7 @@ def pipeline_completeness(
 
     generate_pipeline(
         processor_name="completeness",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / "fixtures/data",
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
@@ -375,7 +366,7 @@ def pipeline_completeness(
 def pipeline_domain_gap(
     test_path: str,
 ) -> None:
-    gen_path = Path(test_path) / "data_generated"
+    gen_path = Path(test_path) / "outputs/data"
     metrics = ["fid", "klmvn_diag", "mmd_linear", "wasserstein_1d"]
 
     for metric in metrics:
@@ -391,12 +382,12 @@ def pipeline_domain_gap(
 
     generate_pipeline(
         processor_name="domain_gap",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / "fixtures/data",
         test_list=[{"test_name": "wasserstein_bytes", "parquet": "target_bytes.parquet"}],
         output_category="delta_metrics",
         test_path=test_path,
         metric_name="wasserstein_1d",
-        parquet_source_path=Path(test_path) / "data/source_bytes.parquet",
+        parquet_source_path=Path(test_path) / "fixtures/data/source_bytes.parquet",
     )
 
 
@@ -412,7 +403,7 @@ def pipeline_visual_features(
 
     generate_pipeline(
         processor_name="visual_features",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / "fixtures/data",
         test_list=test_list,
         output_category="features",
         test_path=test_path,

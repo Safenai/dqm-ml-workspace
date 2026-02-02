@@ -95,5 +95,16 @@ repo_name: dqm-ml-workspace
 repo_url: https://github.com/Safenai/dqm-ml-workspace
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
-  - index.md
-  - Example: examples/multiple_metrics_tests_v2.ipynb
+  - Home: index.md
+  - Getting Started:
+    - Overview: dqm-ml-v2.md
+    - Installation: index.md#dependency-and-bootstrap
+  - User Guide:
+    - Available Metrics: metrics.md
+    - Pipeline Configuration: configuration.md
+  - Tutorials:
+    - Welding Challenge: Example: examples/multiple_metrics_tests_v2.ipynb
+  - Developer Guide:
+    - Contributing: contributing.md
+    - Roadmap: roadmap.md
+  - API Reference: api/

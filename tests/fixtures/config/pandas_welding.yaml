@@ -7,7 +7,7 @@ pipeline_config:
   dataloaders:
     source_dataset:
       type: "csv"
-      path: tests/data/challenge_welding.csv
+      path: tests/fixtures/data/challenge_welding.csv
 
 
 
@@ -40,6 +40,6 @@ pipeline_config:
     # output dataset-level completeness metrics only
     metrics:
       type: "parquet"
-      path_pattern: "tests/output/metrics_pandas_welding_{}-{}.parquet"
+      path_pattern: "tests/outputs/data/metrics_pandas_welding_{}-{}.parquet"
       columns: [ ]
       compression: "snappy"

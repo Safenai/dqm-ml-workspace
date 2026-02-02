@@ -15,8 +15,8 @@ test_cases = [
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output: str) -> None:
     # Create output dir if it doesn't exist
-    path = Path("output")
-    Path.mkdir(path, exist_ok=True)
+    path = Path("outputs/data")
+    Path.mkdir(path, exist_ok=True, parents=True)
 
     execute(shlex.split(command))
     output = capsys.readouterr().out.rstrip()

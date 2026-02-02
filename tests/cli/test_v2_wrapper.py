@@ -10,12 +10,15 @@ test_cases = [
     (
         "list",
         "Available data metrics_registry\n"
-        "- completeness - <class 'dqm_ml_core.CompletenessProcessor'>\n"
-        "- representativeness - <class 'dqm_ml_core.RepresentativenessProcessor'>\n"
+        "- completeness - <class 'dqm_ml_core.metrics.completeness.CompletenessProcessor'>\n"
+        "- representativeness - <class 'dqm_ml_core.metrics.representativeness.RepresentativenessProcessor'>\n"
         "- visual_metrique - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
+        "- domain_gap - <class 'dqm_ml_pytorch.domain_gap.DomainGapProcessor'>\n"
+        "- image_embedding - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
         "Available data loaders\n"
+        "- csv - <class 'dqm_ml_pipeline.dataloaders.pandas.PandasDataLoader'>\n"
         "- parquet - <class 'dqm_ml_pipeline.dataloaders.parquet.ParquetDataLoader'>\n"
-        "Available outputs writter\n"
+        "Available outputs writers\n"
         "- parquet - <class 'dqm_ml_pipeline.outputwriter.parquet.ParquetOutputWriter'>",
     ),
 ]
@@ -31,7 +34,8 @@ def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output:
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_app(command: str, expected_output: str) -> None:
-    full_command = ["dqm-ml"] + shlex.split(command)
+    import sys
+    full_command = [sys.executable, "-m", "dqm_ml"] + shlex.split(command)
     result = subprocess.run(full_command, capture_output=True, text=True)
     output = result.stdout.rstrip()
     assert output == expected_output

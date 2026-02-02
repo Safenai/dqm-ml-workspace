@@ -21,28 +21,29 @@ def test_domain_gap(
 ) -> None:
     # pad and cmd not implemented
 
-    command = f"-p tests/config_generated/domain_gap_{test_name}.yaml"
+    command = f"-p tests/fixtures/config/generated/domain_gap_{test_name}.yaml"
     start = timer()
     execute(shlex.split(command))
     end = timer()
     print(f"Execution time: {end - start}")
 
     epsilon = tests_config["domain_gap"][test_name]["params"]["tolerance"]
-    col_names = tests_config["domain_gap"][test_name]["params"]["columns_names"]
     expected_scores = tests_config["domain_gap"][test_name]["expected_scores"]
 
-    output_filename = f"metrics_domain_gap_{test_name}_source_dataset_target_dataset-0.parquet"
+    output_filename = f"metrics_domain_gap_{test_name}_delta-.parquet"
 
     table = pq.read_table(Path(output_path) / output_filename)
-    for col in col_names:
-        computed_score = table.to_pandas()[col].tolist()[0]
-        expected_score = expected_scores[col]
-        if col == "value":
-            print(f"computed_score = {computed_score}")
-            assert computed_score == pytest.approx(expected_score, abs=epsilon), (
-                f"For {col}, the distance between computed value : {computed_score}",
-                f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
-            )
-        else:
-            # test metric name
-            assert computed_score == expected_score
+    df = table.to_pandas()
+
+    metric_key = test_name
+    if test_name == "wasserstein_bytes":
+        metric_key = "wasserstein_1d"
+
+    computed_score = df[metric_key].tolist()[0]
+    expected_score = expected_scores["value"]
+
+    print(f"computed_score = {computed_score}")
+    assert computed_score == pytest.approx(expected_score, abs=epsilon), (
+        f"For {metric_key}, the distance between computed value : {computed_score}",
+        f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
+    )

@@ -1,15 +1,23 @@
 import argparse
+from collections.abc import Iterable
 import logging
-from typing import Any
+from typing import Any, override
 
 from dqm_ml.cli_tools import CustomFormatter
-from dqm_ml.dependancy import get_available_command
+from dqm_ml.dependency import get_available_command
 
 logger = logging.getLogger(__name__)
 
 
 class _HelpAction(argparse._HelpAction):
-    def __call__(self, parser, namespace, values, option_string=None):
+    @override
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Iterable[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
         if namespace.command:
             # print help for the specific command
             command_list = get_available_command()
@@ -22,7 +30,7 @@ class _HelpAction(argparse._HelpAction):
             parser.exit()
 
 
-def parse_args(arg_list: list[str] | None, command_list: str) -> Any:
+def parse_args(arg_list: list[str] | None, command_list: Iterable[str]) -> Any:
     parser = argparse.ArgumentParser(
         prog="dqm-ml-v2",
         description="DQM-ML Pipeline client",

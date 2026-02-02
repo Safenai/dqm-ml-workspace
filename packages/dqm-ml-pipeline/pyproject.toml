@@ -34,7 +34,7 @@ parquet = "dqm_ml_pipeline.dataloaders:ParquetDataLoader"
 csv = "dqm_ml_pipeline.dataloaders:PandasDataLoader"
 
 
-[project.entry-points."dqm_ml.outputwiter"]
+[project.entry-points."dqm_ml.outputwriter"]
 parquet = "dqm_ml_pipeline.outputwriter:ParquetOutputWriter"
 
 [build-system]

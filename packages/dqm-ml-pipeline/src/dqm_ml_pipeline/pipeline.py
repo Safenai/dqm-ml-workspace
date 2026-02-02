@@ -6,7 +6,7 @@ import pyarrow as pa
 from tqdm import tqdm
 
 from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_pipeline.dataloaders import DataLoader
+from dqm_ml_pipeline.dataloaders import DataLoader, DataSelection
 from dqm_ml_pipeline.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
@@ -21,10 +21,13 @@ class DatasetPipeline:
     output writers.
     """
 
-    def __init__(self,
-                 dataloaders: dict[str, DataLoader],
-                 metrics: dict[str, DatametricProcessor],
-                 features_output: OutputWriter | None, progress_bar: bool = True) -> None:
+    def __init__(
+        self,
+        dataloaders: dict[str, DataLoader],
+        metrics: dict[str, DatametricProcessor],
+        features_output: OutputWriter | None,
+        progress_bar: bool = True,
+    ) -> None:
         """
         Initialize the pipeline with a given configuration.
 
@@ -82,13 +85,13 @@ class DatasetPipeline:
         # TODO: Implement proper ordering based on dependencies
         return list(self.metrics.values())
 
-    def describe(self) -> None:
+    def describe(self, selections: list[DataSelection]) -> None:
         """
         Log a description of the pipeline configuration.
         """
-        logger.info(f"Executing dqm-ml-job on {len(self.dataloaders)}, using {len(self.metrics)} metrics ")
-        for dataloader_name, dataloader in self.dataloaders.items():
-            logger.info(f"  Dataloader: {dataloader_name} -> {dataloader}")
+        logger.info(f"Executing dqm-ml-job on {len(selections)} selections, using {len(self.metrics)} metrics ")
+        for selection in selections:
+            logger.info(f"  Selection: {selection.name} -> {selection}")
 
         for metric_name, metric in self.metrics.items():
             logger.info(f"  Metric: {metric_name} -> {metric}")
@@ -100,7 +103,7 @@ class DatasetPipeline:
         """
         Execute the dataset processing pipeline.
 
-        Iterates through configured data loaders, computes metrics, and writes outputs.
+        Discovers all selections from data loaders and processes them.
         """
 
         # TODO: Check with needed input order of metric computation
@@ -108,43 +111,46 @@ class DatasetPipeline:
 
         columns_list = self.needed_input_columns
 
+        # Discover all selections
+        all_selections: list[DataSelection] = []
+        for loader in self.dataloaders.values():
+            all_selections.extend(loader.get_selections())
+
         dataselection_metrics_list = {}
 
-        if self.progress_bar:
-            pipeline_iter = tqdm(self.dataloaders.items(), desc="loader", position=0)
-        else:
-            pipeline_iter = self.dataloaders.items()
+        pipeline_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections
 
         # TODO : add as a specific command line argument
-        self.describe()
+        self.describe(all_selections)
 
-        for dataloader_name, dataloader in pipeline_iter:
-            logger.info(f"Processing dataloader '{dataloader_name}'")
+        for selection in pipeline_iter:
+            selection_name = selection.name
+            logger.info(f"Processing selection '{selection_name}'")
 
-            # TODO add filter for parquet columns if supported by dataloader
-            dataloader.bootstrap(columns_list)
+            selection.bootstrap(columns_list)
 
             # Compute features and metrics for all batches
-            batches_metrics_array = self._compute_batches_metrics(dataloader_name, dataloader, metrics_processors)
+            batches_metrics_array = self._compute_batches_metrics(selection_name, selection, metrics_processors)
 
             # Compute dataset-level metrics
             dataset_metrics: dict[str, Any] = {}
             for metric in metrics_processors:
                 if logging.getLogger().level == logging.DEBUG:
-                    logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {dataloader_name}")
+                    logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {selection_name}")
                 dataset_metrics.update(metric.compute(batch_metrics=batches_metrics_array))
                 if logging.getLogger().level == logging.DEBUG:
                     logger.debug(f"Available metrics  {list(dataset_metrics.keys())}")
 
-            dataselection_metrics_list[dataloader_name] = dataset_metrics
+            dataselection_metrics_list[selection_name] = dataset_metrics
 
         # If we have to compute delta metrics
         delta_metrics_table = self._compute_delta_metrics(metrics_processors, dataselection_metrics_list)
 
         return dataselection_metrics_list, delta_metrics_table
 
-    def _compute_delta_metrics(self, metrics_processors: list[DatametricProcessor],
-                               dataselection_metrics_list: dict[str, dict[str, pa.Array]]) -> dict[str, Any] | None:
+    def _compute_delta_metrics(
+        self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, pa.Array]]
+    ) -> dict[str, Any] | None:
         """
         Compute delta metrics between all combinations of dataselections.
         Args:
@@ -163,6 +169,7 @@ class DatasetPipeline:
 
             for metric in metrics_processors:
                 delta_metrics = metric.compute_delta(src_metrics, target_metrics)
+
                 # TODO : check format of classical metrics / delta metrics for combinaison of format
                 if len(delta_metrics) == 0:
                     continue
@@ -175,23 +182,28 @@ class DatasetPipeline:
                     for m_name, value in delta_metrics.items():
                         delta_metrics_table[m_name] = pa.concat_arrays([delta_metrics_table[m_name], pa.array([value])])
 
-                    delta_metrics_table["selection_source"] = pa.concat_arrays([delta_metrics_table["selection_source"], pa.array([combinaison[0]])])  # noqa: E501
-                    delta_metrics_table["selection_target"] = pa.concat_arrays([delta_metrics_table["selection_target"], pa.array([combinaison[1]])])  # noqa: E501
+                    delta_metrics_table["selection_source"] = pa.concat_arrays(
+                        [delta_metrics_table["selection_source"], pa.array([combinaison[0]])]
+                    )  # noqa: E501
+                    delta_metrics_table["selection_target"] = pa.concat_arrays(
+                        [delta_metrics_table["selection_target"], pa.array([combinaison[1]])]
+                    )  # noqa: E501
                     logger.debug(f"Writing delta metrics for dataloader {'_'.join(combinaison)}")
 
         return delta_metrics_table
 
-    def _compute_batches_metrics(self, dataloader_name: str, dataloader: DataLoader,
-                                 metrics_processors: list[DatametricProcessor]) -> dict[str, Any]:
+    def _compute_batches_metrics(
+        self, selection_name: str, selection: DataSelection, metrics_processors: list[DatametricProcessor]
+    ) -> dict[str, Any]:
         """
-        Compute metrics and features for all batches in a dataloader.
+        Compute metrics and features for all batches in a data selection.
 
         This method optimizes performance by accumulating batch results in lists
         and concatenating them once at the end, avoiding O(N^2) complexity.
 
         Args:
-            dataloader_name: Name of the dataloader.
-            dataloader: The dataloader instance.
+            selection_name: Name of the selection.
+            selection: The data selection instance.
             metrics_processors: List of metric processors to apply.
 
         Returns:
@@ -207,11 +219,9 @@ class DatasetPipeline:
         part_index = 0
 
         if self.progress_bar:
-            dataloader_iter = tqdm(
-                dataloader, total=dataloader.get_nb_batches(), desc="batches", position=1, leave=False
-            )
+            dataloader_iter = tqdm(selection, total=selection.get_nb_batches(), desc="batches", position=1, leave=False)
         else:
-            dataloader_iter = dataloader
+            dataloader_iter = selection
 
         for batch in dataloader_iter:
             batch_features: dict[str, Any] = {}
@@ -271,6 +281,6 @@ class DatasetPipeline:
         # Write features to disk
         # TODO: If too big parquet, save arrays, and start a new parquet file (chunking)
         if self.features_output and features_array:
-            self.features_output.write_table(dataloader_name, features_array, part_index)
+            self.features_output.write_table(selection_name, features_array, part_index)
 
         return batches_metrics_array

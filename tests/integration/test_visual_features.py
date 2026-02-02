@@ -16,14 +16,14 @@ def test_visual_features(
     test_name: str,
     pipeline_visual_features: Any,
 ) -> None:
-    command = f"-p tests/config_generated/{test_name}.yaml"
+    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))
 
     expected_scores = tests_config["visual_features"]["expected_scores"]
     col_names = tests_config["visual_features"]["params"]["columns_names"]
     epsilon = tests_config["visual_features"]["params"]["tolerance"]
 
-    output_filename = f"metrics_{test_name}.parquet"
+    output_filename = f"metrics_{test_name}_source_dataset-0.parquet"
 
     for col in col_names:
         table = pq.read_table(Path(output_path) / output_filename)

@@ -1,4 +1,5 @@
 import logging
+from typing import override
 
 
 class Bcolors:
@@ -25,13 +26,15 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: Bcolors.FAIL + Bcolors.BOLD,
     }
 
-    def format(self, record):
-        log_fmt = self.LVL_COLOR.get(record.levelno) + self.MSG_FMT + Bcolors.ENDC
+    @override
+    def format(self, record: logging.LogRecord) -> str:
+        color = self.LVL_COLOR.get(record.levelno, "")
+        log_fmt = color + self.MSG_FMT + Bcolors.ENDC
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
     @classmethod
-    def init_log(cls, level, format=MSG_FMT):
+    def init_log(cls, level: int | str, format: str = MSG_FMT) -> None:
         # TODO : forward generic parameters of init_log to basicConfig
         logging.basicConfig(format=format, level=level)
 

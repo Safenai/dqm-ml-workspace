@@ -1,65 +1,40 @@
 import logging
 from typing import Any, override
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.compute as pc
+import pyarrow.parquet as pq
+
+from dqm_ml_pipeline.dataloaders.proto import DataSelection
 
 logger = logging.getLogger(__name__)
 
-# -----------------------------
-# Data Loader
-# -----------------------------
-# TODO create abstract class
 
-
-class ParquetDataLoader:
+class ParquetDataSelection(DataSelection):
     """
-    Data loader for reading datasets from Parquet files in batches.
+    A specific selection of data from a Parquet dataset.
     """
 
-    type: str = "parquet"
-
-    def __init__(self, name: str, config: dict[str, Any] | None = None):
-        """
-        Initialize a ParquetDataLoader.
-
-        Args:
-            name: Unique name for this data loader.
-            config: Configuration dictionary with keys:
-                - path (str): Path to the parquet file.
-                - batch_size (int): Rows per batch (default 100,000).
-                - memory_limit (str): Max memory usage hint (default "2GB").
-                - threads (int): Number of threads to use (default 4).
-
-        Raises:
-            ValueError: If required config keys are missing.
-        """
-        if not config or "path" not in config:
-            raise ValueError(f"Configuration for dataloader '{name}' must contain 'path'")
-
-        self.path = config["path"]
-        self.batch_size: int = config.get("batch_size", 100_000)
-        self.memory_limit: str = config.get("memory_limit", "2GB")
-        self.threads: int = config.get("threads", 4)
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        batch_size: int = 100_000,
+        threads: int = 4,
+        filters_dict: dict[str, Any] | None = None,
+    ):
         self.name = name
-        self.filters_dict = config.get("filter", None)
+        self.path = path
+        self.batch_size = batch_size
+        self.threads = threads
+        self.filters_dict = filters_dict
+        self.columns_list: list[str] | None = None
+        self.dataset: pq.ParquetDataset | None = None
+        self.samples_count: int = 0
 
+    @override
     def bootstrap(self, columns_list: list[str] | None = None) -> None:
-        """
-        Call before iterating the data loader content, can be used for iterator initialization
-        We also pass argument computed from config by pipeline, to allow dala loader optimization
-
-        Args:
-            columns_list: Needed columns list in the data to load.
-        Raises:
-            ValueError: Missing informations.
-        """
-
         self.columns_list = columns_list
-
         filter_expr = None
-        # Building parametric filter expr
         if self.filters_dict is not None:
             expr = None
             for col, val in self.filters_dict.items():
@@ -68,51 +43,92 @@ class ParquetDataLoader:
             filter_expr = expr
 
         self.dataset = pq.ParquetDataset(self.path, filters=filter_expr)
-
-        # If schema was not provided, we read it from the first file
-        if len(self.dataset.files) > 0:
-            self.schema = pq.read_schema(self.dataset.files[0])
-            # self.samples_count = sum(p.metadata.num_rows for p in self.dataset.files)
+        if len(self.dataset.fragments) > 0:
             self.samples_count = sum(p.count_rows() for p in self.dataset.fragments)
         else:
-            self.schema = None
             self.samples_count = 0
 
-    @override
-    def __repr__(self) -> str:
-        return f"Dataload for {self.path}"
-
     def __len__(self) -> int:
-        """
-        Get the total number of rows in the parquet file.
-
-        Returns:
-            int: Total number of rows.
-        """
         return int(self.samples_count)
 
+    @override
     def get_nb_batches(self) -> int:
-        """
-        Get the total number of batches in the parquet file.
-
-        Returns:
-            int: Total number of batches.
-        """
         return int(len(self) / self.batch_size) + (len(self) % self.batch_size > 0)
 
-    def __iter__(self) -> pa.RecordBatch:
-        """
-        Iterate over parquet file in batches.
-
-        Args:
-            columns_list: List of column names to load, or None for all.
-
-        Yields:
-            pyarrow.RecordBatch: A batch of data.
-        """
+    @override
+    def __iter__(self) -> Any:
+        if self.dataset is None:
+            return
         for file in self.dataset.files:
             parquet_file = pq.ParquetFile(file)
             batch_iterator = parquet_file.iter_batches(
-              batch_size=self.batch_size, columns=self.columns_list, use_threads=self.threads
+                batch_size=self.batch_size, columns=self.columns_list, use_threads=self.threads
             )
             yield from batch_iterator
+
+    @override
+    def __repr__(self) -> str:
+        return f"ParquetSelection(name='{self.name}', path='{self.path}', filters={self.filters_dict})"
+
+
+class ParquetDataLoader:
+    """
+    Data loader for Parquet files that generates one or more DataSelections.
+    """
+
+    type: str = "parquet"
+
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
+        if not config or "path" not in config:
+            raise ValueError(f"Configuration for dataloader '{name}' must contain 'path'")
+
+        self.name = name
+        self.config = config
+        self.path = config["path"]
+        self.batch_size = config.get("batch_size", 100_000)
+        self.threads = config.get("threads", 4)
+        self.split_by = config.get("split_by")
+        self.split_values = config.get("split_values")
+        self.filters_dict = config.get("filter", None)
+
+    def get_selections(self) -> list[DataSelection]:
+        """
+        Create one or more ParquetDataSelection instances based on configuration.
+        """
+        if not self.split_by:
+            # Single selection
+            return [
+                ParquetDataSelection(
+                    name=self.name,
+                    path=self.path,
+                    batch_size=self.batch_size,
+                    threads=self.threads,
+                    filters_dict=self.filters_dict,
+                )
+            ]
+
+        # Splitting logic
+        values = self.split_values
+        if values is None:
+            # Automatic discovery if split_values not provided
+            logger.info(f"Discovering unique values for split_by='{self.split_by}' in {self.path}")
+            table = pq.read_table(self.path, columns=[self.split_by])
+            values = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]
+
+        selections: list[DataSelection] = []
+        for val in values:
+            selection_name = f"{self.name}_{val}"
+            # Merge existing filters with the split filter
+            merged_filters = (self.filters_dict or {}).copy()
+            merged_filters[self.split_by] = val
+
+            selections.append(
+                ParquetDataSelection(
+                    name=selection_name,
+                    path=self.path,
+                    batch_size=self.batch_size,
+                    threads=self.threads,
+                    filters_dict=merged_filters,
+                )
+            )
+        return selections

@@ -25,7 +25,7 @@ def test_representativeness(
     test_name: str,
     pipeline_representativeness: Any,
 ) -> None:
-    command = f"-p tests/config_generated/{test_name}.yaml"
+    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
 
     start = timer()
     execute(shlex.split(command))
@@ -45,7 +45,7 @@ def test_representativeness(
     interpretations = tests_config[test_key]["params"]["interpretations"]
 
     # # Compare representativeness metrics with expected values
-    output_filename = f"metrics_{test_name}.parquet"
+    output_filename = f"metrics_{test_name}_all-0.parquet"
 
     error_messages = []
     for col in col_names:
@@ -62,13 +62,17 @@ def test_representativeness(
 
             table = pq.read_table(Path(output_path) / output_filename)
 
-            computed_score = table.to_pandas()[column_value].tolist()[0]
+            # Filter for source_dataset row in selection_source column
+            df = table.to_pandas()
+            source_row = df[df["selection_source"] == "source_dataset"]
+
+            computed_score = source_row[column_value].tolist()[0]
             expected_score = expected_score[col]
 
             print(f"computed_score = {computed_score}")
 
             expected_interpretation = interpretation[0] if computed_score >= threshold else interpretation[1]
-            computed_interpretation = table.to_pandas()[column_interpretation].tolist()[0]
+            computed_interpretation = source_row[column_interpretation].tolist()[0]
 
             if (
                 metric not in ["kolmogorov-smirnov", "chi-square"] 

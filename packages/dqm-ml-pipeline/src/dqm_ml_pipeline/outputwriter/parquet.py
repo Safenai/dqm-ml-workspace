@@ -36,6 +36,7 @@ class ParquetOutputWriter:
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """
+        Write computed metrics to a unique parquet file.
         """
         if len(metrics_dict) > 0:
             logger.debug(f"Writing metrics for the {len(metrics_dict)} data selections")
@@ -47,8 +48,7 @@ class ParquetOutputWriter:
 
             for metric_name in metric_names:
                 metrics_table[metric_name] = pa.array([metrics_dict[key][metric_name] for key in keys])
-
-            self.write_table("", metrics_table)
+        self.write_table("", metrics_table)
 
     def write_table(self, dataloader: str, features_array: dict[str, Any], part: int | None = None) -> None:
         """
@@ -68,7 +68,7 @@ class ParquetOutputWriter:
         if part is None:
             filename = self.path_pattern.format(dataloader, "")
         else:
-            filename = self.path_pattern.format(dataloader, part=part)
+            filename = self.path_pattern.format(dataloader, part)
 
         pq.write_table(table, filename)
         logger.info(f"Wrote output table to {filename}")

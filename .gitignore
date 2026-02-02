@@ -18,10 +18,12 @@ __pycache__
 # Pytest report
 pytest_report.html
 assets
+
 # Test images
 tests/data/img
 tests/config_generated
-tests/data_generated
+tests/fixtures/config/generated
+tests/outputs
 
 # Dynamic versioning
 **/_version_.py

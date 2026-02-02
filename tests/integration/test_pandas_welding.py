@@ -10,7 +10,7 @@ from dqm_ml_pipeline.cli import execute
 
 @pytest.mark.parametrize("test_name", ["pandas_welding"])
 def test_representativeness_pandas(tests_config: Any, test_path: Path, output_path: Path, test_name: str) -> None:
-    command = f"-p tests/config/{test_name}.yaml"
+    command = f"-p tests/fixtures/config/{test_name}.yaml"
     execute(shlex.split(command))
 
     # load test configuration
@@ -24,7 +24,7 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
     interpretations = tests_config["pandas_welding"]["params"]["interpretations"]
 
     # # Compare representativeness metrics with expected values
-    output_filename = f"metrics_{test_name}_source_dataset-0.parquet"
+    output_filename = f"metrics_{test_name}_all-0.parquet"
 
     error_messages = []
     for col in col_names:
@@ -38,11 +38,15 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
 
             table = pq.read_table(Path(output_path) / output_filename)
 
-            computed_score = table.to_pandas()[column_value].tolist()[0]
+            # Filter for source_dataset row in selection_source column
+            df = table.to_pandas()
+            source_row = df[df["selection_source"] == "source_dataset"]
+            
+            computed_score = source_row[column_value].tolist()[0]
             expected_score = expected_score[col]
 
             expected_interpretation = interpretation[0] if computed_score >= threshold else interpretation[1]
-            computed_interpretation = table.to_pandas()[column_interpretation].tolist()[0]
+            computed_interpretation = source_row[column_interpretation].tolist()[0]
 
             # TODO check why this metric has such variance
             tmp_epsilon = 0.5 if metric == "kolmogorov-smirnov" and col == "sharpness" else epsilon

@@ -13,20 +13,15 @@ options.sessions = ["lint", "test", "type_check"]
 def compatibility(s: Session) -> None:
     s.run(
         "pytest",
-        "packages/dqm-ml-core/tests",
+        "tests/unit/core",
         *s.posargs,
     )
     s.run(
         "pytest",
         # Only quick tests for compatibility
-        "tests/test_cli.py",
+        "tests/cli/test_pipeline_cli.py",
         *s.posargs,
     )
-    # s.run(
-    #    "pytest",
-    #    "packages/dqm-ml/tests",
-    #    *s.posargs,
-    # )
 
 
 @session(
@@ -36,35 +31,19 @@ def compatibility(s: Session) -> None:
 def test(s: Session) -> None:
     s.run(
         "pytest",
-        "--cov=packages/dqm-ml-core/src",
-        "--cov-fail-under=1",
-        "packages/dqm-ml-core/tests",
-        *s.posargs,
-    )
-    s.run(
-        "pytest",
-        "--cov-append",
         "--cov=packages/dqm-ml-pipeline/src",
         "--cov=packages/dqm-ml-core/src",
+        "--cov=packages/dqm-ml-pytorch/src",
+        "--cov=packages/dqm-ml-images/src",
+        "--cov=packages/dqm-ml-v2/src",
         "--cov-report=html",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "tests",
+        "tests/unit/core",
+        "tests/integration",
+        "tests/cli",
         *s.posargs,
     )
-
-    # s.run(
-    #    "pytest",
-    #    "--cov-append",
-    #    "--cov=packages/dqm-ml-pipeline/src",
-    #    "--cov=packages/dqm-ml-core/src",
-    #    "--cov=packages/dqm-ml/src",
-    #    "--cov-report=html",
-    #    "--cov-report=term",
-    #    "--cov-fail-under=1",
-    #    "packages/dqm-ml-v2/tests",
-    #    *s.posargs,
-    # )
 
 
 @session(
@@ -133,6 +112,7 @@ def lint_fix(s: Session) -> None:
     s.run("ruff", "check", "packages/dqm-ml-core", "--extend-fixable", "F401", "--fix")
     s.run("ruff", "check", "packages/dqm-ml-images", "--extend-fixable", "F401", "--fix")
     s.run("ruff", "check", "packages/dqm-ml-pytorch", "--extend-fixable", "F401", "--fix")
+    s.run("ruff", "check", "packages/dqm-ml-v2", "--extend-fixable", "F401", "--fix")
 
 
 @session(venv_backend="none")
@@ -141,6 +121,7 @@ def type_check(s: Session) -> None:
     s.run("mypy", "packages/dqm-ml-core", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-images", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")
+    s.run("mypy", "packages/dqm-ml-v2", "noxfile.py")
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.

@@ -2,7 +2,7 @@
 
 We propose to create a dqm-ml v2 from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) for the following rationals:
 
-- Need of an unified API fro all metrics
+- Need of an unified API for all metrics
 - Allow to compute large dataset that do not fit in memory
 - Need to be able to easily add new metrics to the dqm-ml framework
 - allow user to install only needed dependency and not all dependency

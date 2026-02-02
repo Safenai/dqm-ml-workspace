@@ -20,7 +20,7 @@ We identify during refactoring several limitation for an industrial usage that m
 - dqm-ml-pipeline and dqm-ml-images are in beta version, and still subject to change before V2, configuration structure, and command line parameter are still subject of change. But except bug / feedback from community API to derived in order to implement new metrics based on dqm-ml-core might not change, and will be frozen in V2.0.0 to enable community to propose new metrics
 
 - dqm-ml-pipeline will be rename as dqm-ml-job as it perform job in a MLOPS pipeline, not the pipeline
-- Move dataloader / writter type checker in core once stabilized
+- Move dataloader / writer type checker in core once stabilized
 - Check betwee pyyaml and ruamel which on to keep.
 - add test to validate filter on data loader, and and combinaison on filter_row
 
