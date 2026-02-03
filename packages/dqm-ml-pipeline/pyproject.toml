@@ -41,9 +41,6 @@ parquet = "dqm_ml_pipeline.outputwriter:ParquetOutputWriter"
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-dqm-ml-split = "dqm_ml_pipeline.duckdb_subsets:execute"
-
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 

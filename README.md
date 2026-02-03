@@ -30,75 +30,52 @@
 [pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
 [pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
 
-This repository group all package derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to intiate what shall become dqm-ml v2.0.0
+This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
 
-Documentation still remain in the main repository as we only deliver partial migration to the new API [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md)
+Documentation remains in this repository as we deliver the migration to the new API.
 
-The library was originally developped in the programme
+The library was originally developed in the program:
 
 <div align="center">
     <img src="static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
-    <h1 style="font-size: large; font-weight: bold;">dqm-ml</h1>
+    <h1 style="font-size: large; font-weight: bold;">dqm-ml v2</h1>
 </div>
 
-## other useful documentations
+## Documentation
 
-- The [Rational](./docs/dqm-ml-v2.md) behind creation of V2 from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml)
-- A [demonstration](TODO) of dqm usage to generate informations regarding exinsting datas using welding challenge results.
-- [known limitation and evolution roadmap](./docs/roadmap.md)
+* **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
+* **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
+* **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
+* **[Roadmap & Limitations](./docs/roadmap.md)**: Known issues and planned evolutions.
+* **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
 
-## Dependency and bootsrap
+## Installation
 
-### uv
+Install the DQM-ML V2 framework using pip:
 
-We rely on uv for development for speed (multiple python versions, shared cache between venv, ...),
-We also us git lfs for test / data files
-We include legacy dqm-ml as a submodule
-
-``` bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-sudo apt-get install git-lfs
-git lfs pull
-
-git submodule update --init --recursive
+```bash
+pip install "dqm-ml-v2[all]"
 ```
 
-The following command synchronize the workspace and allow to compute metrics
+## Execution
 
-``` bash
-uv sync 
-source .venv/bin/activate
-mkdir output
-dqm-ml process -p packages/dqm-ml-pipeline/config/completeness.yaml
+Run a metric processing job using a configuration file:
 
+```bash
+dqm-ml process -p examples/config/completeness.yaml
 ```
 
-Other configuration exemple files can be found in this [directory](tests/config/)
+Other configuration examples can be found in the `examples/config/` directory.
 
-## Contents
+## Workspace Structure
 
-- packages/*: the sources of packages build by this environment
-- docs/*: documentation for dqml-ml-v2 no documentation in partial package to prevent documentation segmentation (TO BE MOVED FOR V2)
-- .github: CI configuration
-- src/*: empty workspace content for workspace
-- uv.lock: reference version used for the environment
-
-## Available commands
-
-- uv sync : install workspace dependency (with --no-sync if you want to rely on uv.lock file)
-- uv build --package <package_name> : build the define package
-- uv run nox : execute by default the following sessions [lint, type_check, test]
-- uv run nox -s <session_name> whith one of the available sessions
-  - lint : check lint issues
-  - lint_fix : use to correct several lint (TODO : check complementarity with fmt)
-  - fmt : auto reformat code (use to correct lint warnings)
-  - type_check : check type control with mypy
-  - test_dev : execute basic tests
-  - test : perform test on all packages with coverage results
-  - compatibility : execute test for different python versions
-  - licenses : check licences dependency of the repository
-- uv publish (see publishing guide)
+* `packages/dqm-ml-v2`: Main wrapper and CLI entry point.
+* `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
+* `packages/dqm-ml-pipeline`: Orchestration, streaming data loaders, and output writers.
+* `packages/dqm-ml-images`: Visual feature extraction metrics.
+* `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
+* `packages/dqm-ml`: **Legacy** version (V1), excluded from the active workspace.
 
 ## Usage from your python code
 
-- [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
+* [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)

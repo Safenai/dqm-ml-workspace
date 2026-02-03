@@ -1,93 +1,22 @@
-# Available Metrics
+# Metrics Guide
 
-DQM-ML V2 provides a set of core metrics to evaluate the quality of your Machine Learning datasets.
+DQM-ML V2 provides a set of modular metrics organized by package. Each metric is designed to handle large-scale datasets using a streaming architecture.
 
-## Completeness
+## Available Metrics
 
-Evaluates the ratio of non-null to total values in your dataset.
+### Core Metrics (`dqm-ml-core`)
 
-- **Class**: `CompletenessProcessor`
-- **Package**: `dqm-ml-core`
-- **Output**:
-  - `completeness_overall`: Average completeness across all analyzed columns.
-  - `completeness_<column_name>`: Completeness score for a specific column.
+* **[Completeness](./metrics/completeness.md)**: Analyzes the presence of non-null values.
+* **[Representativeness](./metrics/representativeness.md)**: Compares data distributions against a reference.
 
-**Configuration:**
-```yaml
-metrics_processor:
-  my_completeness:
-    type: completeness
-    input_columns: ["col1", "col2"]
-    include_per_column: true
-    include_overall: true
-    include_metadata: false
-```
+### Visual Metrics (`dqm-ml-images`)
 
-## Representativeness
+* **[Visual Features](./metrics/visual_features.md)**: Extracts image quality indicators (luminosity, blur, etc.).
 
-Compares the distribution of your data to a target reference distribution (Normal or Uniform).
+### Advanced Metrics (`dqm-ml-pytorch`)
 
-- **Class**: `RepresentativenessProcessor`
-- **Package**: `dqm-ml-core`
-- **Methods**: `chi-square`, `grte`, `shannon-entropy`, `kolmogorov-smirnov`
-- **Target Distributions**: `normal`, `uniform`
+* **[Domain Gap](./metrics/domain_gap.md)**: Measures statistical distance between source and target distributions.
 
-**Configuration:**
-```yaml
-metrics_processor:
-  my_representativeness:
-    type: representativeness
-    input_columns: ["numeric_col"]
-    distribution: "normal"
-    metrics: ["chi-square", "grte"]
-    bins: 10
-    distribution_params:
-      mean: 0.0
-      std: 1.0
-```
+## Configuration
 
-## Visual Features
-
-Computes basic image quality features for image datasets.
-
-- **Class**: `VisualFeaturesProcessor`
-- **Package**: `dqm-ml-images`
-- **Features**:
-  - `luminosity`: Mean gray level.
-  - `contrast`: RMS contrast (standard deviation of gray levels).
-  - `blur`: Variance of Laplacian (measures sharpness).
-  - `entropy`: Shannon entropy of the gray histogram.
-
-**Configuration:**
-```yaml
-metrics_processor:
-  my_visual:
-    type: visual_metrique
-    input_columns: ["image_bytes"]
-    dataset_root_path: "/path/to/images" # Optional if bytes are not provided
-    grayscale: true
-    normalize: true
-```
-
-## Domain Gap
-
-Computes statistical distances between two datasets (source and target) based on their embeddings.
-
-- **Class**: `DomainGapProcessor`
-- **Package**: `dqm-ml-pytorch`
-- **Metrics**:
-  - `klmvn_diag`: KL-Divergence assuming Diagonal Multivariate Normal distribution.
-  - `mmd_linear`: Maximum Mean Discrepancy (linear kernel).
-  - `fid`: Frechet Inception Distance.
-  - `wasserstein_1d`: 1D Wasserstein distance aggregated over dimensions.
-
-**Configuration:**
-```yaml
-metrics_processor:
-  my_domain_gap:
-    type: domain_gap
-    INPUT:
-      embedding_col: "embedding"
-    DELTA:
-      metric: "fid"
-```
+Metrics are configured in the `metrics_processor` section of the pipeline YAML file. For detailed configuration options for each metric, follow the links above.
