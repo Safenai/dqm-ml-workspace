@@ -32,16 +32,18 @@ class ParquetDataSelection(DataSelection):
         self.samples_count: int = 0
 
     @override
-    def bootstrap(self, columns_list: list[str] | None = None) -> None:
+    def bootstrap(self, columns_list: list[str]) -> None:
         self.columns_list = columns_list
         filter_expr = None
         if self.filters_dict is not None:
             expr = None
             for col, val in self.filters_dict.items():
+                if col not in (self.columns_list):
+                    self.columns_list.append(col)
                 col_expr = pc.equal(pc.field(col), val)
                 expr = col_expr if expr is None else pc.and_(expr, col_expr)
             filter_expr = expr
-
+        self.filter_expr = filter_expr
         self.dataset = pq.ParquetDataset(self.path, filters=filter_expr)
         if len(self.dataset.fragments) > 0:
             self.samples_count = sum(p.count_rows() for p in self.dataset.fragments)
@@ -64,7 +66,12 @@ class ParquetDataSelection(DataSelection):
             batch_iterator = parquet_file.iter_batches(
                 batch_size=self.batch_size, columns=self.columns_list, use_threads=self.threads
             )
-            yield from batch_iterator
+            for batch in batch_iterator:
+                if self.filter_expr is not None:
+                    batch = batch.filter(self.filter_expr)
+                if len(batch) == 0:
+                    continue
+                yield batch
 
     @override
     def __repr__(self) -> str:

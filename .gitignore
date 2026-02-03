@@ -5,7 +5,7 @@
 .pytest_cache
 dist
 build
-htmlcov
+--/htmlcov
 site
 __pycache__
 *.pyc
@@ -16,7 +16,8 @@ __pycache__
 .ruff_cache
 .venv
 # Pytest report
-pytest_report.html
+**/pytest_report.html
+docs/static/assets
 assets
 
 # Test images

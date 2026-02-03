@@ -93,6 +93,7 @@ copyright: Copyright &copy; SafenAI
 # GitHub Specific Configuration.
 repo_name: dqm-ml-workspace
 repo_url: https://github.com/Safenai/dqm-ml-workspace
+remote_name: github
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
@@ -103,7 +104,7 @@ nav:
     - Available Metrics: metrics.md
     - Pipeline Configuration: configuration.md
   - Tutorials:
-    - Welding Challenge: Example: examples/multiple_metrics_tests_v2.ipynb
+    - Welding Challenge: tutorials/welding_challenge.md
   - Developer Guide:
     - Contributing: contributing.md
     - Roadmap: roadmap.md

@@ -47,10 +47,6 @@ pipeline_config:
       
     metrics:
       type: parquet 
-      path_pattern: output/metrics_{}-{}.parquet
-      # All metrics shall not be a dictionarry, but scalars, 
-      # TODO : add wildcart in columns name here (ex [*] => all metrics are exported)
-      # TODO : not use currently
-      #columns: ['*']
+      path_pattern: tests/outputs/representativness.parquet
       columns: []
       

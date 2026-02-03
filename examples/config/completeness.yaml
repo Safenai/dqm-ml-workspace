@@ -36,6 +36,6 @@ pipeline_config:
     # output dataset-level completeness metrics only
     metrics:
       type: parquet
-      path_pattern: output/metrics_completeness_{}-{}.parquet
-      columns: [completeness_overall, completeness_sample_id, completeness_blur_score, completeness_contrast, completeness_quality_score]
+      path_pattern: tests/outputs/metrics_completeness.parquet
+      columns: []
       compression: snappy

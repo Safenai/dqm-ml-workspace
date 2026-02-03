@@ -105,7 +105,6 @@ class DatasetPipeline:
 
         Discovers all selections from data loaders and processes them.
         """
-
         # TODO: Check with needed input order of metric computation
         metrics_processors = self.get_ordered_metrics()
 
@@ -118,7 +117,7 @@ class DatasetPipeline:
 
         dataselection_metrics_list = {}
 
-        pipeline_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections
+        pipeline_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections  # noqa: E501
 
         # TODO : add as a specific command line argument
         self.describe(all_selections)
@@ -134,7 +133,10 @@ class DatasetPipeline:
 
             # Compute dataset-level metrics
             dataset_metrics: dict[str, Any] = {}
-            for metric in metrics_processors:
+
+            metrics_iter = tqdm(metrics_processors, desc="metrics", position=1, leave=False) if self.progress_bar else metrics_processors  # noqa: E501
+
+            for metric in metrics_iter:
                 if logging.getLogger().level == logging.DEBUG:
                     logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {selection_name}")
                 dataset_metrics.update(metric.compute(batch_metrics=batches_metrics_array))
@@ -218,10 +220,8 @@ class DatasetPipeline:
         feature_array_size = 0
         part_index = 0
 
-        if self.progress_bar:
-            dataloader_iter = tqdm(selection, total=selection.get_nb_batches(), desc="batches", position=1, leave=False)
-        else:
-            dataloader_iter = selection
+        dataloader_iter = tqdm(selection, desc="batches", position=1, leave=False,
+                               total=selection.get_nb_batches()) if self.progress_bar else selection  # noqa: E501
 
         for batch in dataloader_iter:
             batch_features: dict[str, Any] = {}

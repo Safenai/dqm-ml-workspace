@@ -7,7 +7,7 @@ dependencies = [
     "dqm-ml-core",
     "dqm-ml-images",
     "dqm-ml-pipeline",
-    "dqm-ml[pipeline]",
+    # "dqm-ml[pipeline]",
     "dqm-ml-pytorch",
     "pre-commit>=4.5.0",
     "pycocotools>=2.0.10",
@@ -31,7 +31,7 @@ dqm-ml-core = { workspace = true }
 dqm-ml-pipeline = { workspace = true }
 dqm-ml-images = { workspace = true }
 dqm-ml-pytorch = { workspace = true }
-dqm-ml = { workspace = true }
+# dqm-ml = { workspace = true }
 dqm-ml-v2 = { workspace = true }
 
 [tool.uv]
@@ -39,7 +39,7 @@ default-groups = "all"
 
 [tool.uv.workspace]
 members = ["packages/*"]
-exclude = []
+exclude = ["packages/dqm-ml"]
 
 # Dependency gourps of the workspace depending actions performed in the workspace
 [dependency-groups]

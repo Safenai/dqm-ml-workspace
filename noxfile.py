@@ -7,7 +7,7 @@ options.sessions = ["lint", "test", "type_check"]
 
 
 @session(
-    python=["3.9", "3.10", "3.11", "3.12", "3.13"],
+    python=["3.12", "3.13"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
@@ -36,10 +36,11 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-pytorch/src",
         "--cov=packages/dqm-ml-images/src",
         "--cov=packages/dqm-ml-v2/src",
-        "--cov-report=html",
+        "--cov-report=html:docs/static/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "tests/unit/core",
+        "--html=docs/static/pytest_report.html",
+        "tests/unit",
         "tests/integration",
         "tests/cli",
         *s.posargs,
@@ -127,12 +128,15 @@ def type_check(s: Session) -> None:
 # Environment variable needed for mkdocstrings-python to locate source files.
 doc_env = {"PYTHONPATH": "packages"}
 
+
 @session(venv_backend="none")
 def docs_offline(s: Session) -> None:
     s.run("mkdocs", "build", "--no-strict", env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)})
 
+
 # Environment variable needed for mkdocstrings-python to locate source files.
 doc_env = {"PYTHONPATH": "packages"}
+
 
 @session(venv_backend="none")
 def docs_github_pages(s: Session) -> None:
