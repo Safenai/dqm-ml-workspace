@@ -45,7 +45,7 @@ def test_representativeness(
     interpretations = tests_config[test_key]["params"]["interpretations"]
 
     # # Compare representativeness metrics with expected values
-    output_filename = f"metrics_{test_name}_all-0.parquet"
+    output_filename = f"metrics_{test_name}_-.parquet"
 
     error_messages = []
     for col in col_names:
@@ -64,7 +64,7 @@ def test_representativeness(
 
             # Filter for source_dataset row in selection_source column
             df = table.to_pandas()
-            source_row = df[df["selection_source"] == "source_dataset"]
+            source_row = df[df["selection"] == "source_dataset"]
 
             computed_score = source_row[column_value].tolist()[0]
             expected_score = expected_score[col]

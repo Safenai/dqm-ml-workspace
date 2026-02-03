@@ -134,7 +134,8 @@ class DatasetPipeline:
             # Compute dataset-level metrics
             dataset_metrics: dict[str, Any] = {}
 
-            metrics_iter = tqdm(metrics_processors, desc="metrics", position=1, leave=False) if self.progress_bar else metrics_processors  # noqa: E501
+            metrics_iter = tqdm(metrics_processors, desc="metrics", position=1,
+                                leave=False) if self.progress_bar else metrics_processors
 
             for metric in metrics_iter:
                 if logging.getLogger().level == logging.DEBUG:
@@ -220,8 +221,8 @@ class DatasetPipeline:
         feature_array_size = 0
         part_index = 0
 
-        dataloader_iter = tqdm(selection, desc="batches", position=1, leave=False,
-                               total=selection.get_nb_batches()) if self.progress_bar else selection  # noqa: E501
+        dataloader_iter = tqdm(selection, desc="batches", position=1, leave=False, 
+                               total=selection.get_nb_batches()) if self.progress_bar else selection
 
         for batch in dataloader_iter:
             batch_features: dict[str, Any] = {}

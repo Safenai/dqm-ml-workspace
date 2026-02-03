@@ -24,7 +24,7 @@ def test_completeness(
     col_names = tests_config["completeness"]["params"]["columns_names"]
 
     # # Test completeness by columns and overall
-    output_filename = f"metrics_{test_name}_all-0.parquet"
+    output_filename = f"metrics_{test_name}_-.parquet"
 
     table = pq.read_table(Path(output_path) / output_filename)
     for col in col_names:

@@ -24,7 +24,7 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
     interpretations = tests_config["pandas_welding"]["params"]["interpretations"]
 
     # # Compare representativeness metrics with expected values
-    output_filename = f"metrics_{test_name}_all-0.parquet"
+    output_filename = f"metrics_{test_name}_-.parquet"
 
     error_messages = []
     for col in col_names:
@@ -38,9 +38,9 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
 
             table = pq.read_table(Path(output_path) / output_filename)
 
-            # Filter for source_dataset row in selection_source column
+            # Filter for source_dataset row in selection column
             df = table.to_pandas()
-            source_row = df[df["selection_source"] == "source_dataset"]
+            source_row = df[df["selection"] == "source_dataset"]
             
             computed_score = source_row[column_value].tolist()[0]
             expected_score = expected_score[col]
