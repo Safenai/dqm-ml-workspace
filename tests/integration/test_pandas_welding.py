@@ -41,7 +41,7 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
             # Filter for source_dataset row in selection column
             df = table.to_pandas()
             source_row = df[df["selection"] == "source_dataset"]
-            
+
             computed_score = source_row[column_value].tolist()[0]
             expected_score = expected_score[col]
 

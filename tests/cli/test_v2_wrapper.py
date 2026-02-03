@@ -35,6 +35,7 @@ def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output:
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_app(command: str, expected_output: str) -> None:
     import sys
+
     full_command = [sys.executable, "-m", "dqm_ml"] + shlex.split(command)
     result = subprocess.run(full_command, capture_output=True, text=True)
     output = result.stdout.rstrip()
