@@ -18,9 +18,9 @@ The Domain Gap metric measures the statistical distance between a source and a t
 ## Configuration Parameters
 
 * `INPUT`:
-    * `embedding_col`: Column containing pre-computed feature embeddings.
+  * `embedding_col`: Column containing pre-computed feature embeddings.
 * `DELTA`:
-    * `metric`: The specific distance metric to compute.
+  * `metric`: The specific distance metric to compute.
 
 ## Example YAML Configuration
 
