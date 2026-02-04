@@ -46,7 +46,7 @@ The library was originally developed in the program:
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
 * **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
-* **[Roadmap & Limitations](./docs/roadmap.md)**: Known issues and planned evolutions.
+* **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
 * **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
 
 ## Installation

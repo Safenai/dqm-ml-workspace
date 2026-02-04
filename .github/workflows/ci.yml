@@ -4,9 +4,11 @@ on:
   push:
     branches:
     - main
+    - dev
   pull_request:
     branches:
     - main
+    - dev
 
 env:
   UV_VERSION: "0.8.17"
