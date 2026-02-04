@@ -99,15 +99,27 @@ nav:
   - Home: index.md
   - Getting Started:
     - Overview: dqm-ml-v2.md
-    - Installation: index.md#dependency-and-bootstrap
+    - Installation: index.html#installation
   - User Guide:
-    - Available Metrics: metrics.md
-    - Pipeline Configuration: configuration.md
+    - cli usage: configuration.md
+    - direct call: TBD.md    
+  - Metrics: 
+    - Overview: metrics.md
+    - Completeness : metrics/completeness.md
+    - Domain gap : metrics/domain_gap.md
+    - Representativeness : metrics/representativeness.md
+    - Visual features : metrics/visual_features.md
+  - Tuitorials and Examples:
+    - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
   # TODO: Uncomment when this documentation exists
-  # - Tutorials:
   #   - Welding Challenge: tutorials/welding_challenge.md
+  - Test reports:
+    - Pytest report: static/htmlcov/index.html
+    - Coverage Report: static/pytest_report.html
+    - Performance Report: TBD.md
   - Developer Guide:
     - Contributing: contributing.md
     - Roadmap: ROADMAP.md
+
   - API Reference: reference/
 

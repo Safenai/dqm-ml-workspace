@@ -51,7 +51,7 @@ def execute(arg_list: list[str] | None = None) -> None:
         with Path(args.save_config).open("w") as stream:
             yaml.safe_dump(config, stream)
 
-    run(config)
+    run(config["pipeline_config"])
 
 
 def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], component_name: str) -> dict[str, Any]:
@@ -77,9 +77,7 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
     return components
 
 
-def run(file_config: dict[str, Any]) -> None:
-    config = file_config["pipeline_config"]
-    # TODO : get parameters from config
+def run(config: dict[str, Any]) -> None:
 
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()

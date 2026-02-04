@@ -7,6 +7,7 @@ This package provides the orchestration engine for DQM-ML V2. It handles the lif
 ### `DatasetPipeline`
 
 The main orchestrator that:
+
 * Loads the configuration.
 * Discovers plugins via entry points.
 * Executes the streaming loop.

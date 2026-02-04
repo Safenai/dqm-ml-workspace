@@ -31,7 +31,7 @@ Unlike V1, which often loaded entire datasets into memory (e.g., using large Pan
 
 ## Interoperability & Migration
 
-V2 maintains a high level of interoperability with V1 concepts while optimizing the underlying implementation. 
+V2 maintains a high level of interoperability with V1 concepts while optimizing the underlying implementation.
 
 * Comparative Performance: V2 implementations of Completeness and Representativeness show significantly lower memory footprints and faster execution times on large Parquet/CSV files due to the streaming architecture and PyArrow integration.
 * Legacy Support: The legacy `dqm-ml` package is included as a submodule for reference and side-by-side comparison, though new development should strictly follow the V2 API.
