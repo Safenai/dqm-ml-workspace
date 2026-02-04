@@ -6,20 +6,21 @@ def update_readme_relative_links():
     index = Path("docs/index.md")
     with index.open() as f:
         md = f.read()
-        updated_md = md.replace('./docs/', './')
-        updated_md = updated_md.replace('./docs/', './')
+        updated_md = md.replace("./docs/", "./")
+        updated_md = updated_md.replace("./docs/", "./")
         updated_md = updated_md.replace(
-            '(packages/',
-            '(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/'
+            "(packages/",
+            "(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/",
         )
     with index.open("w") as f:
         f.write(updated_md)
 
 
 def copy_example():
-    Path.mkdir("docs/examples", exist_ok=True)
+    Path("docs/examples").mkdir(exist_ok=True)
     shutil.copy(
-         "examples/multiple_metrics_tests_v2.ipynb", "docs/examples/multiple_metrics_tests_v2.ipynb"
+        "examples/multiple_metrics_tests_v2.ipynb",
+        "docs/examples/multiple_metrics_tests_v2.ipynb",
     )
 
 

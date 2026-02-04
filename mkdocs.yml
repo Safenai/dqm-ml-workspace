@@ -103,9 +103,11 @@ nav:
   - User Guide:
     - Available Metrics: metrics.md
     - Pipeline Configuration: configuration.md
-  - Tutorials:
-    - Welding Challenge: tutorials/welding_challenge.md
+  # TODO: Uncomment when this documentation exists
+  # - Tutorials:
+  #   - Welding Challenge: tutorials/welding_challenge.md
   - Developer Guide:
     - Contributing: contributing.md
-    - Roadmap: roadmap.md
-  - API Reference: api/
+    - Roadmap: ROADMAP.md
+  - API Reference: reference/
+

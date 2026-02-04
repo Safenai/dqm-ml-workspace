@@ -256,7 +256,11 @@ def generate_pipeline(
         test_name = test["test_name"]
 
         if processor_name == "domain_gap":
-            config_name = f"{processor_name}_{test_name}" if test_name != "" else f"{processor_name}_{metric_name}"
+            config_name = (
+                f"{processor_name}_{test_name}"
+                if test_name != ""
+                else f"{processor_name}_{metric_name}"
+            )
         elif processor_name in ["completeness", "visual_features"]:
             config_name = test_name
         else:
@@ -264,45 +268,77 @@ def generate_pipeline(
 
         config_path = Path(f"{configs_path}/{config_name}.yaml")
 
-        template_path = Path(test_path) / f"fixtures/config/templates/{processor_name}.yaml"
+        template_path = (
+            Path(test_path) / f"fixtures/config/templates/{processor_name}.yaml"
+        )
         with Path(template_path).open() as file:
             config, ind, bsi = ruamel.yaml.util.load_yaml_guess_indent(file)
 
         pipeline_config = config["pipeline_config"]
         if processor_name == "domain_gap":
-            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(parquet_source_path)
-            pipeline_config["dataloaders"]["target_dataset"]["path"] = str(parquet_path)
-            pipeline_config["metrics_processor"][processor_name]["DELTA"]["metric"] = metric_name
+            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(
+                parquet_source_path
+            )
+            pipeline_config["dataloaders"]["target_dataset"]["path"] = str(
+                parquet_path
+            )
+            pipeline_config["metrics_processor"][processor_name]["DELTA"][
+                "metric"
+            ] = metric_name
             for param in ["batch_size", "height", "width"]:
-                pipeline_config["metrics_processor"]["image_embedding"]["infer"][param] = domain_gap_infer_params[
+                pipeline_config["metrics_processor"]["image_embedding"][
+                    "infer"
+                ][param] = domain_gap_infer_params[
                     metric_name  # type: ignore
                 ][param]
         else:
-            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(parquet_path)
+            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(
+                parquet_path
+            )
 
         if "batch" in test_name:
             if processor_name == "representativeness":
-                pipeline_config["dataloaders"]["source_dataset"]["batch_size"] = 50000
+                pipeline_config["dataloaders"]["source_dataset"][
+                    "batch_size"
+                ] = 50000
             if processor_name == "domain_gap":
-                pipeline_config["dataloaders"]["source_dataset"]["batch_size"] = 50
-                pipeline_config["dataloaders"]["target_dataset"]["batch_size"] = 50
+                pipeline_config["dataloaders"]["source_dataset"][
+                    "batch_size"
+                ] = 50
+                pipeline_config["dataloaders"]["target_dataset"][
+                    "batch_size"
+                ] = 50
             if processor_name == "completeness":
-                pipeline_config["dataloaders"]["source_dataset"]["batch_size"] = 100
+                pipeline_config["dataloaders"]["source_dataset"][
+                    "batch_size"
+                ] = 100
             if processor_name == "visual_features":
-                pipeline_config["dataloaders"]["source_dataset"]["batch_size"] = 100
+                pipeline_config["dataloaders"]["source_dataset"][
+                    "batch_size"
+                ] = 100
 
         if processor_name == "representativeness":
             if "uniform" in test_name:
-                pipeline_config["metrics_processor"]["representativeness"]["distribution"] = "uniform"
+                pipeline_config["metrics_processor"]["representativeness"][
+                    "distribution"
+                ] = "uniform"
             else:
-                pipeline_config["metrics_processor"]["representativeness"]["distribution"] = "normal"
+                pipeline_config["metrics_processor"]["representativeness"][
+                    "distribution"
+                ] = "normal"
 
         if processor_name == "visual_features" and "path" in test_name:
-            pipeline_config["metrics_processor"]["visual_features"]["input_columns"] = ["image_path"]
+            pipeline_config["metrics_processor"]["visual_features"][
+                "input_columns"
+            ] = ["image_path"]
 
         if processor_name == "domain_gap" and "bytes" in test_name:
-            pipeline_config["metrics_processor"]["image_embedding"]["DATA"]["image_column"] = "image_bytes"
-            pipeline_config["metrics_processor"]["image_embedding"]["DATA"]["mode"] = "bytes"
+            pipeline_config["metrics_processor"]["image_embedding"]["DATA"][
+                "image_column"
+            ] = "image_bytes"
+            pipeline_config["metrics_processor"]["image_embedding"]["DATA"][
+                "mode"
+            ] = "bytes"
 
         if processor_name == "domain_gap":
             pipeline_config["outputs"][output_category]["path_pattern"] = (
@@ -328,10 +364,22 @@ def pipeline_representativeness(
     not_uniform_dist: Any,
 ) -> None:
     test_list = [
-        {"test_name": "normal_distribution", "parquet": "normal_distribution.parquet"},
-        {"test_name": "not_normal_distribution", "parquet": "not_normal_distribution.parquet"},
-        {"test_name": "uniform_distribution", "parquet": "uniform_distribution.parquet"},
-        {"test_name": "not_uniform_distribution", "parquet": "not_uniform_distribution.parquet"},
+        {
+            "test_name": "normal_distribution",
+            "parquet": "normal_distribution.parquet",
+        },
+        {
+            "test_name": "not_normal_distribution",
+            "parquet": "not_normal_distribution.parquet",
+        },
+        {
+            "test_name": "uniform_distribution",
+            "parquet": "uniform_distribution.parquet",
+        },
+        {
+            "test_name": "not_uniform_distribution",
+            "parquet": "not_uniform_distribution.parquet",
+        },
         {"test_name": "batch", "parquet": "normal_distribution.parquet"},
     ]
 
@@ -355,7 +403,7 @@ def pipeline_completeness(
 
     generate_pipeline(
         processor_name="completeness",
-        parquets_path=Path(test_path) / "fixtures/data",
+        parquets_path=Path(test_path) / "data",
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
@@ -382,12 +430,17 @@ def pipeline_domain_gap(
 
     generate_pipeline(
         processor_name="domain_gap",
-        parquets_path=Path(test_path) / "fixtures/data",
-        test_list=[{"test_name": "wasserstein_bytes", "parquet": "target_bytes.parquet"}],
+        parquets_path=Path(test_path) / "data",
+        test_list=[
+            {
+                "test_name": "wasserstein_bytes",
+                "parquet": "target_bytes.parquet",
+            }
+        ],
         output_category="delta_metrics",
         test_path=test_path,
         metric_name="wasserstein_1d",
-        parquet_source_path=Path(test_path) / "fixtures/data/source_bytes.parquet",
+        parquet_source_path=Path(test_path) / "data/source_bytes.parquet",
     )
 
 
@@ -397,13 +450,19 @@ def pipeline_visual_features(
 ) -> None:
     test_list = [
         {"test_name": "visual_features", "parquet": "visual_features.parquet"},
-        {"test_name": "visual_features_batch", "parquet": "visual_features.parquet"},
-        {"test_name": "visual_features_path", "parquet": "visual_features_path.parquet"},
+        {
+            "test_name": "visual_features_batch",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "visual_features_path",
+            "parquet": "visual_features_path.parquet",
+        },
     ]
 
     generate_pipeline(
         processor_name="visual_features",
-        parquets_path=Path(test_path) / "fixtures/data",
+        parquets_path=Path(test_path) / "data",
         test_list=test_list,
         output_category="features",
         test_path=test_path,
