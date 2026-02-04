@@ -93,7 +93,6 @@ copyright: Copyright &copy; SafenAI
 # GitHub Specific Configuration.
 repo_name: dqm-ml-workspace
 repo_url: https://github.com/Safenai/dqm-ml-workspace
-remote_name: github
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
