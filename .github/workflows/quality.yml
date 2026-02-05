@@ -1,4 +1,4 @@
-name: CI
+name: Code Quality
 
 on:
   push:
@@ -39,26 +39,3 @@ jobs:
 
       - name: Test with Nox
         run: uv run nox -s ${{ matrix.nox-session }}
-
-  container:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          lfs: false
-
-      - name: Validate build configuration
-        uses: docker/build-push-action@v6
-        with:
-          call: check
-          context: .
-          file: ./Dockerfile
-
-      - name: Build Container Image
-        uses: docker/build-push-action@v6
-        with:
-          push: false
-          context: .
-          file: ./Dockerfile

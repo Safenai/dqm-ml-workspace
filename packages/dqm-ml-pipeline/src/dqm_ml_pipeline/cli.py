@@ -78,7 +78,6 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
 
 
 def run(config: dict[str, Any]) -> None:
-
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()

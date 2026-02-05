@@ -1,10 +1,11 @@
+from unittest.mock import MagicMock
+
 import pandas as pd
 import pyarrow as pa
 import pytest
-from unittest.mock import MagicMock
 
-from dqm_ml_core.utils.metric_runner import MetricRunner
 from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.utils.metric_runner import MetricRunner
 
 
 @pytest.fixture

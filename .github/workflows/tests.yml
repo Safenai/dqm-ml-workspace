@@ -1,6 +1,5 @@
 name: Tests
 
-# TODO: Move back to ci.yml with branch main once LFS quota reset
 on:
   push:
     branches:
@@ -111,6 +110,13 @@ jobs:
           key: dqm-test-resnet
 
       - name: Test with Nox
+        # Step with only quick tests, with condition on pushes and pulol request to dev
+        if: github.event.pull_request.base.ref == 'dev' || github.ref == 'refs/heads/dev'
+        run: uv run nox -s test-${{ matrix.python-version }} -- -m "not slow"
+
+      - name: Test with Nox
+        # Step with all tests, with condition on pushes and pulol request to main
+        if: github.event.pull_request.base.ref == 'main' || github.ref == 'refs/heads/main'
         run: uv run nox -s test-${{ matrix.python-version }}
 
       - uses: actions/upload-artifact@v4
