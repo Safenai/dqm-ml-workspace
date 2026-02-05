@@ -28,7 +28,17 @@ def copy_readme():
     shutil.copy("README.md", "docs/index.md")
 
 
+def rename_coverage_index():
+    coverage_index = Path("docs/reports/htmlcov/index.html")
+    if coverage_index.exists():
+        shutil.cp(
+            "docs/reports/htmlcov/index.html",
+            "docs/reports/htmlcov/coverage_report.html",
+        )
+
+
 def pre_build(*args, **kwargs):
     copy_example()
     copy_readme()
+    rename_coverage_index()
     update_readme_relative_links()
