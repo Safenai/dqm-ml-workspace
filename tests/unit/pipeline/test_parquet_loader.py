@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
 import pyarrow as pa
+import pytest
 
 from dqm_ml_pipeline.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
 

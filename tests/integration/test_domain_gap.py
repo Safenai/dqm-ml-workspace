@@ -9,8 +9,12 @@ import pytest
 from dqm_ml_pipeline.cli import execute
 
 
+@pytest.mark.slow
 @pytest.mark.timeout(600)
-@pytest.mark.parametrize("test_name", ["wasserstein_1d", "fid", "klmvn_diag", "mmd_linear", "wasserstein_bytes"])
+@pytest.mark.parametrize(
+    "test_name",
+    ["wasserstein_1d", "fid", "klmvn_diag", "mmd_linear", "wasserstein_bytes"],
+)
 def test_domain_gap(
     tests_config: Any,
     test_path: Path,

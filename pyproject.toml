@@ -168,6 +168,9 @@ filterwarnings = [
     # "ignore::DeprecationWarning:typer",
     "ignore::SyntaxWarning",
 ]
+markers = [
+    "slow: Marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 [tool.coverage.run]
 branch = true

@@ -1,8 +1,10 @@
-from typing import Any
-import pytest
-import pyarrow as pa
 import logging
+
+import pyarrow as pa
+import pytest
+
 from dqm_ml_core import DatametricProcessor
+
 
 def test_processor_init_defaults():
     proc = DatametricProcessor(name="test", config=None)
