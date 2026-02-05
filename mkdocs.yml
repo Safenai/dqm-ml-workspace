@@ -27,7 +27,8 @@ theme:
     - navigation.indexes
     - navigation.expand
     - navigation.footer
-    - navigation.instant
+    # conflict with navigation.tracking
+    #- navigation.instant
     - navigation.top
     - navigation.tracking
     - search.highlight
@@ -51,6 +52,7 @@ markdown_extensions:
   - md_in_html
 extra_css:
   - static/stylesheets/extra.css
+  - static/stylesheets/pytest.css
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -101,7 +103,7 @@ nav:
     - Installation: index.html#installation
   - User Guide:
     - cli usage: configuration.md
-    - direct call: TBD.md    
+    - direct call: TBD1.md
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
@@ -113,9 +115,9 @@ nav:
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md
   - Test reports:
-    - Pytest report: static/htmlcov/index.html
-    - Coverage Report: static/pytest_report.html
-    - Performance Report: TBD.md
+    - Pytest report: reports/pytest/pytest_report.html
+    - Coverage Report: reports/htmlcov/coverage_report.html
+    - Performance Report: TBD2.md
   - Developer Guide:
     - Contributing: contributing.md
     - Roadmap: ROADMAP.md

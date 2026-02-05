@@ -113,6 +113,20 @@ jobs:
       - name: Test with Nox
         run: uv run nox -s test-${{ matrix.python-version }}
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: docs/reports/pytest
+          retention-days: 1
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pytest-coverage
+          path: docs/reports/htmlcov
+          retention-days: 1
+          overwrite: true
+
       - name: Update cache containing coco dataset
         uses: actions/cache/save@v4
         if: always()

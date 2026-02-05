@@ -24,6 +24,7 @@ env:
 
 jobs:
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -42,6 +43,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: pytest-results
+          path: docs/reports/pytest
+
+      - uses: actions/download-artifact@v5
+        with:
+          nname: pytest-coverage
+          path: docs/reports/htmlcov
 
       - name: Publish Docs
         run: uv run nox -s docs_github_pages

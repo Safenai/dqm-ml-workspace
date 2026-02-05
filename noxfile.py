@@ -36,10 +36,10 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-pytorch/src",
         "--cov=packages/dqm-ml-images/src",
         "--cov=packages/dqm-ml-v2/src",
-        "--cov-report=html:docs/static/htmlcov",
+        "--cov-report=html:docs/reports/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "--html=docs/static/pytest_report.html",
+        "--html=docs/reports/pytest_report.html",
         "tests/unit",
         "tests/integration",
         "tests/cli",
@@ -57,6 +57,7 @@ def test_dev(s: Session) -> None:
         "tests",
         *s.posargs,
     )
+
 
 # TODO Test management improvment
 # - add a way to iterate on package tests and update coverage level to 100%
@@ -109,11 +110,46 @@ def lint(s: Session, command: list[str]) -> None:
 
 @session(venv_backend="none")
 def lint_fix(s: Session) -> None:
-    s.run("ruff", "check", "packages/dqm-ml-pipeline", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-core", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-images", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-pytorch", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-v2", "--extend-fixable", "F401", "--fix")
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-pipeline",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-core",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-images",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-pytorch",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-v2",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
 
 
 @session(venv_backend="none")
@@ -131,7 +167,12 @@ doc_env = {"PYTHONPATH": "packages"}
 
 @session(venv_backend="none")
 def docs_offline(s: Session) -> None:
-    s.run("mkdocs", "build", "--no-strict", env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)})
+    s.run(
+        "mkdocs",
+        "build",
+        "--no-strict",
+        env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)},
+    )
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.
