@@ -31,7 +31,7 @@ def copy_readme():
 def rename_coverage_index():
     coverage_index = Path("docs/reports/htmlcov/index.html")
     if coverage_index.exists():
-        shutil.cp(
+        shutil.copy(
             "docs/reports/htmlcov/index.html",
             "docs/reports/htmlcov/coverage_report.html",
         )

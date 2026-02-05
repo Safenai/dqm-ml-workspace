@@ -17,7 +17,6 @@ __pycache__
 .venv
 # Pytest report
 **/pytest_report.html
-docs/static/assets
 docs/examples
 assets
 

@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -14,6 +14,32 @@ env:
   UV_VERSION: "0.8.17"
 
 jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        nox-session: ["lint", "type_check"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Test with Nox
+        run: uv run nox -s ${{ matrix.nox-session }}
+
   compatibility:
     runs-on: ubuntu-24.04
     strategy:
@@ -146,3 +172,37 @@ jobs:
         with:
           path: /home/runner/.cache/torch
           key: dqm-test-resnet
+
+  pages:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pytest-results
+          path: docs/reports/pytest
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pytest-coverage
+          path: docs/reports/htmlcov
+
+      - name: Publish Docs
+        run: uv run nox -s docs_github_pages
