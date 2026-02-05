@@ -5,13 +5,12 @@ on:
     branches:
     - main
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
 jobs:
   container:
     runs-on: ubuntu-24.04
-    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

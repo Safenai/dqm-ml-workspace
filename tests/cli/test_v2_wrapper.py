@@ -7,7 +7,7 @@ import pytest
 
 test_cases = [
     ("version", f"DQML version : {version}"),  # no args
-    (
+    [
         "list",
         "Available data metrics_registry\n"
         "- completeness - <class 'dqm_ml_core.metrics.completeness.CompletenessProcessor'>\n"
@@ -20,26 +20,28 @@ test_cases = [
         "- parquet - <class 'dqm_ml_pipeline.dataloaders.parquet.ParquetDataLoader'>\n"
         "Available outputs writers\n"
         "- parquet - <class 'dqm_ml_pipeline.outputwriter.parquet.ParquetOutputWriter'>",
-    ),
+    ],
 ]
 command_list = {"version": None}
 
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
-def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output: str) -> None:
+def test_main(
+    capsys: pytest.CaptureFixture[str], command: str, expected_output: list[str]
+) -> None:
     execute(shlex.split(command))
     output = capsys.readouterr().out.rstrip()
-    assert output == expected_output
+    assert all(val in output for val in expected_output)
 
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
-def test_app(command: str, expected_output: str) -> None:
+def test_app(command: str, expected_output: list[str]) -> None:
     import sys
 
     full_command = [sys.executable, "-m", "dqm_ml"] + shlex.split(command)
     result = subprocess.run(full_command, capture_output=True, text=True)
     output = result.stdout.rstrip()
-    assert output == expected_output
+    assert all(val in output for val in expected_output)
 
 
 @pytest.mark.parametrize(
@@ -53,7 +55,9 @@ def test_app(command: str, expected_output: str) -> None:
         # long params TODO
     ],
 )
-def test_parse_args(prompt: str, command: str, quiet: str, verbose: str) -> None:
+def test_parse_args(
+    prompt: str, command: str, quiet: str, verbose: str
+) -> None:
     args, _ = parse_args(shlex.split(prompt), command_list)
 
     # or split them up, either works

@@ -39,7 +39,7 @@ def test(s: Session) -> None:
         "--cov-report=html:docs/reports/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "--html=docs/reports/pytest_report.html",
+        "--html=docs/reports/pytest/pytest_report.html",
         "tests/unit",
         "tests/integration",
         "tests/cli",

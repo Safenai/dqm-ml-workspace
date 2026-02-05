@@ -2,3 +2,5 @@
 *
 # Except this file
 !.gitignore
+# And directory to store pytest results in html
+!pytest
