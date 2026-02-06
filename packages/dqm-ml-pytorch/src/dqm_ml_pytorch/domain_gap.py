@@ -167,6 +167,8 @@ class DomainGapProcessor(DatametricProcessor):
         """Compute a domain-gap metric from two dataset-level summaries."""
         if not getattr(self, "_checked", False):
             self.check_config()
+        # TODO : check config and available metrics outside of computation
+        # TODO : add a return code error in th API
 
         def vec(a: pa.FixedSizeListArray) -> Any:  # TODO : check type error np.ndarray
             len_a = len(a[0])
@@ -199,7 +201,7 @@ class DomainGapProcessor(DatametricProcessor):
             if metric == "mmd_linear":
                 diff = mu1 - mu2
                 val = float(np.dot(diff, diff))
-                return {"metric": pa.array([metric]), "value": pa.array([val], type=pa.float64())}
+                return {"mmd_linear": pa.array([val], type=pa.float64())}
 
             v1 = np.maximum(vec(source["sum_sq"]) / n1 - mu1 * mu1, 1e-9)
             v2 = np.maximum(vec(target["sum_sq"]) / n2 - mu2 * mu2, 1e-9)
@@ -208,7 +210,7 @@ class DomainGapProcessor(DatametricProcessor):
                 term_var = np.sum(v1 / v2 - 1.0 - np.log(v1 / v2))
                 term_mean = np.sum((mu2 - mu1) ** 2 / v2)
                 val = 0.5 * (term_var + term_mean)
-                return {"metric": pa.array([metric]), "value": pa.array([float(val)], type=pa.float64())}
+                return {"klmvn_diag": pa.array([float(val)], type=pa.float64())}
 
             if metric == "fid":
                 so1 = vec(source["sum_outer"])
@@ -228,7 +230,7 @@ class DomainGapProcessor(DatametricProcessor):
                 if np.iscomplexobj(covmean):
                     covmean = covmean.real
                 fid = diff.dot(diff) + np.trace(s1) + np.trace(s2) - 2 * np.trace(covmean)
-                return {"metric": pa.array([metric]), "value": pa.array([float(abs(fid))], type=pa.float64())}
+                return {"fid": pa.array([float(abs(fid))], type=pa.float64())}
 
         if metric == "wasserstein_1d":
             if "hist_counts" not in source or "hist_counts" not in target:
@@ -244,8 +246,8 @@ class DomainGapProcessor(DatametricProcessor):
             total = 0.0
             used = 0
             for j in range(use_dims):
-                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)
-                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)
+                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
+                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
                 if h1.sum() == 0 and h2.sum() == 0:
                     continue
                 p = h1 / max(1.0, h1.sum())
@@ -255,6 +257,6 @@ class DomainGapProcessor(DatametricProcessor):
                 total += float(np.sum(np.abs(cdf_p - cdf_q)) * width)
                 used += 1
             val = total / max(1, used)
-            return {"metric": pa.array([metric]), "value": pa.array([val], type=pa.float64())}
+            return {"wasserstein_1d": pa.array([val], type=pa.float64())}
 
         return {"metric": pa.array([metric]), "note": pa.array(["unsupported metric or invalid inputs"])}

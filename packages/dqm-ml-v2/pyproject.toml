@@ -1,10 +1,9 @@
 [project]
-name = "dqm-ml"
+name = "dqm-ml-v2"
 dynamic = ["version","dependencies"]
 description = "Python library designed to compute data quality metrics for Machine Learning"
 authors = [
   {name = "Safenai", email="support@safenai.io"},   
-  {name = "IRT SystemX", email="support@irt-systemx.fr"},
 ]
 
 license ="Apache-2.0"
@@ -29,18 +28,19 @@ classifiers = [
 
 notebooks = [
     "jupyter>=1.0.0",
-    "matplotlib>=3.3.0",
-    "seaborn>=0.11.0",
     "plotly>=5.0.0",
 ]
 
-pipeline = [
-    "dqm-ml-pipeline>=0.0.1"
-]
+job = [ "dqm-ml-pipeline>=1.1.4"]
+pytorch = [ "dqm-ml-images>=1.1.4"]
+images = [ "dqm-ml-images>=1.1.4"]
 
 all = [
-    "dqm-ml[notebooks, pipeline]"
+    "dqm-ml[notebooks, job, pytorch, images]",
 ]
+
+
+
 
 [project.urls]
 Homepage = "https://irt-systemx.github.io/dqm-ml"
@@ -48,6 +48,7 @@ Documentation = "https://irt-systemx.github.io/dqm-ml"
 Repository = "https://github.com/IRT-SystemX/dqm-ml"
 
 [project.scripts]
+dqm-ml-v2 = "dqm_ml.__main__:execute"
 dqm-ml = "dqm_ml.__main__:execute"
 
 [tool.setuptools.dynamic]

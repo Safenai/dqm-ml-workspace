@@ -53,7 +53,6 @@ class RepresentativenessProcessor(DatametricProcessor):
         self.metrics: list[str] = list(
             cfg.get("metrics", ["chi-square", "grte", "kolmogorov-smirnov", "shannon-entropy"])
         )
-        self.input_columns: list[str] = list(cfg.get("input_columns", []))
 
         self.bins: int = int(cfg.get("bins", 10))
         self.distribution: str = str(cfg.get("distribution", "normal")).lower()
@@ -97,6 +96,35 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         self._bin_edges: dict[str, np.ndarray] = {}
         self._initialized: bool = False
+
+    @override
+    def generated_metrics(self) -> list[str]:
+        """
+        Return the list of metric columns that will be generated.
+
+        Returns:
+            List of output metric column names
+        """
+        # TODO : manage output metrics names with configuration
+        # for now we follow a fixed naming convention
+        metrics = []
+        for col in self.input_columns:
+            if "chi-square" in self.metrics:
+                metrics.append(f"{col}_chi-square_p_value")
+                metrics.append(f"{col}_chi-square_statistic")
+                metrics.append(f"{col}_chi-square_interpretation")
+            if "kolmogorov-smirnov" in self.metrics:
+                metrics.append(f"{col}_kolmogorov-smirnov_p_value")
+                metrics.append(f"{col}_kolmogorov-smirnov_statistic")
+                metrics.append(f"{col}_kolmogorov-smirnov_interpretation")
+            if "shannon-entropy" in self.metrics:
+                metrics.append(f"{col}_shannon-entropy_entropy")
+                metrics.append(f"{col}_shannon-entropy_interpretation")
+            if "grte" in self.metrics:
+                metrics.append(f"{col}_grte_grte_value")
+                metrics.append(f"{col}_grte_interpretation")
+
+        return metrics
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:

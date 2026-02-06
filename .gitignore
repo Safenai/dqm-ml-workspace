@@ -16,12 +16,14 @@ __pycache__
 .ruff_cache
 .venv
 # Pytest report
-pytest_report.html
+**/pytest_report.html
+docs/examples
 assets
+
 # Test images
-packages/dqm-ml-pipeline/tests/data/img
-packages/dqm-ml-pipeline/tests/config_generated
-packages/dqm-ml-pipeline/tests/data_generated
+tests/config_generated
+tests/fixtures/config/generated
+tests/outputs
 
 # Dynamic versioning
 **/_version_.py

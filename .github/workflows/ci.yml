@@ -4,9 +4,11 @@ on:
   push:
     branches:
     - main
+    - dev
   pull_request:
     branches:
     - main
+    - dev
 
 env:
   UV_VERSION: "0.8.17"
@@ -38,8 +40,14 @@ jobs:
       - name: Test with Nox
         run: uv run nox -s ${{ matrix.nox-session }}
 
-  container:
+  compatibility:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        # dqml v1 requires python >= 3.11
+        # 3.11: ImportError: cannot import name 'override' from 'typing'
+        python-version: [ "3.12", "3.13" ]
+        # python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,16 +55,161 @@ jobs:
           submodules: recursive
           lfs: false
 
-      - name: Validate build configuration
-        uses: docker/build-push-action@v6
-        with:
-          call: check
-          context: .
-          file: ./Dockerfile
+      - name: Create Git LFS file list
+        run: git lfs ls-files -l |cut -d' ' -f1 |sort >.git/lfs-hashes.txt
 
-      - name: Build Container Image
-        uses: docker/build-push-action@v6
+      - name: Restore Git LFS object cache
+        uses: actions/cache@v4
         with:
-          push: false
-          context: .
-          file: ./Dockerfile
+          path: .git/lfs
+          key: ${{ runner.os }}-lfsdata-v1-${{ hashFiles('.git/lfs-hashes.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-lfsdata-v1-
+            ${{ runner.os }}-lfsdata
+
+      - name: Fetch any needed Git LFS objects and prune extraneous ones
+        run: git lfs fetch --prune
+
+      - name: Check out Git LFS content
+        run: git lfs checkout
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compatibility with Nox
+        run: uv run nox -s compatibility-${{ matrix.python-version }}  
+
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Create Git LFS file list
+        run: git lfs ls-files -l |cut -d' ' -f1 |sort >.git/lfs-hashes.txt
+
+      - name: Restore Git LFS object cache
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfsdata-v1-${{ hashFiles('.git/lfs-hashes.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-lfsdata-v1-
+            ${{ runner.os }}-lfsdata
+
+      - name: Fetch any needed Git LFS objects and prune extraneous ones
+        run: git lfs fetch --prune
+
+      - name: Check out Git LFS content
+        run: git lfs checkout
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Restore coco dataset from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/fiftyone
+          key: dqm-test-coco-dataset
+
+      - name: Restore resnet from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/torch
+          key: dqm-test-resnet
+
+      - name: Test with Nox
+        # Step with only quick tests, with condition on pushes and pulol request to dev
+        if: github.event.pull_request.base.ref == 'dev' || github.ref == 'refs/heads/dev'
+        run: uv run nox -s test-${{ matrix.python-version }} -- -m "not slow"
+
+      - name: Test with Nox
+        # Step with all tests, with condition on pushes and pulol request to main
+        if: github.event.pull_request.base.ref == 'main' || github.ref == 'refs/heads/main'
+        run: uv run nox -s test-${{ matrix.python-version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: docs/reports/pytest
+          retention-days: 1
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pytest-coverage
+          path: docs/reports/htmlcov
+          retention-days: 1
+          overwrite: true
+
+      - name: Update cache containing coco dataset
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: /home/runner/fiftyone
+          key: dqm-test-coco-dataset
+
+      - name: Update cache containing resnet
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: /home/runner/.cache/torch
+          key: dqm-test-resnet
+
+  pages:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pytest-results
+          path: docs/reports/pytest
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pytest-coverage
+          path: docs/reports/htmlcov
+
+      - name: Publish Docs
+        run: uv run nox -s docs_github_pages

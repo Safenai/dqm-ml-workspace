@@ -27,7 +27,8 @@ theme:
     - navigation.indexes
     - navigation.expand
     - navigation.footer
-    - navigation.instant
+    # conflict with navigation.tracking
+    #- navigation.instant
     - navigation.top
     - navigation.tracking
     - search.highlight
@@ -51,6 +52,7 @@ markdown_extensions:
   - md_in_html
 extra_css:
   - static/stylesheets/extra.css
+  - static/stylesheets/pytest.css
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -95,5 +97,30 @@ repo_name: dqm-ml-workspace
 repo_url: https://github.com/Safenai/dqm-ml-workspace
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
-  - index.md
-  - Example: examples/multiple_metrics_tests_v2.ipynb
+  - Home: index.md
+  - Getting Started:
+    - Overview: dqm-ml-v2.md
+    - Installation: index.html#installation
+  - User Guide:
+    - cli usage: configuration.md
+    - direct call: TBD1.md
+  - Metrics: 
+    - Overview: metrics.md
+    - Completeness : metrics/completeness.md
+    - Domain gap : metrics/domain_gap.md
+    - Representativeness : metrics/representativeness.md
+    - Visual features : metrics/visual_features.md
+  - Tuitorials and Examples:
+    - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
+  # TODO: Uncomment when this documentation exists
+  #   - Welding Challenge: tutorials/welding_challenge.md
+  - Test reports:
+    - Pytest report: reports/pytest/pytest_report.html
+    - Coverage Report: reports/htmlcov/coverage_report.html
+    - Performance Report: TBD2.md
+  - Developer Guide:
+    - Contributing: contributing.md
+    - Roadmap: ROADMAP.md
+
+  - API Reference: reference/
+

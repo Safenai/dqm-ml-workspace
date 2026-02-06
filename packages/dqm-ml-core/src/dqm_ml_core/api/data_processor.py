@@ -73,7 +73,7 @@ class DatametricProcessor:
         outputs = getattr(self, "output_metrics", {})
         return list(outputs.values())
 
-    def compute_features(self, batch: pa.RecordBatch, prev_features: pa.Array = None) -> dict[str, pa.Array]:
+    def compute_features(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """
         Compute the features for a given batch.
         By default we return the needed columns for metric computation
@@ -86,6 +86,10 @@ class DatametricProcessor:
         features = {}
 
         for col in self.needed_columns():
+            if col in prev_features:
+                # feature already computed no neet to add it again
+                continue
+
             if col not in batch.schema.names:
                 logger.warning(f"[{self.name}] column '{col}' not found in batch")
                 continue
