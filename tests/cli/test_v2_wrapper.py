@@ -14,7 +14,7 @@ test_cases = [
         "- representativeness - <class 'dqm_ml_core.metrics.representativeness.RepresentativenessProcessor'>\n"
         "- domain_gap - <class 'dqm_ml_pytorch.domain_gap.DomainGapProcessor'>\n"
         "- image_embedding - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
-        "- visual_metrique - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
+        "- visual_metric - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
         "Available data loaders\n"
         "- csv - <class 'dqm_ml_pipeline.dataloaders.pandas.PandasDataLoader'>\n"
         "- parquet - <class 'dqm_ml_pipeline.dataloaders.parquet.ParquetDataLoader'>\n"

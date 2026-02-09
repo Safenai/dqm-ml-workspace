@@ -64,14 +64,14 @@ Install the DQM-ML V2 framework with all available metrics and helpers using pip
 pip install "dqm-ml-v2[all]" 
 ```
 
-Install the DQM-ML V2 framework by passing only needed optional dependecy:
+Install the DQM-ML V2 framework by passing only needed optional dependency:
 > :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
 
 ```bash
 pip install "dqm-ml-v2[notebooks, pytorch, job, images ]" 
 ```
 
-Manualy install all packages:
+Manually install all packages:
 > :warning: for version <v2.0.0> the dqm-ml version installed is the legacy version, you have access to the **process** command
 
 ```bash
@@ -103,7 +103,7 @@ def compute_metric() -> None:
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
-        # Execute the job with the loaded configuration, output are directlu saved to disk
+        # Execute the job with the loaded configuration, output are directly saved to disk
         exec_qml_job(config["pipeline_config"])
 
         # A more granular API will be provided in future releases to access intermediate results
@@ -113,10 +113,10 @@ if __name__ == "__main__":
 ```
 
 ```bash
-python examples/script/completness.py
+python examples/script/completeness.py
 ```
 
-this example can be found in `examples/script/completness.py'` and executed with
+this example can be found in `examples/script/completeness.py'` and executed with
 
 ## Direct usage of metrics from your python code on data
 

@@ -34,7 +34,7 @@ metrics_processor:
 
   # Visual feature extraction
   quality_check:
-    type: visual_metrique
+    type: visual_metric
     input_columns: ["image_bytes"]
 ```
 
@@ -68,7 +68,7 @@ metrics_processor:
     include_per_column: true
 
   visual:
-    type: visual_metrique
+    type: visual_metric
     input_columns: ["img"]
 
 outputs:

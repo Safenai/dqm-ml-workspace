@@ -6,7 +6,7 @@ The Visual Features metric extracts standard image quality indicators from image
 
 * **Class**: `VisualFeaturesProcessor`
 * **Package**: `dqm-ml-images`
-* **Type Name**: `visual_metrique`
+* **Type Name**: `visual_metric`
 
 ## Computed Features
 
@@ -25,7 +25,7 @@ The Visual Features metric extracts standard image quality indicators from image
 ```yaml
 metrics_processor:
   image_quality:
-    type: visual_metrique
+    type: visual_metric
     input_columns: ["image_data"]
     grayscale: true
 ```

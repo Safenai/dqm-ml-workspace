@@ -14,7 +14,7 @@ pipeline_config:
   metrics_processor:
 
     visual_features:
-      type: visual_metrique
+      type: visual_metric
       input_columns: [image_bytes]
       output_features: 
         blur_level : m_blur_level

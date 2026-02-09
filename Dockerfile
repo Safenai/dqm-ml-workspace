@@ -51,7 +51,7 @@ COPY .git .git
 RUN uv sync --locked --no-default-groups --no-install-project
 
 # Copy in source files.
-# README.md is required for the package to build. It can be ommited for non-package applications.
+# README.md is required for the package to build. It can be omitted for non-package applications.
 COPY README.md ./
 COPY src src
 

@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class ImageEmbeddingProcessor(DatametricProcessor):
     """
     Compute one latent vector per row from images stored in Parquet.
-    TODO: tester aussi les paths des images
     Config:
       input_columns:
         image_column: "image_bytes" | "image_path" (default: "image_bytes")
@@ -34,7 +33,11 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         device: "cpu" | "cuda" (default: "cpu")
     """
 
-    def __init__(self, name: str = "image_embedding", config: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        name: str = "image_embedding",
+        config: dict[str, Any] | None = None,
+    ):
         super().__init__(name, config)
         self._checked = False
 
@@ -53,7 +56,10 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         logger.info(f"[ImageEmbeddingProcessor] dataset_root_path = '{self.dataset_root_path}'")
 
         icfg = cfg.get("INFER", {})
-        self.size: tuple[int, int] = (int(icfg.get("width", 224)), int(icfg.get("height", 224)))
+        self.size: tuple[int, int] = (
+            int(icfg.get("width", 224)),
+            int(icfg.get("height", 224)),
+        )
         mean = icfg.get("norm_mean", [0.485, 0.456, 0.406])
         std = icfg.get("norm_std", [0.229, 0.224, 0.225])
         self.batch_size: int = int(icfg.get("batch_size", 32))

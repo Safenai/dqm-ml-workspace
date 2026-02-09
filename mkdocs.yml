@@ -111,7 +111,7 @@ nav:
     - Domain gap : metrics/domain_gap.md
     - Representativeness : metrics/representativeness.md
     - Visual features : metrics/visual_features.md
-  - Tuitorials and Examples:
+  - Tutorials and Examples:
     - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md

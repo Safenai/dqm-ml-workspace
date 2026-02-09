@@ -5,8 +5,6 @@
 pipeline_config: 
 
   # Configuration for the data loader
-  # Pour Domain Gap, on utilise PLUSIEURS dataloaders
-  # Le gap sera calculé entre source et target
   dataloaders:
     source_dataset:
       type: parquet
@@ -17,7 +15,7 @@ pipeline_config:
     
   metrics_processor:
 
-    #Représentativité (distribution fitting) : voir aussi la comparaison entre deux distributions
+    # Representativeness (distribution fitting)
     representativeness:
       type: representativeness
 
@@ -39,7 +37,7 @@ pipeline_config:
 
       distribution: normal  # ou uniform
       bins: 20
-      distribution_params:  # optionnel : forcer mean/std et si uniforme min/max
+      distribution_params:  # optional : force mean/std and if uniform min/max
         # mean: 128.0
         # std: 50.0
 
@@ -47,6 +45,6 @@ pipeline_config:
       
     metrics:
       type: parquet 
-      path_pattern: tests/outputs/representativness.parquet
+      path_pattern: tests/outputs/representativeness.parquet
       columns: []
       

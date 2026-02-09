@@ -29,7 +29,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
         "entropy": "m_entropy",
     }
 
-    def __init__(self, name: str = "visual_metrique", config: dict[str, Any] | None = None) -> None:
+    def __init__(self, name: str = "visual_metric", config: dict[str, Any] | None = None) -> None:
         super().__init__(name, config)
 
         # Local view of config for convenience
@@ -86,7 +86,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
         col = batch.column(image_column)
         values = col.to_pylist()  #
-        # Utilise rqque les l'image grise
+        # Use grayscale image
         gray_images: list[Any] = []
         for idx, v in enumerate(values):
             try:
@@ -125,7 +125,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
     def reset(self) -> None:
         pass
 
-    # TODO : voir si on peut les vectoriser / paralleliser
+    # TODO : Check if it can be vectorized, parallelized
 
     def _compute_luminosity_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
         """Compute luminosity (mean gray level) for each image."""
@@ -238,7 +238,13 @@ class VisualFeaturesProcessor(DatametricProcessor):
         if self.laplacian_kernel == "5x5":
             # 5x5 Laplacian (approx.)
             k = np.array(
-                [[0, 0, -1, 0, 0], [0, -1, -2, -1, 0], [-1, -2, 16, -2, -1], [0, -1, -2, -1, 0], [0, 0, -1, 0, 0]],
+                [
+                    [0, 0, -1, 0, 0],
+                    [0, -1, -2, -1, 0],
+                    [-1, -2, 16, -2, -1],
+                    [0, -1, -2, -1, 0],
+                    [0, 0, -1, 0, 0],
+                ],
                 dtype=np.float32,
             )
         else:
@@ -277,6 +283,6 @@ class VisualFeaturesProcessor(DatametricProcessor):
         kf = np.flipud(np.fliplr(kernel)).astype(np.float32)
         for i in range(ih):
             for j in range(iw):
-                region = padded[i : i + kh, j : j + kw]  # noqa 501
+                region = padded[i : i + kh, j : j + kw]
                 out[i, j] = float(np.sum(region * kf))
         return out
