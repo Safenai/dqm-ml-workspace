@@ -2,12 +2,14 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+The following table describes which released versions currently receive
+security updates. We generally provide security fixes for the latest patch
+release of the most recent minor series.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.1.5   | :white_check_mark: |
+| Version  | Supported              |
+| -------- | ---------------------- |
+| 1.1.x    | :white_check_mark:     |
+| 1.0.x    | :x:                    |
 
 
 ## Reporting a Vulnerability
