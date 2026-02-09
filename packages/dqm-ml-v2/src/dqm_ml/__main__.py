@@ -72,7 +72,7 @@ def execute(arg_list: list[str] | None = None) -> None:
     if args.command in command_list and command_list[args.command] is not None:
         command_list[args.command](remaining)
     else:
-        raise ValueError(f"Unkow comand {args.command}")
+        raise ValueError(f"Unknown command {args.command}")
 
 
 if __name__ == "__main__":
