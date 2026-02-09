@@ -1,6 +1,5 @@
 import shutil
 import pytest
-import pyarrow as pa
 import pyarrow.parquet as pq
 from dqm_ml_pipeline.outputwriter.parquet import ParquetOutputWriter
 
