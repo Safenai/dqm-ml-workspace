@@ -77,11 +77,12 @@ def test_dev(s: Session) -> None:
             [
                 "ruff",
                 "check",
-                ".",
+                "packages",
                 "--select",
                 "I",
                 # Also remove unused imports.
                 "--select",
+
                 "F401",
                 "--extend-fixable",
                 "F401",
@@ -163,6 +164,25 @@ def type_check(s: Session) -> None:
 
 # Environment variable needed for mkdocstrings-python to locate source files.
 doc_env = {"PYTHONPATH": "packages"}
+
+
+@session(venv_backend="none")
+def docs(s: Session) -> None:
+    s.run(
+        "mkdocs",
+        "build",
+        "--strict",
+        env=doc_env,
+    )
+
+
+@session(venv_backend="none")
+def docs_serve(s: Session) -> None:
+    s.run(
+        "mkdocs",
+        "serve",
+        env=doc_env,
+    )
 
 
 @session(venv_backend="none")
