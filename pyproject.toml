@@ -3,7 +3,7 @@ name = "dqm-workspace"
 version = "1.1.4"
 requires-python = ">=3.10"
 dependencies = [
-    "dqm-ml-v2",
+    "dqm-ml-v2>=1.1.4",
     "dqm-ml-core",
     "dqm-ml-images",
     "dqm-ml-pipeline",
@@ -35,7 +35,7 @@ dqm-ml-pytorch = { workspace = true }
 dqm-ml-v2 = { workspace = true }
 
 [tool.uv]
-default-groups = "all"
+default-groups = ["nox", "lint", "type_check"]
 
 [tool.uv.workspace]
 members = ["packages/*"]
@@ -59,7 +59,8 @@ test = [
     "pytest-sugar",
     "pytest-timeout",
     # to download open source datasets
-    "fiftyone"
+    "fiftyone",
+    "strawberry-graphql==0.287.3" # TODO : pinning to avoid deprecated dependency issue with fiftyone
 ]
 
 type_check = [

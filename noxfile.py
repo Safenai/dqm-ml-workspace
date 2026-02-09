@@ -58,12 +58,6 @@ def test_dev(s: Session) -> None:
         *s.posargs,
     )
 
-
-# TODO Test management improvment
-# - add a way to iterate on package tests and update coverage level to 100%
-# - move test to repository level
-# - create tests with session not including all packages to validate dependency managment
-
 # For some sessions, set venv_backend="none" to simply execute scripts within the existing outer
 # uv-generated virtual environment, rather than have nox create a new one for each session. This
 # makes commonly repeated sessions execute faster.
@@ -166,7 +160,10 @@ def type_check(s: Session) -> None:
 doc_env = {"PYTHONPATH": "packages"}
 
 
-@session(venv_backend="none")
+@session(
+    python=["3.12"],
+    uv_groups=["docs"],
+)
 def docs(s: Session) -> None:
     s.run(
         "mkdocs",
@@ -176,7 +173,10 @@ def docs(s: Session) -> None:
     )
 
 
-@session(venv_backend="none")
+@session(
+    python=["3.12"],
+    uv_groups=["docs"],
+)
 def docs_serve(s: Session) -> None:
     s.run(
         "mkdocs",
@@ -185,7 +185,10 @@ def docs_serve(s: Session) -> None:
     )
 
 
-@session(venv_backend="none")
+@session(
+    python=["3.12"],
+    uv_groups=["docs"],
+)
 def docs_offline(s: Session) -> None:
     s.run(
         "mkdocs",
@@ -195,11 +198,10 @@ def docs_offline(s: Session) -> None:
     )
 
 
-# Environment variable needed for mkdocstrings-python to locate source files.
-doc_env = {"PYTHONPATH": "packages"}
-
-
-@session(venv_backend="none")
+@session(
+    python=["3.12"],
+    uv_groups=["docs"],
+)
 def docs_github_pages(s: Session) -> None:
     s.run("mkdocs", "gh-deploy", "--force", env=doc_env)
 
