@@ -24,7 +24,7 @@ class _HelpAction(argparse._HelpAction):
             if namespace.command in command_list and command_list[namespace.command] is not None:
                 command_list[namespace.command](["-h"])
             else:
-                raise ValueError(f"Unkown command {namespace.command}")
+                raise ValueError(f"Unknown command {namespace.command}")
         else:
             parser.print_help()
             parser.exit()
