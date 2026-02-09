@@ -1,4 +1,3 @@
-import os
 import shutil
 import pytest
 import pyarrow as pa
