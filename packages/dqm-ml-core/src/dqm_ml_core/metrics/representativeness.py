@@ -25,7 +25,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
     """
 
-    SUPPORTED_METRICS = {"chi-square", "grte", "shannon-entropy", "kolmogorov-smirnov"}
+    SUPPORTED_METRICS = {
+        "chi-square",
+        "grte",
+        "shannon-entropy",
+        "kolmogorov-smirnov",
+    }
     SUPPORTED_DISTS = {"normal", "uniform"}
 
     # Configuration constants - can be overridden in config
@@ -45,15 +50,21 @@ class RepresentativenessProcessor(DatametricProcessor):
         "low_representativeness": "low_representativeness",
     }
 
-    def __init__(self, name: str = "representativeness", config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        name: str = "representativeness",
+        config: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(name, config)
         self.name = name
 
         cfg = self.config
         self.metrics: list[str] = list(
-            cfg.get("metrics", ["chi-square", "grte", "kolmogorov-smirnov", "shannon-entropy"])
+            cfg.get(
+                "metrics",
+                ["chi-square", "grte", "kolmogorov-smirnov", "shannon-entropy"],
+            )
         )
-        self.input_columns: list[str] = list(cfg.get("input_columns", []))
 
         self.bins: int = int(cfg.get("bins", 10))
         self.distribution: str = str(cfg.get("distribution", "normal")).lower()
@@ -61,7 +72,10 @@ class RepresentativenessProcessor(DatametricProcessor):
         # Load configurable constants from config or use defaults
         self.alpha: float = float(cfg.get("alpha", self.DEFAULT_ALPHA))
         self.shannon_entropy_threshold: float = float(
-            cfg.get("shannon_entropy_threshold", self.DEFAULT_SHANNON_ENTROPY_THRESHOLD)
+            cfg.get(
+                "shannon_entropy_threshold",
+                self.DEFAULT_SHANNON_ENTROPY_THRESHOLD,
+            )
         )
         self.grte_threshold: float = float(cfg.get("grte_threshold", self.DEFAULT_GRTE_THRESHOLD))
         self.ks_sample_size: int = int(cfg.get("ks_sample_size", self.DEFAULT_KS_SAMPLE_SIZE))
@@ -99,6 +113,35 @@ class RepresentativenessProcessor(DatametricProcessor):
         self._initialized: bool = False
 
     @override
+    def generated_metrics(self) -> list[str]:
+        """
+        Return the list of metric columns that will be generated.
+
+        Returns:
+            List of output metric column names
+        """
+        # TODO : manage output metrics names with configuration
+        # for now we follow a fixed naming convention
+        metrics = []
+        for col in self.input_columns:
+            if "chi-square" in self.metrics:
+                metrics.append(f"{col}_chi-square_p_value")
+                metrics.append(f"{col}_chi-square_statistic")
+                metrics.append(f"{col}_chi-square_interpretation")
+            if "kolmogorov-smirnov" in self.metrics:
+                metrics.append(f"{col}_kolmogorov-smirnov_p_value")
+                metrics.append(f"{col}_kolmogorov-smirnov_statistic")
+                metrics.append(f"{col}_kolmogorov-smirnov_interpretation")
+            if "shannon-entropy" in self.metrics:
+                metrics.append(f"{col}_shannon-entropy_entropy")
+                metrics.append(f"{col}_shannon-entropy_interpretation")
+            if "grte" in self.metrics:
+                metrics.append(f"{col}_grte_grte_value")
+                metrics.append(f"{col}_grte_interpretation")
+
+        return metrics
+
+    @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """Compute partial histogram statistics per batch for streaming aggregation."""
         batch_metrics = {}
@@ -129,12 +172,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             edges = self._bin_edges[col]
 
-            # Ddebeug
+            # Debug
             logger.debug(f"[{self.name}] edges shape: {edges.shape}, values shape: {values.shape}")
 
             hist_counts = np.histogram(values, bins=edges)[0].astype(np.int64)
 
-            # debeug: vérifier l'histogramme
+            # debug: check histogram
             logger.debug(f"[{self.name}] hist_counts shape: {hist_counts.shape}, expected: {self.bins}")
 
             # store as Arrow arrays for aggregation
@@ -145,11 +188,15 @@ class RepresentativenessProcessor(DatametricProcessor):
             )
 
             # sampling for KS test approximation
-            # TODO: KS need to have all the data un memory to compute,
+            # TODO: KS need to have all the data in memory to compute,
             # this metrics need to rely on other metrics prior computation of mean, std, min, max computation
             if "kolmogorov-smirnov" in self.metrics or "chi-square" in self.metrics:
                 sample_per_batch = min(
-                    self.ks_sample_size, max(self.ks_min_sample_size, len(values) // self.ks_sample_divisor)
+                    self.ks_sample_size,
+                    max(
+                        self.ks_min_sample_size,
+                        len(values) // self.ks_sample_divisor,
+                    ),
                 )
                 if len(values) > sample_per_batch:
                     # Random sampling without replacement
@@ -222,16 +269,16 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             # sum histogram counts across batches
             if hist_arrays.ndim == 1:
-                # Single histogram
+                logger.debug("Single histogram")
                 obs_counts = hist_arrays.astype(float)
             else:
-                # Multiple histograms from different batches
                 # Ensure we're summing along the right axis
+                logger.debug("Multiple histograms from different batches")
                 if hist_arrays.shape[1] == self.bins:
-                    # Sum along batch dimension (axis=0)
+                    logger.debug("Sum along batch dimension (axis=0)")
                     obs_counts = np.sum(hist_arrays, axis=0).astype(float)
                 else:
-                    # Flatten and create a single histogram
+                    logger.debug("Flatten and create a single histogram")
                     logger.warning(f"[{self.name}] Unexpected histogram shape {hist_arrays.shape}, flattening")
                     obs_counts = hist_arrays.flatten().astype(float)
 
@@ -250,10 +297,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             # theoretical probabilities - Aligné sur DQM-ML officiel
             if self.distribution == "normal":
+                logger.debug("Generate normal distribution")
                 # Utilise les MÊMES paramètres que ceux utilisés pour générer les bins
 
                 sample_key = f"{col}_ks_sample"
                 if sample_key in batch_metrics:
+                    logger.debug("Use sampled meand and std")
                     sample_arrays = batch_metrics[sample_key].to_numpy()
                     if sample_arrays.ndim > 1:
                         sample_arrays = sample_arrays.flatten()
@@ -261,15 +310,20 @@ class RepresentativenessProcessor(DatametricProcessor):
                     std = float(self.dist_params.get("std", np.std(sample_arrays, ddof=0)))
                     std = std if std > 0.0 else self.epsilon
                 else:
-                    # Fallback: use default or configured parameters
+                    logger.debug("Fallback: use default or configured mean and std")
                     mean = float(self.dist_params.get("mean", 0.0))
                     std = float(self.dist_params.get("std", 1.0))
+                logger.debug(f"mean={mean}")
+                logger.debug(f"std={mean}")
                 # génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
                 expected_values = np.random.normal(mean, std, total_count)
                 exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
             else:  # uniform
+                logger.debug("Generate uniform distribution")
                 mn = float(self.dist_params.get("min", edges[0]))
                 mx = float(self.dist_params.get("max", edges[-1]))
+                logger.debug(f"min={mn}")
+                logger.debug(f"max={mx}")
                 # Génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
                 expected_values = np.random.uniform(mn, mx, total_count)
                 exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
@@ -284,7 +338,7 @@ class RepresentativenessProcessor(DatametricProcessor):
 
                 mask = exp_counts > 0
                 if mask.sum() >= 2:
-                    # Normalize expected counts to match observed sum
+                    logger.debug("Normalize expected counts to match observed sum")
                     obs_sum = obs_counts[mask].sum()
                     exp_sum = exp_counts[mask].sum()
 
@@ -292,8 +346,17 @@ class RepresentativenessProcessor(DatametricProcessor):
                         # Scale expected counts to match observed sum
                         exp_counts_normalized = exp_counts[mask] * (obs_sum / exp_sum)
 
+                        logger.debug("Expected frequencies:")
+                        logger.debug(exp_counts_normalized)
+                        logger.debug("Observed frequencies: ")
+                        logger.debug(obs_counts[mask])
+
                         try:
-                            chi = stats.chisquare(obs_counts[mask], f_exp=exp_counts_normalized)
+                            chi = stats.chisquare(
+                                f_obs=obs_counts[mask],
+                                f_exp=exp_counts_normalized,
+                            )
+                            logger.debug(f"Chi P value: {chi.pvalue}")
                             col_res["chi-square"] = {
                                 "p_value": float(chi.pvalue),
                                 "statistic": float(chi.statistic),
@@ -344,7 +407,11 @@ class RepresentativenessProcessor(DatametricProcessor):
                             mx = float(self.dist_params.get("max", np.max(ks_samples)))
                             if mx <= mn:
                                 mx = mn + self.epsilon
-                            ks = stats.kstest(ks_samples, stats.uniform.cdf, args=(mn, mx - mn))
+                            ks = stats.kstest(
+                                ks_samples,
+                                stats.uniform.cdf,
+                                args=(mn, mx - mn),
+                            )
 
                         col_res["kolmogorov-smirnov"] = {
                             "p_value": float(ks.pvalue),
@@ -369,9 +436,9 @@ class RepresentativenessProcessor(DatametricProcessor):
                         "interpretation": "no_sample_data_found",
                     }
 
-            # Shannon entropy - Aligné sur DQM-ML officiel (utilise fréquences théoriques)
+            # Shannon entropy - aligned on dqm-ml v1 (using theoretical frequencies)
             if "shannon-entropy" in self.metrics:
-                # Utilise les fréquences théoriques comme l'officiel
+                # Use theoretical frequencies
                 p_exp = exp_probs / exp_probs.sum()
                 h_exp = float(stats.entropy(p_exp))
                 col_res["shannon-entropy"] = {
@@ -382,9 +449,9 @@ class RepresentativenessProcessor(DatametricProcessor):
                     ),
                 }
 
-            # GRTE (gap between observed and theoretical entropies) - Aligné sur DQM-ML officiel
+            # GRTE (gap between observed and theoretical entropies) - aligned on dqm-ml v1
             if "grte" in self.metrics:
-                # Utilise les fréquences observées et théoriques comme l'officiel
+                # Use observed and theoretical frequencies
                 p_obs = obs_counts / obs_counts.sum()
                 p_exp = exp_probs / exp_probs.sum()
                 h_obs = float(stats.entropy(p_obs))
@@ -399,7 +466,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 }
 
             # Stupid way to flatten tree of keys
-            # TODO : refactor the implementation,for omptimizations
+            # TODO : refactor the implementation,for optimization
             if col_res:
                 for key, value in col_res.items():
                     if isinstance(value, dict):
@@ -432,7 +499,7 @@ class RepresentativenessProcessor(DatametricProcessor):
 
     def _bin_edges_normal(self, mean: float, std: float, bins: int, data: np.ndarray) -> np.ndarray:
         """Return bin edges for normal distribution - Aligné sur DQM-ML officiel."""
-        # Logique officielle : utilise stats.norm.ppf avec linspace(1/bins, 1, bins)
+        # logic from dqm-ml v1 : use stats.norm.ppf with linspace(1/bins, 1, bins)
         interval = []
         for i in range(1, bins):
             val = stats.norm.ppf(i / bins, mean, std)

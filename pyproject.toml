@@ -3,13 +3,15 @@ name = "dqm-workspace"
 version = "1.1.4"
 requires-python = ">=3.10"
 dependencies = [
+    "dqm-ml-v2",
     "dqm-ml-core",
     "dqm-ml-images",
     "dqm-ml-pipeline",
-    "dqm-ml[pipeline]",
+    # "dqm-ml[pipeline]",
     "dqm-ml-pytorch",
     "pre-commit>=4.5.0",
     "pycocotools>=2.0.10",
+    "ruamel-yaml>=0.19.1",
 ]
 
 
@@ -23,22 +25,23 @@ requires = ["uv_build>=0.8.0,<0.9.0"]
 build-backend = "uv_build"
 
 # UV Configuration workspace
-# - dependency groupes, repositoy packages to includes, etc.
+# - dependency groups, repository packages to includes, etc.
 [tool.uv.sources]
 dqm-ml-core = { workspace = true }
 dqm-ml-pipeline = { workspace = true }
 dqm-ml-images = { workspace = true }
 dqm-ml-pytorch = { workspace = true }
-dqm-ml = { workspace = true }
+# dqm-ml = { workspace = true }
+dqm-ml-v2 = { workspace = true }
 
 [tool.uv]
 default-groups = "all"
 
 [tool.uv.workspace]
 members = ["packages/*"]
-exclude = ["packages/dqm-ml-v2"]
+exclude = ["packages/dqm-ml"]
 
-# Dependency gourps of the workspace depending actions performed in the workspace
+# Dependency groups of the workspace depending actions performed in the workspace
 [dependency-groups]
 
 nox = [
@@ -73,10 +76,12 @@ docs = [
     "mkdocs-material",
     "mkdocs-htmlproofer-plugin",
 
-    # Python API documentation (not neccessary for applications).
+    # Python API documentation (not necessary for applications).
     "mkdocstrings[python]",
     # Autodoc.
     "mkdocs-api-autonav",
+    "mkdocs-jupyter",
+    "mkdocs-simple-hooks",
 ]
 
 licenses = [
@@ -162,6 +167,9 @@ filterwarnings = [
     # is throwing a deprecation warning that needs to be fixed upstream:
     # "ignore::DeprecationWarning:typer",
     "ignore::SyntaxWarning",
+]
+markers = [
+    "slow: Marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
 [tool.coverage.run]

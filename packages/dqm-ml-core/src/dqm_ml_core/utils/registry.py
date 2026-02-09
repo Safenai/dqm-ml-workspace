@@ -35,12 +35,12 @@ def load_registered_plugins(plugin_group: str, base_class: Any, base_name: str =
 
 class PluginLoadedRegistry:
     """
-    Class to provide access to registered object for metrics, dataloader, or output writter
+    Class to provide access to registered object for metrics, dataloader, or output writer
     """
 
     _metrics_registry: dict[str, type[DatametricProcessor]] | None = None
     _dataloaders_registry: dict[str, Any] | None = None
-    _outputwiter_registry: dict[str, Any] | None = None
+    _outputwriter_registry: dict[str, Any] | None = None
 
     @classmethod
     def get_metrics_registry(cls) -> dict[str, type[DatametricProcessor]]:
@@ -56,8 +56,8 @@ class PluginLoadedRegistry:
         return cls._dataloaders_registry
 
     @classmethod
-    def get_outputwiter_registry(cls) -> dict[str, Any]:
-        if not cls._outputwiter_registry:
-            cls._outputwiter_registry = load_registered_plugins("dqm_ml.outputwiter", None)  # TODO add base class
+    def get_outputwriter_registry(cls) -> dict[str, Any]:
+        if not cls._outputwriter_registry:
+            cls._outputwriter_registry = load_registered_plugins("dqm_ml.outputwriter", None)  # TODO add base class
 
-        return cls._outputwiter_registry
+        return cls._outputwriter_registry

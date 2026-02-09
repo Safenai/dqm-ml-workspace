@@ -1,0 +1,41 @@
+## Example pipeline configuration with completeness metric
+
+---
+pipeline_config: 
+
+  # Configuration for the data loader
+  dataloaders:
+    source_dataset:
+      type: parquet
+      path: data/large_test_2m.parquet
+      batch_size: 10000
+      memory_limit: 1GB
+      threads: 2
+
+  metrics_processor:
+    completeness:
+      type: completeness
+      #Columns to analyze for completeness : take numerical and categorical columns
+      input_columns: [sample_id, blur_score, contrast, quality_score]
+      
+      # configuration options
+      include_per_column: true    # column completeness scores
+      include_overall: true       # overall dataset completeness score
+      include_metadata: true       # include meta for tests
+
+      # custom output column mappings 
+      output_metrics:
+        overall_completeness: completeness_overall
+        completeness_sample_id: completeness_sample_id
+        completeness_blur_score: completeness_blur_score 
+        completeness_contrast: completeness_contrast
+        completeness_quality_score: completeness_quality_score
+
+
+  outputs:
+    # output dataset-level completeness metrics only
+    metrics:
+      type: parquet
+      path_pattern: tests/outputs/metrics_completeness.parquet
+      columns: []
+      compression: snappy

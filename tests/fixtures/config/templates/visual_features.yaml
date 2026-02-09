@@ -1,0 +1,45 @@
+---
+pipeline_config:
+
+  dataloaders:
+    source_dataset:
+      type: parquet
+ 
+      path:
+      batch_size: 10000
+      memory_limit: 2GB
+      threads: 4
+
+
+  metrics_processor:
+
+    visual_features:
+      type: visual_metric
+      input_columns: [image_bytes]
+      output_features: 
+        blur_level : m_blur_level
+        entropy : m_entropy
+        contrast : m_contrast
+        luminosity : m_luminosity
+
+      output_metrics: None
+
+      metrics: [luminosity, contrast, blur, entropy]
+
+      grayscale: true
+      normalize: true
+      entropy_bins: 256
+      laplacian_kernel: 3x3  # or 5x5 for more accuracy
+
+  outputs :
+    features:
+      type: parquet
+      path_pattern:
+      columns: [
+        m_blur_level,
+        m_entropy,
+        m_contrast,
+        m_luminosity
+      ]
+      compression: snappy
+

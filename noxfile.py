@@ -7,26 +7,21 @@ options.sessions = ["lint", "test", "type_check"]
 
 
 @session(
-    python=["3.9", "3.10", "3.11", "3.12", "3.13"],
+    python=["3.12", "3.13"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
     s.run(
         "pytest",
-        "packages/dqm-ml-core/tests",
+        "tests/unit/core",
         *s.posargs,
     )
     s.run(
         "pytest",
         # Only quick tests for compatibility
-        "packages/dqm-ml-pipeline/tests/test_cli.py",
+        "tests/cli/test_pipeline_cli.py",
         *s.posargs,
     )
-    # s.run(
-    #    "pytest",
-    #    "packages/dqm-ml/tests",
-    #    *s.posargs,
-    # )
 
 
 @session(
@@ -36,35 +31,20 @@ def compatibility(s: Session) -> None:
 def test(s: Session) -> None:
     s.run(
         "pytest",
-        "--cov=packages/dqm-ml-core/src",
-        "--cov-fail-under=1",
-        "packages/dqm-ml-core/tests",
-        *s.posargs,
-    )
-    s.run(
-        "pytest",
-        "--cov-append",
         "--cov=packages/dqm-ml-pipeline/src",
         "--cov=packages/dqm-ml-core/src",
-        "--cov-report=html",
+        "--cov=packages/dqm-ml-pytorch/src",
+        "--cov=packages/dqm-ml-images/src",
+        "--cov=packages/dqm-ml-v2/src",
+        "--cov-report=html:docs/reports/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
-        "packages/dqm-ml-pipeline/tests",
+        "--html=docs/reports/pytest/pytest_report.html",
+        "tests/unit",
+        "tests/integration",
+        "tests/cli",
         *s.posargs,
     )
-
-    # s.run(
-    #    "pytest",
-    #    "--cov-append",
-    #    "--cov=packages/dqm-ml-pipeline/src",
-    #    "--cov=packages/dqm-ml-core/src",
-    #    "--cov=packages/dqm-ml/src",
-    #    "--cov-report=html",
-    #    "--cov-report=term",
-    #    "--cov-fail-under=1",
-    #    "packages/dqm-ml-v2/tests",
-    #    *s.posargs,
-    # )
 
 
 @session(
@@ -74,9 +54,10 @@ def test(s: Session) -> None:
 def test_dev(s: Session) -> None:
     s.run(
         "pytest",
-        "packages/dqm-ml-pipeline/tests",
+        "tests",
         *s.posargs,
     )
+
 
 # TODO Test management improvment
 # - add a way to iterate on package tests and update coverage level to 100%
@@ -96,11 +77,12 @@ def test_dev(s: Session) -> None:
             [
                 "ruff",
                 "check",
-                ".",
+                "packages",
                 "--select",
                 "I",
                 # Also remove unused imports.
                 "--select",
+
                 "F401",
                 "--extend-fixable",
                 "F401",
@@ -129,10 +111,46 @@ def lint(s: Session, command: list[str]) -> None:
 
 @session(venv_backend="none")
 def lint_fix(s: Session) -> None:
-    s.run("ruff", "check", "packages/dqm-ml-pipeline", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-core", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-images", "--extend-fixable", "F401", "--fix")
-    s.run("ruff", "check", "packages/dqm-ml-pytorch", "--extend-fixable", "F401", "--fix")
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-pipeline",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-core",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-images",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-pytorch",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "packages/dqm-ml-v2",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
 
 
 @session(venv_backend="none")
@@ -141,17 +159,45 @@ def type_check(s: Session) -> None:
     s.run("mypy", "packages/dqm-ml-core", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-images", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")
+    s.run("mypy", "packages/dqm-ml-v2", "noxfile.py")
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.
 doc_env = {"PYTHONPATH": "packages"}
+
+
+@session(venv_backend="none")
+def docs(s: Session) -> None:
+    s.run(
+        "mkdocs",
+        "build",
+        "--strict",
+        env=doc_env,
+    )
+
+
+@session(venv_backend="none")
+def docs_serve(s: Session) -> None:
+    s.run(
+        "mkdocs",
+        "serve",
+        env=doc_env,
+    )
+
 
 @session(venv_backend="none")
 def docs_offline(s: Session) -> None:
-    s.run("mkdocs", "build", "--no-strict", env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)})
+    s.run(
+        "mkdocs",
+        "build",
+        "--no-strict",
+        env=doc_env | {"MKDOCS_MATERIAL_OFFLINE": str(True)},
+    )
+
 
 # Environment variable needed for mkdocstrings-python to locate source files.
 doc_env = {"PYTHONPATH": "packages"}
+
 
 @session(venv_backend="none")
 def docs_github_pages(s: Session) -> None:

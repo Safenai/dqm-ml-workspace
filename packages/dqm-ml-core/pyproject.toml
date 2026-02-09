@@ -30,8 +30,6 @@ Homepage = "https://irt-systemx.github.io/dqm-ml"
 Documentation = "https://irt-systemx.github.io/dqm-ml"
 Repository = "https://github.com/IRT-SystemX/dqm-ml"
 
-[project.scripts]
-dqm-ml-pipeline = "dqm_ml_pipeline.cli:execute"
 
 # Registry of exported metrics
 [project.entry-points."dqm_ml.metrics"]

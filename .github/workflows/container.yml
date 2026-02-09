@@ -1,0 +1,33 @@
+name: Container
+
+on:
+  push:
+    branches:
+    - main
+
+permissions:
+  contents: read
+
+jobs:
+  container:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: false
+
+      - name: Validate build configuration
+        uses: docker/build-push-action@v6
+        with:
+          call: check
+          context: .
+          file: ./Dockerfile
+
+      - name: Build Container Image
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          context: .
+          file: ./Dockerfile
