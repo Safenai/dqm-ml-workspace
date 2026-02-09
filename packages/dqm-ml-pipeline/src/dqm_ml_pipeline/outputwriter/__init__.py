@@ -22,7 +22,7 @@ class OutputWriter(Protocol):
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """ """
-        
+
     def write_table(self, name: str, table: Any, part_index: int | None = None) -> None:
         """
         Write a table (features or metrics) to the output.
