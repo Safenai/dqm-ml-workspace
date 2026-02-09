@@ -20,7 +20,7 @@ publicly disclosed.
 
 ### How to report
 
-- Email: `security@example.org`
+- Email: `security@safenai.io`
 - Subject line: `Security report: <short summary>`
 
 Please include the following information in your report:
@@ -34,7 +34,7 @@ Please include the following information in your report:
 ### What to expect
 
 - **Acknowledgement:** We aim to acknowledge receipt of your report within
-  3 business days.
+  7 business days.
 - **Initial assessment:** We will perform an initial assessment and let you
   know whether we can reproduce the issue and how we plan to proceed.
 - **Status updates:** We will provide updates at least every 14 days while
@@ -45,4 +45,4 @@ Please include the following information in your report:
   investigate and release a patch.
 
 If you have questions about this process, you can also contact us at
-`security@example.org` for clarification.
+`security@safenai.io` for clarification.
