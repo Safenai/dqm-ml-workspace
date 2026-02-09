@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.6 (2026-02-10) - upgrade dependency and security check
+
+* Security warning regarding dependency used in uv.lock as reference package version
+  * `urllib3 "2.6.2" => "2.6.3"` : Decompression-bomb safeguards bypassed when following HTTP redirects (streaming API) High
+  * `torch 2.7.1 => 2.10.0` : PyTorch Improper Resource Shutdown or Release vulnerability Moderate
+  * `filelock "3.20.1" => "3.20.3"` : filelock Time-of-Check-Time-of-Use (TOCTOU) Symlink Vulnerability in SoftFileLock Moderate
+  * `pynacl "1.6.1" => "1.6.2"` : libsodium has Incomplete List of Disallowed Inputs Moderate
+  * `virtualenv "20.35.4" => "20.36.1"` : virtualenv Has TOCTOU Vulnerabilities in Directory Creation Moderate
+
+* As `fiftyone` use a deprecated version of `strawberry-graphql` we pin the version to "`strawberry-graphql==0.287.3`
+
+* Other version change associate to uv sync --upgrade
+  * default package version used for development and test upgraded, but without increasing min value dependencies
+
+* Remove dependency needed for test from default installation, only install when targetted nox command are executed
+
+* github-code-quality[bot] findings
+  * SECURITY.md update
+  * `Unkow comand`=> `Unknown command` miss spelling
+
+* add default issues template to github workflow
+
 ## 1.1.5 (2026-02-09)
 
 * Quality correction / ci improvements **Fixed**
