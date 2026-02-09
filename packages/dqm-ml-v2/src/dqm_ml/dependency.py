@@ -26,7 +26,7 @@ def optional_dependencies(error: str = "ignore") -> Generator[None, None, None]:
 def display_version(arg_list: list[str] | None = None) -> None:
     if core_version != version:
         logger.warning(f"Different dqm-ml-core version {core_version} from dqm-ml version {version}")
-    print(f"DQML version : {version}")
+    print(f"DQM-ML version : {version}")
 
 
 def display_list_of(arg_list: list[str] | None = None) -> None:

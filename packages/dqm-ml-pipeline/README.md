@@ -22,4 +22,4 @@ The main orchestrator that:
 ## Built-in Loaders
 
 * `parquet`: Optimized loading using PyArrow.
-* `csv`: Flexibile loading using Pandas.
+* `csv`: Flexible loading using Pandas.

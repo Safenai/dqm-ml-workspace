@@ -5,13 +5,10 @@
 pipeline_config: 
 
   # Configuration for the data loader
-  # Pour Domain Gap, on utilise PLUSIEURS dataloaders
-  # Le gap sera calculé entre source et target
   dataloaders:
     source_dataset:
       type: parquet
-      #path: output/samples.parquet
-      path: /Users/checkkoutame/Desktop/Renare/kc-data-sampling/raw_samples/samples_raw_with_inference.parquet
+      path: /tmp/raw_samples/samples_raw_with_inference.parquet
       batch_size: 50000
       memory_limit: 2GB
       threads: 4
@@ -20,7 +17,7 @@ pipeline_config:
   metrics_processor:
 
     visual_features:
-      type: visual_metrique
+      type: visual_metric
       input_columns: [image_bytes]      
       output_features:  # List of output columns to compute associate to metric processor capabilities
         blur_level : m_blur_level
@@ -43,11 +40,11 @@ pipeline_config:
       type: parquet
       path_pattern: features/samples_raw_with_inference.parquet
       columns: [
-        # Identifiants
+        # Identifiers
         sample_id,
         sample_type,
         
-        # Informations de classe
+        # Class information
         class_id,
         class_name,
         
@@ -60,12 +57,12 @@ pipeline_config:
         
         #model_name,
         
-        # # Prédictions adversariales
+        # # Adversarial predictions
         # orig_pred,
         # aug_pred,
         # is_success,
         
-        # Features visuelles calculées
+        # Computed visual features
         m_blur_level,
         m_entropy,
         m_contrast,

@@ -18,17 +18,21 @@ class DomainGapProcessor(DatametricProcessor):
     Config:
       INPUT:
         embedding_col: "embedding"
-      calcul au niveau du batch:
+      Batch level computation:
         collect_sum_outer: bool   # needed for FID
         collect_hist_1d: bool     # needed for Wasserstein-1D
         hist_dims: int            # number of dims to histogram (<= d)
         hist_bins: int
         hist_range: [low, high]
-      DELTA: calcul au niveau du dataset
+      DELTA: dataset level computation
         metric: "klmvn_diag" | "mmd_linear" | "fid" | "wasserstein_1d"
     """
 
-    def __init__(self, name: str = "image_embedding", config: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        name: str = "image_embedding",
+        config: dict[str, Any] | None = None,
+    ):
         super().__init__(name, config)
         self._checked = False
 
@@ -55,7 +59,7 @@ class DomainGapProcessor(DatametricProcessor):
         self.collect_sum_outer: bool = bool(scfg.get("collect_sum_outer", auto_sum_outer))
         self.collect_hist_1d: bool = bool(scfg.get("collect_hist_1d", auto_hist_1d))
 
-        # Paramètres Wasserstein-1D
+        # Wasserstein-1D parameters
         self.hist_dims: int = int(scfg.get("hist_dims", 64))
         self.hist_bins: int = int(scfg.get("hist_bins", 32))
         rng = scfg.get("hist_range", [-3.0, 3.0])
@@ -75,7 +79,7 @@ class DomainGapProcessor(DatametricProcessor):
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """Produce per-batch summaries from the 'embedding' column.
-        Ici on peut aussi faire des histogrammes sur les embeddings, mais aussi la moyenne et la variance des embeddings
+        Histograms, mean, variance of embeddings could also be added here
         """
         if not getattr(self, "_checked", False):
             self.check_config()
@@ -95,12 +99,12 @@ class DomainGapProcessor(DatametricProcessor):
         out["sum"] = pa.FixedSizeListArray.from_arrays(pa.array(arr.sum(axis=0).astype(np.float64)), d)
         out["sum_sq"] = pa.FixedSizeListArray.from_arrays(pa.array((arr * arr).sum(axis=0).astype(np.float64)), d)
 
-        # pptional: sum_outer for FID
+        # optional: sum_outer for FID
         if self.collect_sum_outer:
             s = (arr.T @ arr).reshape(-1).astype(np.float64)
             out["sum_outer"] = pa.FixedSizeListArray.from_arrays(pa.array(s), d * d)
 
-        # ptional: histograms for Wasserstein-1D
+        # optional: histograms for Wasserstein-1D
         if self.collect_hist_1d:
             use_dims = min(d, self.hist_dims)
             low, high = self.hist_range
@@ -170,7 +174,9 @@ class DomainGapProcessor(DatametricProcessor):
         # TODO : check config and available metrics outside of computation
         # TODO : add a return code error in th API
 
-        def vec(a: pa.FixedSizeListArray) -> Any:  # TODO : check type error np.ndarray
+        def vec(
+            a: pa.FixedSizeListArray,
+        ) -> Any:  # TODO : check type error np.ndarray
             len_a = len(a[0])
             # len_a = a.list_size
             array = np.asarray(a.values.to_numpy(), dtype=np.float64).reshape(-1, len_a).sum(axis=0)
@@ -189,11 +195,17 @@ class DomainGapProcessor(DatametricProcessor):
                 need |= {"sum_outer"}
             for side, name in ((source, "source"), (target, "target")):
                 if not need.issubset(side.keys()):
-                    return {"metric": pa.array([metric]), "note": pa.array([f"missing keys in {name}: {sorted(need)}"])}
+                    return {
+                        "metric": pa.array([metric]),
+                        "note": pa.array([f"missing keys in {name}: {sorted(need)}"]),
+                    }
 
             n1, n2 = scalar(source["count"]), scalar(target["count"])
             if n1 <= 0 or n2 <= 0:
-                return {"metric": pa.array([metric]), "note": pa.array(["empty summaries"])}
+                return {
+                    "metric": pa.array([metric]),
+                    "note": pa.array(["empty summaries"]),
+                }
 
             mu1 = vec(source["sum"]) / n1
             mu2 = vec(target["sum"]) / n2
@@ -234,20 +246,26 @@ class DomainGapProcessor(DatametricProcessor):
 
         if metric == "wasserstein_1d":
             if "hist_counts" not in source or "hist_counts" not in target:
-                return {"metric": pa.array([metric]), "note": pa.array(["missing hist_counts"])}
+                return {
+                    "metric": pa.array([metric]),
+                    "note": pa.array(["missing hist_counts"]),
+                }
             h1 = np.asarray(source["hist_counts"].values.to_numpy(), dtype=np.int64)
             h2 = np.asarray(target["hist_counts"].values.to_numpy(), dtype=np.int64)
             # derive dims from summary config
             use_dims = self.hist_dims
             bins = self.hist_bins
             if h1.size != h2.size or h1.size != bins * use_dims:
-                return {"metric": pa.array([metric]), "note": pa.array(["hist_counts length mismatch"])}
+                return {
+                    "metric": pa.array([metric]),
+                    "note": pa.array(["hist_counts length mismatch"]),
+                }
             width = (self.hist_range[1] - self.hist_range[0]) / bins
             total = 0.0
             used = 0
             for j in range(use_dims):
-                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
-                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)  # noqa: E203
+                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)
+                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)
                 if h1.sum() == 0 and h2.sum() == 0:
                     continue
                 p = h1 / max(1.0, h1.sum())
@@ -259,4 +277,7 @@ class DomainGapProcessor(DatametricProcessor):
             val = total / max(1, used)
             return {"wasserstein_1d": pa.array([val], type=pa.float64())}
 
-        return {"metric": pa.array([metric]), "note": pa.array(["unsupported metric or invalid inputs"])}
+        return {
+            "metric": pa.array([metric]),
+            "note": pa.array(["unsupported metric or invalid inputs"]),
+        }

@@ -25,7 +25,7 @@ requires = ["uv_build>=0.8.0,<0.9.0"]
 build-backend = "uv_build"
 
 # UV Configuration workspace
-# - dependency groupes, repositoy packages to includes, etc.
+# - dependency groups, repository packages to includes, etc.
 [tool.uv.sources]
 dqm-ml-core = { workspace = true }
 dqm-ml-pipeline = { workspace = true }
@@ -41,7 +41,7 @@ default-groups = "all"
 members = ["packages/*"]
 exclude = ["packages/dqm-ml"]
 
-# Dependency gourps of the workspace depending actions performed in the workspace
+# Dependency groups of the workspace depending actions performed in the workspace
 [dependency-groups]
 
 nox = [
@@ -76,7 +76,7 @@ docs = [
     "mkdocs-material",
     "mkdocs-htmlproofer-plugin",
 
-    # Python API documentation (not neccessary for applications).
+    # Python API documentation (not necessary for applications).
     "mkdocstrings[python]",
     # Autodoc.
     "mkdocs-api-autonav",

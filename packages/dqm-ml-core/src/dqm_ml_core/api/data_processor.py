@@ -111,7 +111,7 @@ class DatametricProcessor:
 
     def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:
         """
-        Compute the metric on a dataset level aggerating sample features
+        Compute the metric on a dataset level aggregating sample features
 
         Args:
             batch_metrics: The intermediate elements computed for each batch of data.
