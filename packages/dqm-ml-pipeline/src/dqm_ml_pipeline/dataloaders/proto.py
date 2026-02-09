@@ -31,4 +31,3 @@ class DataLoader(Protocol):
         """
         Discover and return the list of available selections for this loader.
         """
-        ...
