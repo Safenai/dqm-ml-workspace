@@ -39,7 +39,7 @@ def test_help_action_with_invalid_command():
 
     mock_commands = {"list": MagicMock()}
     with patch("dqm_ml.__main__.get_available_command", return_value=mock_commands):
-        with pytest.raises(ValueError, match="Unkow comand nonexistent"):
+        with pytest.raises(ValueError, match="Unknown command nonexistent"):
             action(parser, namespace, None)
 
 
@@ -73,5 +73,5 @@ def test_execute_unknown_command(mock_get_commands):
     # We need to bypass parse_args or mock it to return an invalid command
     with patch("dqm_ml.__main__.parse_args") as mock_parse:
         mock_parse.return_value = (argparse.Namespace(command="unknown", verbose=False, quiet=False), [])
-        with pytest.raises(ValueError, match="Unkow comand unknown"):
+        with pytest.raises(ValueError, match="Unknown command unknown"):
             execute(["unknown"])
