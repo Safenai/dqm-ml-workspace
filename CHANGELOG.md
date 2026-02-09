@@ -5,6 +5,7 @@
 * Quality correction / ci improvments **Fixed**
   * `noxfile.py`: Added a `docs` session to build the documentation. (Fixes #6)
   * `noxfile.py`: The `format` nox session now runs independently from the `lint` session. (Fixes #8)
+  * `dqm_ml_pipeline/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
   * `.github\ci.yml` : adjust security permissions and other code quality checks
 
 * Repository organization changes :

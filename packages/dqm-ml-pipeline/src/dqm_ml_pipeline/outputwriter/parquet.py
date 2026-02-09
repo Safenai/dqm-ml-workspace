@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any
 
 import pyarrow as pa
@@ -70,5 +71,9 @@ class ParquetOutputWriter:
         else:
             filename = self.path_pattern.format(dataloader, part)
 
+        output_dir = os.path.dirname(filename)
+        if not os.path.exists(output_dir):
+            logger.info(f"Creating output directory: {output_dir}")
+            os.makedirs(output_dir)
         pq.write_table(table, filename)
         logger.info(f"Wrote output table to {filename}")
