@@ -11,15 +11,12 @@ class DataSelection(Protocol):
 
     def bootstrap(self, columns_list: list[str]) -> None:
         """Initialize the selection with required columns."""
-        ...
 
     def get_nb_batches(self) -> int:
         """Get the number of batches for this selection."""
-        ...
 
     def __iter__(self) -> Any:
         """Iterate over the selection batches."""
-        ...
 
 
 @runtime_checkable

@@ -99,7 +99,8 @@ edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
   - Getting Started:
-    - Overview: dqm-ml-v2.md
+    - Overview: dqm-ml-overview.md
+    - Why a dqm-ml V2: dqm-ml-v2.md    
     - Installation: index.html#installation
   - User Guide:
     - cli usage: configuration.md

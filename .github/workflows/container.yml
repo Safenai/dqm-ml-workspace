@@ -5,8 +5,8 @@ on:
     branches:
     - main
 
-# permissions:
-#   contents: write
+permissions:
+  contents: read
 
 jobs:
   container:

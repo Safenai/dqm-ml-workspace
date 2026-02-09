@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.1.5 (2026-02-09)
+
+* Quality correction / ci improvments **Fixed**
+  * `noxfile.py`: Added a `docs` session to build the documentation. (Fixes #6)
+  * `noxfile.py`: The `format` nox session now runs independently from the `lint` session. (Fixes #8)
+  * `dqm_ml_pipeline/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
+  * `.github\ci.yml` : adjust security permissions and other code quality checks
+
+* Repository organization changes :
+  * Fixes : #28 : test moves to root of the workspace, and cover improved to 80%
+  * fixes : #11 #12 : publication of mkdocs content document integrated
+
+* Documentation :
+  * First documentation strucutre proposed, to be upgraded with feedback, it integrate fixes for #9 and #10
+
+* Conceptual change:
+  * Notion of data selection introduced, and metrics are computed on a data selection, not a data loader.
+  * delta metrics are compare betweenn all dataselection available in the data selection.
+
+* Configuration changes
+  * parquet data loader  (fix : #27)
+  * comparison of multiple data selection metrics fix : #25 and fix : #26
+  * progression bar (optional) has been added to follow computation in the cli (fix : #24)
+
+* Limitations not delivered in v1.1.5
+  * Change of dml-ml-pipeline to dqm-ml-job in futur release for consistency #29
+
 ## 1.1.4 (2025-12-18)
 
 * github ci

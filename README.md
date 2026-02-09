@@ -24,10 +24,12 @@
 
 ## Package last version available on pypi
 
-* [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) : dqml-core package
-* [![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline) : dqml-pipeline package
-* [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) : dqml-images package
-* [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : dqml-pytorch package
+* [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) :  `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
+* [![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline) : `packages/dqm-ml-pipeline`: Orchestration, streaming data loaders, and output writers.
+* [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) :`packages/dqm-ml-images`: Visual feature extraction metrics.
+* [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
+* (not yet delivered as a package)`packages/dqm-ml-v2`: Main wrapper and CLI entry point.
+* `packages/dqm-ml`: **Legacy** version (V1) delivered from original repository, excluded from the active workspace.
 
 [pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
 [pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
@@ -121,11 +123,4 @@ this example can be found in `examples/script/completness.py'` and executed with
 * [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
 
 ## Workspace Structure
-
-* `packages/dqm-ml-v2`: Main wrapper and CLI entry point.
-* `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
-* `packages/dqm-ml-pipeline`: Orchestration, streaming data loaders, and output writers.
-* `packages/dqm-ml-images`: Visual feature extraction metrics.
-* `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
-* `packages/dqm-ml`: **Legacy** version (V1), excluded from the active workspace.
 

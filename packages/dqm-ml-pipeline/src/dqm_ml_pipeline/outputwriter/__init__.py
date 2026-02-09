@@ -22,7 +22,6 @@ class OutputWriter(Protocol):
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """ """
-        ...
 
     def write_table(self, name: str, table: Any, part_index: int | None = None) -> None:
         """
@@ -33,7 +32,6 @@ class OutputWriter(Protocol):
             table: The data to write (usually a pyarrow Table or dict of arrays).
             part_index: Index of the data part (for chunked writing).
         """
-        ...
 
 
 dqml_outputs_registry = {"parquet": ParquetOutputWriter}
