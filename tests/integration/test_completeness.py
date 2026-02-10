@@ -14,7 +14,7 @@ def test_completeness(
     test_path: Path,
     output_path: Path,
     test_name: str,
-    pipeline_completeness: Any,
+    job_completeness: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))

@@ -21,7 +21,7 @@ def test_domain_gap(
     output_path: Path,
     test_name: str,
     coco_data: Any,
-    pipeline_domain_gap: Any,
+    job_domain_gap: Any,
 ) -> None:
     # pad and cmd not implemented
 

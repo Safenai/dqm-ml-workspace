@@ -84,6 +84,6 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 ## Tests
 
-* [ ] Handle long parameter lists in CLI tests (`test_v2_wrapper.py`, `test_pipeline_cli.py`).
+* [ ] Handle long parameter lists in CLI tests (`test_v2_wrapper.py`, `test_job_cli.py`).
 * [ ] Investigate high variance in metrics for the Pandas welding integration test.
 * [ ] Add tests to validate filters on DataLoaders and combinations of `filter_row`.

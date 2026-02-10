@@ -23,7 +23,7 @@ def test_representativeness(
     tests_config: Any,
     output_path: Path,
     test_name: str,
-    pipeline_representativeness: Any,
+    job_representativeness: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
 

@@ -14,7 +14,7 @@ def test_visual_features(
     test_path: str,
     output_path: str,
     test_name: str,
-    pipeline_visual_features: Any,
+    job_visual_features: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))

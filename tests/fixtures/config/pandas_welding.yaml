@@ -1,7 +1,7 @@
 ## Example pipeline configuration with completeness metric
 
 ---
-pipeline_config:
+config:
 
   # Configuration for the data loader
   dataloaders:

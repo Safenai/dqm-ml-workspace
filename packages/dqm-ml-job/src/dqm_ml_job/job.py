@@ -12,11 +12,11 @@ from dqm_ml_job.outputwriter import OutputWriter
 logger = logging.getLogger(__name__)
 
 
-class DatasetPipeline:
+class DatasetJob:
     """
     Orchestrates the end-to-end data quality assessment process.
 
-    The pipeline handles:
+    The job handles:
     1. Plugin discovery and component initialization.
     2. Data selection discovery via DataLoaders.
     3. Streaming execution: Iterating over selections and batches to compute features and metrics.
@@ -98,7 +98,7 @@ class DatasetPipeline:
 
     def run(self) -> tuple[dict[Any, dict[str, Any]], dict[str, Any] | None]:
         """
-        Execute the pipeline on all discovered data selections.
+        Execute the job on all discovered data selections.
 
         This is the main entry point for execution. It iterates through every
         selection found by the loaders, computes statistics, and finally
@@ -121,12 +121,12 @@ class DatasetPipeline:
 
         dataselection_metrics_list = {}
 
-        pipeline_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections  # noqa: E501
+        job_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections  # noqa: E501
 
         # TODO : add as a specific command line argument
         self.describe(all_selections)
 
-        for selection in pipeline_iter:
+        for selection in job_iter:
             selection_name = selection.name
             logger.info(f"Processing selection '{selection_name}'")
 

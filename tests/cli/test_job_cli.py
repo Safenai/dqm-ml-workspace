@@ -32,15 +32,15 @@ def test_app(command: str, expected_output: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ("prompt", "pipeline"),
+    ("prompt", "process_config"),
     [
         # short params
         ("-p dummy.yaml", ["dummy.yaml"]),
         # long params TODO
     ],
 )
-def test_parse_args(prompt: str, pipeline: str) -> None:
+def test_parse_args(prompt: str, process_config: str) -> None:
     args = parse_args(shlex.split(prompt))
 
     # or split them up, either works
-    assert args.pipeline == pipeline
+    assert args.process_config == process_config

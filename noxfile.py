@@ -19,7 +19,7 @@ def compatibility(s: Session) -> None:
     s.run(
         "pytest",
         # Only quick tests for compatibility
-        "tests/cli/test_pipeline_cli.py",
+        "tests/cli/test_job_cli.py",
         *s.posargs,
     )
 

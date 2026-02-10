@@ -6,7 +6,6 @@ from typing import Any, override
 import numpy as np
 from PIL import Image
 import pyarrow as pa
-
 from scipy import signal
 
 from dqm_ml_core import DatametricProcessor
