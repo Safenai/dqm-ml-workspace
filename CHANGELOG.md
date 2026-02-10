@@ -2,6 +2,16 @@
 
 ## 1.1.6 (2026-02-10) - upgrade dependency and security check
 
+This release is dedicated to rename dqm-ml-pipeline as sqm-ml-job, correct security issues detected by github, as well as initiated template for issues, feature and merge request
+
+### Issue ticket number and link
+
+* fix: #42
+* fix: #31
+* fix: #31
+
+### Other details on several changes
+
 * Security warning regarding dependency used in uv.lock as reference package version
   * `urllib3 "2.6.2" => "2.6.3"` : Decompression-bomb safeguards bypassed when following HTTP redirects (streaming API) High
   * `torch 2.7.1 => 2.10.0` : PyTorch Improper Resource Shutdown or Release vulnerability Moderate
@@ -21,6 +31,15 @@
   * `Unkow comand`=> `Unknown command` miss spelling
 
 * add default issues template to github workflow
+
+* documentation presentation improvment
+  * Add light/dark mode
+  * Add dynamic horizontal size for content
+  * Disable expand by default in navigation
+  * Add navigation tab
+  * Add navigation path
+   
+* connection to sonarqube for code quality
 
 ## 1.1.5 (2026-02-09)
 
