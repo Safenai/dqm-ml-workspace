@@ -7,3 +7,8 @@
     /* Reset alignment for table cells */
     text-align: initial;
 }
+
+.md-grid {
+    max-width: initial;
+}
+
