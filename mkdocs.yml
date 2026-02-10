@@ -109,7 +109,7 @@ watch:
   # Watch directories to reload on changes to docstrings for mkdocstrings plugin.
   - "packages/dqm-ml-core/src/dqm_ml_core/"
   - "packages/dqm-ml-images/src/dqm_ml_images/"
-  - "packages/dqm-ml-pipeline/src/dqm_ml_job/"
+  - "packages/dqm-ml-job/src/dqm_ml_job/"
   - "packages/dqm-ml-pytorch/src/dqm_ml_pytorch/"
   - "docs"
 site_name: DQM-ML V2
