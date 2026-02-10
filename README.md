@@ -12,6 +12,9 @@
 [![Nox][nox-badge]](https://nox.thea.codes/en/stable/)
 [![Checked with mypy][mypy-badge]](https://mypy-lang.org/)
 
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Safenai_dqm-ml-workspace)](https://sonarcloud.io/summary/new_code?id=Safenai_dqm-ml-workspace)
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=Safenai_dqm-ml-workspace)
+
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 [size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
 [python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
