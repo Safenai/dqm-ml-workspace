@@ -38,4 +38,4 @@ V2 maintains a high level of interoperability with V1 concepts while optimizing 
 
 ## Implementation Details
 
-The orchestration is handled by the `DatasetPipeline` class in `dqm-ml-pipeline`. It manages the lifecycle of the processors and ensures that only the required data columns are loaded from the source, further optimizing I/O performance.
+The orchestration is handled by the `DatasetJob` class in `dqm-ml-job`. It manages the lifecycle of the processors and ensures that only the required data columns are loaded from the source, further optimizing I/O performance.

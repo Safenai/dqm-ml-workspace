@@ -27,7 +27,7 @@
 * Quality correction / ci improvements **Fixed**
   * `noxfile.py`: Added a `docs` session to build the documentation. (Fixes #6)
   * `noxfile.py`: The `format` nox session now runs independently from the `lint` session. (Fixes #8)
-  * `dqm_ml_pipeline/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
+  * `dqm_ml_job/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
   * `.github\ci.yml` : adjust security permissions and other code quality checks
 
 * Repository organization changes :
@@ -64,6 +64,6 @@ Version content :
 * dqm-ml-core : API proposal for future generic V2 api to allow generic usage of API
 * dqm-ml-images : beta version of feature computation for images in order to simplify computation on features computed
 * dqm-ml-pytorch : beta implementation of 3 of existing domain gap metrics relying on pytorch
-* dqm-ml-pipeline : beta implementation of of metric computation cli from files, with grouping strategy (see roadmap)
+* dqm-ml-job : beta implementation of of metric computation cli from files, with grouping strategy (see roadmap)
 
 This version allow use to generate metrics on welding uses case to demonstrate values of such an structural evolution

@@ -11,25 +11,35 @@ logger = logging.getLogger(__name__)
 
 class MetricRunner:
     """
-    Main class for processing metrics through a configurable pipeline
-    of data loaders, metrics processors, and output writers.
+    Orchestrator for executing metric processors on in-memory Pandas DataFrames.
+
+    This class provides a high-level API for users who want to compute metrics
+    directly on DataFrames without using the full YAML-driven pipeline.
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
         """
-        Initialize the pipeline with a given configuration.
+        Initialize the runner.
 
         Args:
-            config: Dictionary containing:
-                - loading config
-        Return:
-            List of computed metrics
+            config: Optional configuration for metric default behaviors.
         """
+        self.config = config or {}
 
     def run(self, df: DataFrame, metrics_processors: list[DatametricProcessor]) -> dict[str, Any]:
         """
-        Execute the dataset processing pipeline.
+        Execute the provided metric processors on a DataFrame.
+
+        Args:
+            df: The input Pandas DataFrame.
+            metrics_processors: List of initialized DatametricProcessor instances.
+
+        Returns:
+            A dictionary containing the aggregated dataset-level metrics.
         """
+        if df.empty or not metrics_processors:
+            logger.warning("Empty DataFrame or no metrics provided to MetricRunner")
+            return {}
 
         metrics_array: dict[str, Any] = {}
 
@@ -39,21 +49,18 @@ class MetricRunner:
 
         # Compute features and batch-level metrics
         for metric in metrics_processors:
-            logger.debug(f"Processing metric {metric.__class__.__name__} for dataloader")
+            logger.debug(f"Processing metric {metric.__class__.__name__}")
             batch_features |= metric.compute_features(batch, prev_features=batch_features)
             batch_metrics |= metric.compute_batch_metric(batch_features)
 
-        # Merge batch metrics
+        # Merge batch metrics (trivial here as there's only one batch)
         for k, v in batch_metrics.items():
-            if k in metrics_array:
-                # For histogram metrics, we need to sum, not concatenate
-                metrics_array[k] = pa.concat_arrays([metrics_array[k], v])
-            else:
-                metrics_array[k] = v
+            metrics_array[k] = v
 
         # Compute dataset-level metrics
         dataset_metrics: dict[str, Any] = {}
         for metric in metrics_processors:
-            logger.debug(f"Processing metric computation {metric.__class__.__name__} for dataloader")
+            logger.debug(f"Computing final score for {metric.__class__.__name__}")
             dataset_metrics |= metric.compute(batch_metrics=metrics_array)
+
         return dataset_metrics

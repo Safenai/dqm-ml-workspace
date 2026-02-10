@@ -4,7 +4,7 @@ from typing import Any, override
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-from dqm_ml_pipeline.dataloaders.proto import DataSelection
+from dqm_ml_job.dataloaders.proto import DataSelection
 
 logger = logging.getLogger(__name__)
 

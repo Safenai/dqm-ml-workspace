@@ -13,16 +13,22 @@ logger = logging.getLogger(__name__)
 
 class RepresentativenessProcessor(DatametricProcessor):
     """
-    TODO: this metric is compute for juste one colomn : only performs a one-sample test —
-          it compares your data to a target distribution (normal or uniform).
-          We might extend this metrics to support multi dimensionnal representativeness in the future.
+    Evaluates how well the dataset represents a target statistical distribution.
 
-    Dataset-level representativeness metrics:
-      - Chi-square
-      - Kolmogorov-Smirnov
-      - Shannon entropy
-      - GRTE
+    This processor performs on samples discretisation statistical tests to compare the observed
+    distribution of numerical columns against a theoretical target distribution
+    (Normal or Uniform).
 
+    Supported Metrics:
+      - Chi-square: Goodness-of-fit test for categorical/binned data.
+      - Kolmogorov-Smirnov (KS): Non-parametric test for continuous distributions (approximated via sampling).
+      - Shannon Entropy: Measures the information diversity of the binned data.
+      - GRTE (Geometric Representativeness Trajectory Error): Measures the exponential gap
+        between observed and theoretical entropy.
+
+    The processor uses a streaming architecture:
+    - Batch level: Computes partial calculus.
+    - Dataset level: Aggregates histograms and performs final statistical tests.
     """
 
     SUPPORTED_METRICS = {
@@ -55,6 +61,19 @@ class RepresentativenessProcessor(DatametricProcessor):
         name: str = "representativeness",
         config: dict[str, Any] | None = None,
     ) -> None:
+        """
+        Initialize the representativeness processor.
+
+        Args:
+            name: Name of the processor.
+            config: Configuration dictionary containing:
+                - input_columns: List of columns to analyze.
+                - metrics: List of metrics to compute (default: all supported).
+                - bins: Number of bins for histograms (default: 10).
+                - distribution: Target distribution ("normal" or "uniform").
+                - alpha: Significance level (default: 0.05).
+                - distribution_params: Dictionary of params (e.g., mean, std, min, max).
+        """
         super().__init__(name, config)
         self.name = name
 
@@ -143,7 +162,18 @@ class RepresentativenessProcessor(DatametricProcessor):
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """Compute partial histogram statistics per batch for streaming aggregation."""
+        """
+        Compute partial histogram statistics per batch for streaming aggregation.
+
+        Args:
+            features: Dictionary of column arrays from this batch.
+
+        Returns:
+            Dictionary containing:
+                - {col}_count: Total valid numeric samples.
+                - {col}_hist: Histogram counts.
+                - {col}_ks_sample: Random subset of data for KS test.
+        """
         batch_metrics = {}
 
         for col in self.input_columns:
@@ -152,7 +182,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 continue
 
             arr = features[col]
-            # convert to numeric, handle mixed types and NaN, we also can add another transformation
+            # convert to numeric, handle mixed types and NaN
             try:
                 np_col = np.asarray(arr.to_numpy(zero_copy_only=False))
             except Exception:
@@ -160,15 +190,12 @@ class RepresentativenessProcessor(DatametricProcessor):
 
             values = pd.to_numeric(pd.Series(np_col), errors="coerce").dropna()
 
-            if values.empty or len(values) == 0:
-                logger.warning(f"[{self.name}] column '{col}' empty numeric values")
+            if values.empty:
+                logger.warning(f"[{self.name}] column '{col}' has no valid numeric values in this batch")
                 continue
 
-            if not self._initialized:
-                self._initialize_bin_edges(values, col)
-
-            if col not in self._bin_edges:
-                self._initialize_bin_edges(values, col)
+            if not self._initialized or col not in self._bin_edges:
+                self._initialize_bin_edges(values.to_numpy(), col)
 
             edges = self._bin_edges[col]
 
@@ -213,7 +240,13 @@ class RepresentativenessProcessor(DatametricProcessor):
         return batch_metrics
 
     def _initialize_bin_edges(self, sample_data: np.ndarray, col: str) -> None:
-        """Initialize bin edges for a column based on sample data and distribution."""
+        """
+        Initialize bin edges for a column based on sample data and target distribution.
+
+        Args:
+            sample_data: Data array used to infer parameters if not provided in config.
+            col: Name of the column.
+        """
         if self.distribution == "normal":
             mean = float(self.dist_params.get("mean", np.mean(sample_data)))
             std = float(self.dist_params.get("std", np.std(sample_data, ddof=0)))
@@ -230,7 +263,15 @@ class RepresentativenessProcessor(DatametricProcessor):
 
     @override
     def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, Any]:
-        """Compute final dataset-level metrics by aggregating batch histograms."""
+        """
+        Compute final dataset-level metrics by aggregating batch histograms.
+
+        Args:
+            batch_metrics: Dictionary of batch-level metrics collected during processing.
+
+        Returns:
+            Dictionary containing final scores and interpretations for all selected metrics.
+        """
         if not batch_metrics:
             return {"_metadata": {"error": "No batch metrics provided"}}
 
@@ -498,7 +539,12 @@ class RepresentativenessProcessor(DatametricProcessor):
     # utils methods for bin edge calculation
 
     def _bin_edges_normal(self, mean: float, std: float, bins: int, data: np.ndarray) -> np.ndarray:
-        """Return bin edges for normal distribution - Aligné sur DQM-ML officiel."""
+        """
+        Calculate bin edges based on the Percent Point Function (PPF) of a Normal distribution.
+
+        This ensures bins represent equal probability mass under the theoretical distribution.
+        The first and last bins are extended to -inf and +inf respectively.
+        """
         # logic from dqm-ml v1 : use stats.norm.ppf with linspace(1/bins, 1, bins)
         interval = []
         for i in range(1, bins):
@@ -509,7 +555,12 @@ class RepresentativenessProcessor(DatametricProcessor):
         return np.array(interval)
 
     def _bin_edges_uniform(self, mn: float, mx: float, bins: int, data: np.ndarray) -> np.ndarray:
-        """Return bin edges for uniform distribution."""
+        """
+        Calculate linearly spaced bin edges for a Uniform distribution.
+
+        The range is determined by the minimum/maximum of both the configured
+        parameters and the actual observed data.
+        """
         lo = min(mn, float(np.min(data)))
         hi = max(mx, float(np.max(data)))
         if hi <= lo:

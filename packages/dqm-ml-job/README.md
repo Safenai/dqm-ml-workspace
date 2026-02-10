@@ -1,4 +1,4 @@
-# DQM-ML Pipeline
+# DQM-ML Job
 
 This package provides the orchestration engine for DQM-ML V2. It handles the lifecycle of data processing, from loading to metric computation and output writing.
 

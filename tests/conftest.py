@@ -229,7 +229,7 @@ def not_normal_dist(test_path: str) -> Any:
     return
 
 
-def generate_pipeline(
+def generate_job(
     test_path: str,
     processor_name: str,
     output_category: str,
@@ -272,91 +272,91 @@ def generate_pipeline(
             Path(test_path) / f"fixtures/config/templates/{processor_name}.yaml"
         )
         with Path(template_path).open() as file:
-            config, ind, bsi = ruamel.yaml.util.load_yaml_guess_indent(file)
+            full_config, ind, bsi = ruamel.yaml.util.load_yaml_guess_indent(file)
 
-        pipeline_config = config["pipeline_config"]
+        inner_config = full_config["config"]
         if processor_name == "domain_gap":
-            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(
+            inner_config["dataloaders"]["source_dataset"]["path"] = str(
                 parquet_source_path
             )
-            pipeline_config["dataloaders"]["target_dataset"]["path"] = str(
+            inner_config["dataloaders"]["target_dataset"]["path"] = str(
                 parquet_path
             )
-            pipeline_config["metrics_processor"][processor_name]["DELTA"][
+            inner_config["metrics_processor"][processor_name]["DELTA"][
                 "metric"
             ] = metric_name
             for param in ["batch_size", "height", "width"]:
-                pipeline_config["metrics_processor"]["image_embedding"][
+                inner_config["metrics_processor"]["image_embedding"][
                     "infer"
                 ][param] = domain_gap_infer_params[
                     metric_name  # type: ignore
                 ][param]
         else:
-            pipeline_config["dataloaders"]["source_dataset"]["path"] = str(
+            inner_config["dataloaders"]["source_dataset"]["path"] = str(
                 parquet_path
             )
 
         if "batch" in test_name:
             if processor_name == "representativeness":
-                pipeline_config["dataloaders"]["source_dataset"][
+                inner_config["dataloaders"]["source_dataset"][
                     "batch_size"
                 ] = 50000
             if processor_name == "domain_gap":
-                pipeline_config["dataloaders"]["source_dataset"][
+                inner_config["dataloaders"]["source_dataset"][
                     "batch_size"
                 ] = 50
-                pipeline_config["dataloaders"]["target_dataset"][
+                inner_config["dataloaders"]["target_dataset"][
                     "batch_size"
                 ] = 50
             if processor_name == "completeness":
-                pipeline_config["dataloaders"]["source_dataset"][
+                inner_config["dataloaders"]["source_dataset"][
                     "batch_size"
                 ] = 100
             if processor_name == "visual_features":
-                pipeline_config["dataloaders"]["source_dataset"][
+                inner_config["dataloaders"]["source_dataset"][
                     "batch_size"
                 ] = 100
 
         if processor_name == "representativeness":
             if "uniform" in test_name:
-                pipeline_config["metrics_processor"]["representativeness"][
+                inner_config["metrics_processor"]["representativeness"][
                     "distribution"
                 ] = "uniform"
             else:
-                pipeline_config["metrics_processor"]["representativeness"][
+                inner_config["metrics_processor"]["representativeness"][
                     "distribution"
                 ] = "normal"
 
         if processor_name == "visual_features" and "path" in test_name:
-            pipeline_config["metrics_processor"]["visual_features"][
+            inner_config["metrics_processor"]["visual_features"][
                 "input_columns"
             ] = ["image_path"]
 
         if processor_name == "domain_gap" and "bytes" in test_name:
-            pipeline_config["metrics_processor"]["image_embedding"]["DATA"][
+            inner_config["metrics_processor"]["image_embedding"]["DATA"][
                 "image_column"
             ] = "image_bytes"
-            pipeline_config["metrics_processor"]["image_embedding"]["DATA"][
+            inner_config["metrics_processor"]["image_embedding"]["DATA"][
                 "mode"
             ] = "bytes"
 
         if processor_name == "domain_gap":
-            pipeline_config["outputs"][output_category]["path_pattern"] = (
+            inner_config["outputs"][output_category]["path_pattern"] = (
                 f"{output_path!s}/metrics_{config_name}_" + "{}-{}.parquet"
             )
         else:
-            pipeline_config["outputs"][output_category]["path_pattern"] = (
+            inner_config["outputs"][output_category]["path_pattern"] = (
                 f"{output_path!s}/metrics_{config_name}_" + "{}-{}.parquet"
             )
 
         yaml_config = ruamel.yaml.YAML()
         yaml_config.indent(mapping=ind, sequence=ind, offset=bsi)
         with Path(config_path).open("w") as fp:
-            yaml_config.dump(config, fp)
+            yaml_config.dump(full_config, fp)
 
 
 @pytest.fixture(scope="session")
-def pipeline_representativeness(
+def job_representativeness(
     test_path: str,
     normal_dist: Any,
     not_normal_dist: Any,
@@ -383,7 +383,7 @@ def pipeline_representativeness(
         {"test_name": "batch", "parquet": "normal_distribution.parquet"},
     ]
 
-    generate_pipeline(
+    generate_job(
         processor_name="representativeness",
         parquets_path=Path(test_path) / "outputs/data",
         test_list=test_list,
@@ -393,7 +393,7 @@ def pipeline_representativeness(
 
 
 @pytest.fixture(scope="session")
-def pipeline_completeness(
+def job_completeness(
     test_path: str,
 ) -> None:
     test_list = [
@@ -401,7 +401,7 @@ def pipeline_completeness(
         {"test_name": "completeness_batch", "parquet": "completeness.parquet"},
     ]
 
-    generate_pipeline(
+    generate_job(
         processor_name="completeness",
         parquets_path=Path(test_path) / "data",
         test_list=test_list,
@@ -411,14 +411,14 @@ def pipeline_completeness(
 
 
 @pytest.fixture(scope="session")
-def pipeline_domain_gap(
+def job_domain_gap(
     test_path: str,
 ) -> None:
     gen_path = Path(test_path) / "outputs/data"
     metrics = ["fid", "klmvn_diag", "mmd_linear", "wasserstein_1d"]
 
     for metric in metrics:
-        generate_pipeline(
+        generate_job(
             processor_name="domain_gap",
             parquets_path=gen_path,
             test_list=[{"test_name": "", "parquet": "target_1000.parquet"}],
@@ -428,7 +428,7 @@ def pipeline_domain_gap(
             parquet_source_path=Path(gen_path) / "source_1000.parquet",
         )
 
-    generate_pipeline(
+    generate_job(
         processor_name="domain_gap",
         parquets_path=Path(test_path) / "data",
         test_list=[
@@ -445,7 +445,7 @@ def pipeline_domain_gap(
 
 
 @pytest.fixture(scope="session")
-def pipeline_visual_features(
+def job_visual_features(
     test_path: str,
 ) -> None:
     test_list = [
@@ -460,7 +460,7 @@ def pipeline_visual_features(
         },
     ]
 
-    generate_pipeline(
+    generate_job(
         processor_name="visual_features",
         parquets_path=Path(test_path) / "data",
         test_list=test_list,

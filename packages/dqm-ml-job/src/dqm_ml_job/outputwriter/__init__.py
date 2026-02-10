@@ -6,7 +6,7 @@ This module contains classes for processing data and computing metrics.
 
 from typing import Any, Protocol, runtime_checkable
 
-from dqm_ml_pipeline.outputwriter.parquet import ParquetOutputWriter
+from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 
 
 @runtime_checkable
