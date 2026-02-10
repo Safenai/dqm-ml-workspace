@@ -7,6 +7,8 @@ import numpy as np
 from PIL import Image
 import pyarrow as pa
 
+from scipy import signal
+
 from dqm_ml_core import DatametricProcessor
 
 logger = logging.getLogger(__name__)
@@ -14,12 +16,19 @@ logger = logging.getLogger(__name__)
 
 class VisualFeaturesProcessor(DatametricProcessor):
     """
-    Compute basic image quality features per sample :
-      - Luminosity (mean gray level in [0, 1])
-      - Contrast (RMS contrast = std of gray in [0, 1])
-      - Blur (variance of Laplacian on gray)
-      - Entropy (Shannon entropy of gray histogram, base e)
+    Computes basic image quality features per sample.
 
+    Features:
+      - Luminosity: Mean intensity of the image. By default, it is the average gray level
+        mapped to the [0, 1] range.
+      - Contrast: RMS contrast, calculated as the standard deviation of the gray level
+        intensities, mapped to the [0, 1] range.
+      - Blur: Measured as the variance of the Laplacian of the image. A higher value
+        indicates more edges and higher sharpness.
+      - Entropy: Shannon entropy of the image's grayscale histogram. Measures the
+        information content or complexity.
+
+    This processor operates purely at the feature extraction level (per-sample).
     """
 
     DEFAULT_OUTPUTS = {
@@ -30,6 +39,21 @@ class VisualFeaturesProcessor(DatametricProcessor):
     }
 
     def __init__(self, name: str = "visual_metric", config: dict[str, Any] | None = None) -> None:
+        """
+        Initialize the visual features processor.
+
+        Args:
+            name: Unique name of the processor instance.
+            config: Configuration dictionary containing:
+                - input_columns: List containing the name of the image column (bytes or path).
+                - output_features: Mapping of feature names to output column names.
+                - grayscale: Whether to convert images to grayscale (default: True).
+                - normalize: Whether to normalize pixel values to [0, 1] (default: True).
+                - entropy_bins: Number of bins for entropy calculation (default: 256).
+                - clip_percentiles: Tuple of (low, high) percentiles for intensity clipping.
+                - laplacian_kernel: Size of the Laplacian kernel ('3x3' or '5x5').
+                - dataset_root_path: Root directory for relative image paths.
+        """
         super().__init__(name, config)
 
         # Local view of config for convenience
@@ -132,6 +156,8 @@ class VisualFeaturesProcessor(DatametricProcessor):
         values = []
         for gray in gray_images:
             if gray is not None:
+                # Original logic: if not self.normalize, it's uint8 [0,255], divide by 255
+                # If self.normalize, it's already [0,1] (min-max)
                 luminosity = float(np.mean(gray if self.normalize else gray / 255.0))
                 values.append(luminosity)
             else:
@@ -201,8 +227,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
             else:
                 raise ValueError(f"Unsupported ndarray shape {arr.shape}")
 
-            gray = self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
-            return gray
+            return self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
         else:
             raise ValueError(f"Unsupported type for image input: {type(x)}")
 
@@ -217,6 +242,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
             gray_np = 0.2126 * gray_np[..., 0] + 0.7152 * gray_np[..., 1] + 0.0722 * gray_np[..., 2]
 
         if self.normalize:
+            # Revert to min-max normalization as required by existing tests
             return self._to_float01(gray_np)
         else:
             return gray_np.astype(np.uint8)
@@ -229,14 +255,9 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return arr
 
     def _variance_of_laplacian(self, gray: np.ndarray) -> float:
-        """Variance of Laplacian as a blur metric.
-
-        Works with gray in [0,1] or [0,255]; scaling does not change the *relative* ranking,
-        but absolute values differ. We always use the working array as float32.
-        """
+        """Variance of Laplacian as a blur metric."""
         g = gray.astype(np.float32)
         if self.laplacian_kernel == "5x5":
-            # 5x5 Laplacian (approx.)
             k = np.array(
                 [
                     [0, 0, -1, 0, 0],
@@ -248,9 +269,10 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 dtype=np.float32,
             )
         else:
-            # classic 3x3
             k = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
-        lap = self._conv2d_same(g, k)
+
+        # Use scipy for optimized convolution
+        lap = signal.convolve2d(g, k, mode="same")
         return float(np.var(lap))
 
     def _entropy(self, gray: np.ndarray) -> float:
@@ -270,19 +292,3 @@ class VisualFeaturesProcessor(DatametricProcessor):
         # avoid log(0)
         p = p[p > 0]
         return float(-(p * np.log(p)).sum())
-
-    @staticmethod
-    def _conv2d_same(img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
-        """Simple 2D convolution with 'same' output shape and zero padding."""
-        ih, iw = img.shape[:2]
-        kh, kw = kernel.shape
-        pad_h = kh // 2
-        pad_w = kw // 2
-        padded = np.pad(img, ((pad_h, pad_h), (pad_w, pad_w)), mode="constant")
-        out = np.zeros_like(img, dtype=np.float32)
-        kf = np.flipud(np.fliplr(kernel)).astype(np.float32)
-        for i in range(ih):
-            for j in range(iw):
-                region = padded[i : i + kh, j : j + kw]
-                out[i, j] = float(np.sum(region * kf))
-        return out
