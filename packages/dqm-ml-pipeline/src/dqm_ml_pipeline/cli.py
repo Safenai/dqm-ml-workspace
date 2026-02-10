@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 def parse_args(arg_list: list[str] | None) -> Any:
+    """
+    Parse command line arguments for the DQM pipeline.
+
+    Args:
+        arg_list: List of arguments (default: sys.argv[1:]).
+
+    Returns:
+        The parsed Namespace object.
+    """
     parser = argparse.ArgumentParser(
         prog="dqm-ml", description="DQM-ML Pipeline client", epilog="for more informations see README"
     )
@@ -30,6 +39,9 @@ def parse_args(arg_list: list[str] | None) -> Any:
 
 # TODO get parameters, logs, ...
 def execute(arg_list: list[str] | None = None) -> None:
+    """
+    Main CLI entry point for executing DQM pipelines from YAML configurations.
+    """
     args = parse_args(arg_list)
     config: dict[str, Any] = {}
 
@@ -56,15 +68,15 @@ def execute(arg_list: list[str] | None = None) -> None:
 
 def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], component_name: str) -> dict[str, Any]:
     """
-    Initialize pipeline components from a registry.
+    Initialize pipeline components (loaders, metrics, writers) from their respective registries.
 
     Args:
-        config_dict: Dictionary of component configurations.
+        config_dict: Dictionary of component configurations from YAML.
         registry: The registry containing the component classes.
         component_name: The name of the component type (for error messages).
 
     Returns:
-        A dictionary of initialized components.
+        A dictionary of initialized component instances.
     """
     components = {}
     for key, comp_config in config_dict.items():
@@ -78,6 +90,14 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
 
 
 def run(config: dict[str, Any]) -> None:
+    """
+    Execute a pipeline from a validated configuration dictionary.
+
+    The config must contain:
+    - dataloaders: Map of configurations for data sources.
+    - metrics_processor: Map of configurations for quality metrics.
+    - outputs: Map of configurations for results storage.
+    """
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()

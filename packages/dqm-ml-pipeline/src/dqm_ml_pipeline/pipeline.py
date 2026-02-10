@@ -14,11 +14,14 @@ logger = logging.getLogger(__name__)
 
 class DatasetPipeline:
     """
-    Main class for processing datasets through a configurable pipeline.
+    Orchestrates the end-to-end data quality assessment process.
 
-    This class orchestrates the data loading, metric computation, and result writing
-    processes. It supports dynamically loaded plugins for data loaders, metrics, and
-    output writers.
+    The pipeline handles:
+    1. Plugin discovery and component initialization.
+    2. Data selection discovery via DataLoaders.
+    3. Streaming execution: Iterating over selections and batches to compute features and metrics.
+    4. Result persistence via OutputWriters.
+    5. Comparison metrics (deltas) between discovered datasets.
     """
 
     def __init__(
@@ -29,18 +32,13 @@ class DatasetPipeline:
         progress_bar: bool = True,
     ) -> None:
         """
-        Initialize the pipeline with a given configuration.
+        Initialize the pipeline components.
 
         Args:
-            config: Dictionary containing the pipeline configuration:
-                - dataloaders: Dict of data loader configurations.
-                - metrics_processor: Dict of metric processor configurations.
-                - outputs: Dict of output writer configurations.
-                - compute_delta: Boolean, whether to compute delta metrics between datasets.
-                - progress_bar: Boolean, whether to show progress bars.
-
-        Raises:
-            ValueError: If the configuration is missing or invalid.
+            dataloaders: Map of initialized DataLoader instances.
+            metrics: Map of initialized DatametricProcessor instances.
+            features_output: Optional writer for persisting per-sample features.
+            progress_bar: Whether to display execution progress in the terminal.
         """
         # We initialize loaded pluging elements
         self.dataloaders = dataloaders
@@ -77,17 +75,16 @@ class DatasetPipeline:
 
     def get_ordered_metrics(self) -> list[DatametricProcessor]:
         """
-        Return the ordered list of metrics processors.
+        Return the list of metrics processors in the order they should be executed.
 
-        Returns:
-            List of ordered DatametricProcessor instances.
+        Currently returns processors in the order they were defined in the config.
         """
         # TODO: Implement proper ordering based on dependencies
         return list(self.metrics.values())
 
     def describe(self, selections: list[DataSelection]) -> None:
         """
-        Log a description of the pipeline configuration.
+        Log a summary of the execution plan, including discovered selections and metrics.
         """
         logger.info(f"Executing dqm-ml-job on {len(selections)} selections, using {len(self.metrics)} metrics ")
         for selection in selections:
@@ -101,9 +98,16 @@ class DatasetPipeline:
 
     def run(self) -> tuple[dict[Any, dict[str, Any]], dict[str, Any] | None]:
         """
-        Execute the dataset processing pipeline.
+        Execute the pipeline on all discovered data selections.
 
-        Discovers all selections from data loaders and processes them.
+        This is the main entry point for execution. It iterates through every
+        selection found by the loaders, computes statistics, and finally
+        calculates deltas between datasets.
+
+        Returns:
+            A tuple containing:
+                - Mapping of selection names to their final metric dictionaries.
+                - pyarrow Table (or dict of arrays) containing all computed deltas.
         """
         # TODO: Check with needed input order of metric computation
         metrics_processors = self.get_ordered_metrics()
@@ -155,15 +159,17 @@ class DatasetPipeline:
         return dataselection_metrics_list, delta_metrics_table
 
     def _compute_delta_metrics(
-        self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, pa.Array]]
+        self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, Any]]
     ) -> dict[str, Any] | None:
         """
-        Compute delta metrics between all combinations of dataselections.
+        Compute comparison metrics between every unique pair of data selections.
+
         Args:
-            metrics_processors: List of metric processors to use for delta computation.
-            dataselection_metrics_list: A dictionary mapping dataselection names to their computed metrics.
+            metrics_processors: List of processors capable of computing deltas.
+            dataselection_metrics_list: Map of selection names to their metrics.
+
         Returns:
-            A dictionary containing delta metrics for each combination of dataselections.
+            A pyarrow-compatible dictionary representing the delta table.
         """
 
         selection_combinaisons = itertools.combinations(dataselection_metrics_list, 2)
@@ -202,27 +208,32 @@ class DatasetPipeline:
         self, selection_name: str, selection: DataSelection, metrics_processors: list[DatametricProcessor]
     ) -> dict[str, Any]:
         """
-        Compute metrics and features for all batches in a data selection.
+        Process all batches in a selection to compute intermediate statistics and features.
 
-        This method optimizes performance by accumulating batch results in lists
-        and concatenating them once at the end, avoiding O(N^2) complexity.
+        Memory Management:
+        - Batch-level statistics (`batch_metrics`) are accumulated in lists and
+          concatenated once the selection is complete.
+        - Per-sample features are also accumulated in memory before being passed
+          to the OutputWriter.
+        - NOTE: For extremely large datasets, this accumulation can lead to high
+          memory usage. Future versions will implement disk-flushing (chunking).
 
         Args:
-            selection_name: Name of the selection.
-            selection: The data selection instance.
-            metrics_processors: List of metric processors to apply.
+            selection_name: Name of the current data selection.
+            selection: The selection iterator.
+            metrics_processors: List of processors to apply to each batch.
 
         Returns:
-            A tuple containing:
-                - batches_metrics_array: Dictionary of computed batch metrics (concatenated).
+            Dictionary of concatenated intermediate statistics arrays.
         """
         # Use lists for O(1) appending, then concat once at the end.
         batch_metrics_accumulator: dict[str, list[Any]] = {}
         features_accumulator: dict[str, list[Any]] = {}
 
-        # Track memory size for potential chunking (not fully implemented yet)
+        # Track memory size for potential chunking
         feature_array_size = 0
         part_index = 0
+        memory_threshold = 512 * 1024 * 1024  # 512MB threshold for flushing features
 
         dataloader_iter = (
             tqdm(selection, desc="batches", position=1, leave=False, total=selection.get_nb_batches())
@@ -274,7 +285,21 @@ class DatasetPipeline:
                 features_accumulator[k].append(v)
                 feature_array_size += v.get_total_buffer_size()
 
-            # TODO: If feature_array_size > memory_limit, write features to disk and reset accumulators
+            # Flush features to disk if memory threshold reached
+            if feature_array_size > memory_threshold and self.features_output:
+                logger.info(
+                    f"Memory threshold reached ({feature_array_size / 1024**2:.1f}MB). Flushing chunk {part_index}"
+                )
+                features_chunk: dict[str, Any] = {}
+                for k, v_list in features_accumulator.items():
+                    features_chunk[k] = pa.concat_arrays(v_list)
+
+                self.features_output.write_table(selection_name, features_chunk, part_index)
+
+                # Reset features accumulator
+                features_accumulator = {}
+                feature_array_size = 0
+                part_index += 1
 
         # Concatenate all accumulated arrays
         batches_metrics_array: dict[str, Any] = {}
@@ -282,11 +307,11 @@ class DatasetPipeline:
             batches_metrics_array[k] = pa.concat_arrays(v_list)
 
         features_array: dict[str, Any] = {}
-        for k, v_list in features_accumulator.items():
-            features_array[k] = pa.concat_arrays(v_list)
+        if features_accumulator:
+            for k, v_list in features_accumulator.items():
+                features_array[k] = pa.concat_arrays(v_list)
 
-        # Write features to disk
-        # TODO: If too big parquet, save arrays, and start a new parquet file (chunking)
+        # Write remaining features to disk
         if self.features_output and features_array:
             self.features_output.write_table(selection_name, features_array, part_index)
 
