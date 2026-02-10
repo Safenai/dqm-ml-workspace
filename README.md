@@ -36,24 +36,57 @@
 [pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
 [pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
 
-This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
-
-Documentation remains in this repository as we deliver the migration to the new API.
-
 The library was originally developed in the program:
 
 <div align="center">
-    <img src="static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
     <h1 style="font-size: large; font-weight: bold;">dqm-ml v2</h1>
 </div>
 
-## Documentation
+> [!IMPORTANT]  
+> This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
+> All what has been implemented rely on
+> (Definitions from [Confiance.ai program](https://www.confiance.ai/))
+> Reference publication [HAL link](https://hal.science/hal-04719346v1)
+> For more technical and scientific details, please refer to this [deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf?download=1)
+
+
+> [!WARNING]
+> TODO : Need to update link to the ETAIA place
+> TODO : Need to access the open source deliverable (not confidential one)
+
+## Documentations
 
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
 * **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
 * **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
 * **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
+
+## Wich metrics are availables
+
+Metric computed on **data selection** rely on several approches are developped as described in the figure below. and associated publications
+
+<img src="docs/static/library_view.png" width="1024"/>
+
+In the current version, the available (or to be available) metrics are:
+
+* Representativeness:
+  * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
+  * Kolmogorov Smirnov test for Uniform and Normal Distributions
+  * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
+* Diversity:
+  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml v1)
+  * Gini-Simpson and Simposon indices (only in dqm-ml v1)
+* Completeness:
+  * Ratio of filled information
+* Domain Gap:
+  * MMD (only in dqm-ml v1)
+  * CMD (only in dqm-ml v1)
+  * Wasserstein
+  * H-Divergence
+  * FID
+  * Kullback-Leiblur MultiVariate Normal Distribution
 
 ## Installation
 
@@ -124,3 +157,18 @@ this example can be found in `examples/script/completeness.py'` and executed wit
 
 ## Workspace Structure
 
+## References
+
+DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai programme 
+
+``` ref
+@inproceedings{chaouche2024dqm,
+  title={DQM: Data Quality Metrics for AI components in the industry},
+  author={Chaouche, Sabrina and Randon, Yoann and Adjed, Faouzi and Boudjani, Nadira and Khedher, Mohamed Ibn},
+  booktitle={Proceedings of the AAAI Symposium Series},
+  volume={4},
+  number={1},
+  pages={24--31},
+  year={2024}
+}
+```
