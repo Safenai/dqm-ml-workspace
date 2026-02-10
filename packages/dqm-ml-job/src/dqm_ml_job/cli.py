@@ -7,9 +7,9 @@ import yaml
 
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_pipeline.dataloaders import DataLoader
-from dqm_ml_pipeline.outputwriter import OutputWriter
-from dqm_ml_pipeline.pipeline import DatasetPipeline
+from dqm_ml_job.dataloaders import DataLoader
+from dqm_ml_job.outputwriter import OutputWriter
+from dqm_ml_job.pipeline import DatasetPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def parse_args(arg_list: list[str] | None) -> Any:
         The parsed Namespace object.
     """
     parser = argparse.ArgumentParser(
-        prog="dqm-ml", description="DQM-ML Pipeline client", epilog="for more informations see README"
+        prog="dqm-ml", description="DQM-ML Job client", epilog="for more informations see README"
     )
 
     parser.add_argument("-p", "--pipeline", type=str, nargs="+", required=True, help="pipeline files to execute")

@@ -3,7 +3,7 @@ from typing import Any
 
 import yaml
 
-from dqm_ml_pipeline.cli import run as exec_qml_job
+from dqm_ml_job.cli import run as exec_qml_job
 
 
 def compute_metric() -> None:

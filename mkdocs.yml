@@ -78,7 +78,7 @@ plugins:
       modules: [
         "packages/dqm-ml-core/src/dqm_ml_core/",
         "packages/dqm-ml-images/src/dqm_ml_images/",
-        "packages/dqm-ml-pipeline/src/dqm_ml_pipeline/",
+        "packages/dqm-ml-job/src/dqm_ml_job/",
         "packages/dqm-ml-pytorch/src/dqm_ml_pytorch/",
       ]
   # This plugin is used to validate URLs (including anchors).

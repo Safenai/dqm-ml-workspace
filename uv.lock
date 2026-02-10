@@ -21,7 +21,7 @@ resolution-markers = [
 members = [
     "dqm-ml-core",
     "dqm-ml-images",
-    "dqm-ml-pipeline",
+    "dqm-ml-job",
     "dqm-ml-pytorch",
     "dqm-ml-v2",
     "dqm-workspace",
@@ -1292,8 +1292,8 @@ requires-dist = [
 ]
 
 [[package]]
-name = "dqm-ml-pipeline"
-source = { editable = "packages/dqm-ml-pipeline" }
+name = "dqm-ml-job"
+source = { editable = "packages/dqm-ml-job" }
 dependencies = [
     { name = "dqm-ml-core" },
     { name = "pyyaml" },
@@ -1336,7 +1336,7 @@ images = [
     { name = "dqm-ml-images" },
 ]
 job = [
-    { name = "dqm-ml-pipeline" },
+    { name = "dqm-ml-job" },
 ]
 notebooks = [
     { name = "jupyter" },
@@ -1352,7 +1352,7 @@ requires-dist = [
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
     { name = "dqm-ml-images", marker = "extra == 'images'", editable = "packages/dqm-ml-images" },
     { name = "dqm-ml-images", marker = "extra == 'pytorch'", editable = "packages/dqm-ml-images" },
-    { name = "dqm-ml-pipeline", marker = "extra == 'job'", editable = "packages/dqm-ml-pipeline" },
+    { name = "dqm-ml-job", marker = "extra == 'job'", editable = "packages/dqm-ml-job" },
     { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
     { name = "plotly", marker = "extra == 'notebooks'", specifier = ">=5.0.0" },
 ]
@@ -1365,7 +1365,7 @@ source = { editable = "." }
 dependencies = [
     { name = "dqm-ml-core" },
     { name = "dqm-ml-images" },
-    { name = "dqm-ml-pipeline" },
+    { name = "dqm-ml-job" },
     { name = "dqm-ml-pytorch" },
     { name = "dqm-ml-v2" },
     { name = "pre-commit" },
@@ -1410,7 +1410,7 @@ type-check = [
 requires-dist = [
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
     { name = "dqm-ml-images", editable = "packages/dqm-ml-images" },
-    { name = "dqm-ml-pipeline", editable = "packages/dqm-ml-pipeline" },
+    { name = "dqm-ml-job", editable = "packages/dqm-ml-job" },
     { name = "dqm-ml-pytorch", editable = "packages/dqm-ml-pytorch" },
     { name = "dqm-ml-v2", editable = "packages/dqm-ml-v2" },
     { name = "pre-commit", specifier = ">=4.5.0" },

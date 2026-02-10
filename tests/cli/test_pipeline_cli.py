@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from dqm_ml_pipeline.cli import execute, parse_args
+from dqm_ml_job.cli import execute, parse_args
 
 test_cases = [
     ("-p examples/config/completeness.yaml", ""),  # no args

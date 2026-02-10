@@ -28,14 +28,14 @@
 ## Package last version available on pypi
 
 * [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) :  `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
-* [![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline) : `packages/dqm-ml-pipeline`: Orchestration, streaming data loaders, and output writers.
+* [![PyPI dqm-ml-job version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-job) : `packages/dqm-ml-job`: Orchestration, streaming data loaders, and output writers.
 * [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) :`packages/dqm-ml-images`: Visual feature extraction metrics.
 * [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
 * (not yet delivered as a package)`packages/dqm-ml-v2`: Main wrapper and CLI entry point.
 * `packages/dqm-ml`: **Legacy** version (V1) delivered from original repository, excluded from the active workspace.
 
 [pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
-[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
+[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-job.svg
 [pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
 [pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
 
@@ -111,7 +111,7 @@ Manually install all packages:
 > :warning: for version <v2.0.0> the dqm-ml version installed is the legacy version, you have access to the **process** command
 
 ```bash
-pip install dqm-ml, dqm-ml-pipeline, dqm-ml-pytorch, dqm-ml-images" 
+pip install dqm-ml, dqm-ml-job, dqm-ml-pytorch, dqm-ml-images" 
 ```
 
 ## Execution with cli provided **dqm-ml**

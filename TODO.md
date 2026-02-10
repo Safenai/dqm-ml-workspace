@@ -23,9 +23,9 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 * [ ] Move dataloader/writer type checker to core once stabilized.
 * [ ] Extend metrics to compute representativity of a set of features (multi-column), not just single columns.
 
-## Pipeline & Orchestration (`dqm-ml-pipeline`)
+## Pipeline & Orchestration (`dqm-ml-job`)
 
-* [ ] Rename `dqm-ml-pipeline` to `dqm-ml-job` to better reflect its role in MLOps.
+* [ ] Rename `dqm-ml-job` to `dqm-ml-job` to better reflect its role in MLOps.
 * [ ] Add parameters to the CLI to pass file or directory paths directly as inputs for loaders.
 * [ ] Improve generic parameter and log handling in `cli.py`.
 * [ ] Implement proper metric ordering based on dependencies in `DatasetPipeline`.

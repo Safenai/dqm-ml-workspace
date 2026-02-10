@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pyarrow as pa
 import pytest
 
-from dqm_ml_pipeline.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
+from dqm_ml_job.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
 
 
 @pytest.fixture

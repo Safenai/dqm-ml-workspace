@@ -1,5 +1,5 @@
 [project]
-name = "dqm-ml-pipeline"
+name = "dqm-ml-job"
 dynamic = ["dependencies", "version"]
 description = "Python library designed provide pipelining tools dqm-ml library to compute data quality metrics for Machine Learning"
 authors = [
@@ -30,12 +30,12 @@ Documentation = "https://irt-systemx.github.io/dqm-ml"
 Repository = "https://github.com/IRT-SystemX/dqm-ml"
 
 [project.entry-points."dqm_ml.dataloaders"]
-parquet = "dqm_ml_pipeline.dataloaders:ParquetDataLoader"
-csv = "dqm_ml_pipeline.dataloaders:PandasDataLoader"
+parquet = "dqm_ml_job.dataloaders:ParquetDataLoader"
+csv = "dqm_ml_job.dataloaders:PandasDataLoader"
 
 
 [project.entry-points."dqm_ml.outputwriter"]
-parquet = "dqm_ml_pipeline.outputwriter:ParquetOutputWriter"
+parquet = "dqm_ml_job.outputwriter:ParquetOutputWriter"
 
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
@@ -45,5 +45,5 @@ build-backend = "setuptools.build_meta"
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools_scm]
-version_file = "src/dqm_ml_pipeline/_version_.py"
+version_file = "src/dqm_ml_job/_version_.py"
 root= "../.."

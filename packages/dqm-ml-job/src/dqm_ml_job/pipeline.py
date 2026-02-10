@@ -6,8 +6,8 @@ import pyarrow as pa
 from tqdm import tqdm
 
 from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_pipeline.dataloaders import DataLoader, DataSelection
-from dqm_ml_pipeline.outputwriter import OutputWriter
+from dqm_ml_job.dataloaders import DataLoader, DataSelection
+from dqm_ml_job.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
 

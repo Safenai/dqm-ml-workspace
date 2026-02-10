@@ -7,7 +7,7 @@ DQM-ML V2 is a modular Python framework designed to compute data quality metrics
 The project is managed as a `uv` workspace with several specialized packages located in the `packages/` directory:
 
 * `dqm-ml-core`: Defines the base API (`DatametricProcessor`) and provides core metrics like Completeness and Representativeness.
-* `dqm-ml-pipeline`: Orchestrates the data processing flow. It handles data loading via `DataSelection` and `DataLoader` protocols and executes metric processors in a streaming fashion.
+* `dqm-ml-job`: Orchestrates the data processing flow. It handles data loading via `DataSelection` and `DataLoader` protocols and executes metric processors in a streaming fashion.
 * `dqm-ml-images`: Provides metrics and feature extraction specifically for image data (luminosity, contrast, blur, entropy).
 * `dqm-ml-pytorch`: Implements advanced metrics requiring PyTorch, such as Domain Gap (FID, KLMVN, MMD).
 * `dqm-ml-v2`: A wrapper package providing the main CLI (`dqm-ml-v2`) and handling optional dependencies.

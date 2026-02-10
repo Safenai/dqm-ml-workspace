@@ -31,7 +31,7 @@ notebooks = [
     "plotly>=5.0.0",
 ]
 
-job = [ "dqm-ml-pipeline>=1.1.4"]
+job = [ "dqm-ml-job>=1.1.4"]
 pytorch = [ "dqm-ml-images>=1.1.4"]
 images = [ "dqm-ml-images>=1.1.4"]
 

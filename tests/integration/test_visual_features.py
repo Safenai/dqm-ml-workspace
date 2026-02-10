@@ -5,7 +5,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_pipeline.cli import execute
+from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize("test_name", ["visual_features", "visual_features_batch", "visual_features_path"])

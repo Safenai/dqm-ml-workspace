@@ -16,10 +16,10 @@ test_cases = [
         "- image_embedding - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
         "- visual_metric - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
         "Available data loaders\n"
-        "- csv - <class 'dqm_ml_pipeline.dataloaders.pandas.PandasDataLoader'>\n"
-        "- parquet - <class 'dqm_ml_pipeline.dataloaders.parquet.ParquetDataLoader'>\n"
+        "- csv - <class 'dqm_ml_job.dataloaders.pandas.PandasDataLoader'>\n"
+        "- parquet - <class 'dqm_ml_job.dataloaders.parquet.ParquetDataLoader'>\n"
         "Available outputs writers\n"
-        "- parquet - <class 'dqm_ml_pipeline.outputwriter.parquet.ParquetOutputWriter'>",
+        "- parquet - <class 'dqm_ml_job.outputwriter.parquet.ParquetOutputWriter'>",
     ],
 ]
 command_list = {"version": None}
