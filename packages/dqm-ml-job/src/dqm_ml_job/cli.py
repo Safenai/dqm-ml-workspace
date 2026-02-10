@@ -8,8 +8,8 @@ import yaml
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core.api.data_processor import DatametricProcessor
 from dqm_ml_job.dataloaders import DataLoader
-from dqm_ml_job.outputwriter import OutputWriter
 from dqm_ml_job.job import DatasetJob
+from dqm_ml_job.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +28,9 @@ def parse_args(arg_list: list[str] | None) -> Any:
         prog="dqm-ml", description="DQM-ML Job client", epilog="for more informations see README"
     )
 
-    parser.add_argument("-p", "--process-config", type=str, nargs="+", required=True, 
-                        help="configuration files to execute")
+    parser.add_argument(
+        "-p", "--process-config", type=str, nargs="+", required=True, help="configuration files to execute"
+    )
 
     parser.add_argument("--save-config", type=str, help="Path to save the resolved configuration")
 
