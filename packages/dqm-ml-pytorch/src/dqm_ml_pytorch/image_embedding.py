@@ -20,17 +20,15 @@ logger = logging.getLogger(__name__)
 
 class ImageEmbeddingProcessor(DatametricProcessor):
     """
-    Compute one latent vector per row from images stored in Parquet.
-    Config:
-      input_columns:
-        image_column: "image_bytes" | "image_path" (default: "image_bytes")
-        mode: "bytes" | "path" (default: "bytes")
-      infer:
-        width, height, batch_size, norm_mean, norm_std
-      model_config:
-        arch: torchvision model name (default: "resnet18")
-        n_layer_feature: layer name | index | list[str] (default: "avgpool")
-        device: "cpu" | "cuda" (default: "cpu")
+    Computes high-dimensional latent vectors (embeddings) for images using deep learning models.
+
+    This processor uses PyTorch and Torchvision to:
+    1. Load images from bytes or file paths.
+    2. Preprocess images (resize, normalize) for the selected model.
+    3. Run batch inference using a pre-trained model (e.g., ResNet, ViT).
+    4. Extract features from a specific layer (e.g., 'avgpool').
+
+    The resulting embeddings are stored as a `FixedSizeListArray` in the features.
     """
 
     def __init__(
@@ -38,11 +36,30 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         name: str = "image_embedding",
         config: dict[str, Any] | None = None,
     ):
+        """
+        Initialize the image embedding processor.
+
+        Args:
+            name: Unique name of the processor instance.
+            config: Configuration dictionary containing:
+                - DATA:
+                    - image_column: Column name containing image data (default: "image_bytes").
+                    - mode: Source type, "bytes" or "path" (default: "bytes").
+                - INFER:
+                    - width, height: Input resolution for the model (default: 224x224).
+                    - batch_size: Number of images per inference pass (default: 32).
+                    - norm_mean, norm_std: Preprocessing normalization stats.
+                - MODEL:
+                    - arch: Torchvision model name (default: "resnet18").
+                    - n_layer_feature: Target layer for feature extraction (default: "avgpool").
+                    - device: Execution device, "cpu" or "cuda" (default: "cpu").
+        """
         super().__init__(name, config)
         self._checked = False
 
     # ---------------- API ----------------
     def check_config(self) -> None:
+        """Validate and initialize model/transforms from configuration."""
         cfg = self.config or {}
 
         dcfg = cfg.get("DATA", {})
@@ -94,6 +111,20 @@ class ImageEmbeddingProcessor(DatametricProcessor):
 
     @override
     def compute_features(self, batch: pa.RecordBatch, prev_features: pa.Array = None) -> dict[str, pa.Array]:
+        """
+        Extract image embeddings for all samples in the batch.
+
+        1. Images are loaded and transformed.
+        2. Model inference is performed in sub-batches defined by `INFER.batch_size`.
+        3. Results are aggregated into a pyarrow `FixedSizeListArray`.
+
+        Args:
+            batch: Raw pyarrow batch.
+            prev_features: Pre-computed features (not used).
+
+        Returns:
+            Dictionary mapping 'embedding' to the calculated feature vectors.
+        """
         if not getattr(self, "_checked", False):
             self.check_config()
         if self.image_column not in batch.schema.names:
@@ -172,7 +203,10 @@ class ImageEmbeddingProcessor(DatametricProcessor):
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        return features
+        """
+        Return an empty dictionary as embeddings are stored as features, we do not compute metrics.
+        """
+        return {}
 
     @override
     def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, pa.Array]:

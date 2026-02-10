@@ -6,7 +6,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_pipeline.cli import execute
+from dqm_ml_job.cli import execute
 
 
 @pytest.mark.slow
@@ -21,7 +21,7 @@ def test_domain_gap(
     output_path: Path,
     test_name: str,
     coco_data: Any,
-    pipeline_domain_gap: Any,
+    job_domain_gap: Any,
 ) -> None:
     # pad and cmd not implemented
 

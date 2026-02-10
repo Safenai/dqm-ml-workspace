@@ -1,7 +1,7 @@
 import shutil
 import pytest
 import pyarrow.parquet as pq
-from dqm_ml_pipeline.outputwriter.parquet import ParquetOutputWriter
+from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 
 @pytest.fixture
 def temp_output_dir(tmp_path):

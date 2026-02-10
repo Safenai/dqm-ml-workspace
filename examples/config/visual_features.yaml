@@ -2,7 +2,7 @@
 
 ---
 # A really basic pipeline configuration
-pipeline_config: 
+config: 
 
   # Configuration for the data loader
   dataloaders:

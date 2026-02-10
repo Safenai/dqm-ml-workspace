@@ -12,6 +12,9 @@
 [![Nox][nox-badge]](https://nox.thea.codes/en/stable/)
 [![Checked with mypy][mypy-badge]](https://mypy-lang.org/)
 
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=Safenai_dqm-ml-workspace)](https://sonarcloud.io/summary/new_code?id=Safenai_dqm-ml-workspace)
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=Safenai_dqm-ml-workspace)
+
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 [size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
 [python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
@@ -25,35 +28,68 @@
 ## Package last version available on pypi
 
 * [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) :  `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
-* [![PyPI dqm-ml-pipeline version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-pipeline) : `packages/dqm-ml-pipeline`: Orchestration, streaming data loaders, and output writers.
+* [![PyPI dqm-ml-job version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-job) : `packages/dqm-ml-job`: Orchestration, streaming data loaders, and output writers.
 * [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) :`packages/dqm-ml-images`: Visual feature extraction metrics.
 * [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
 * (not yet delivered as a package)`packages/dqm-ml-v2`: Main wrapper and CLI entry point.
 * `packages/dqm-ml`: **Legacy** version (V1) delivered from original repository, excluded from the active workspace.
 
 [pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
-[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-pipeline.svg
+[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-job.svg
 [pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
 [pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
-
-This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
-
-Documentation remains in this repository as we deliver the migration to the new API.
 
 The library was originally developed in the program:
 
 <div align="center">
-    <img src="static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
     <h1 style="font-size: large; font-weight: bold;">dqm-ml v2</h1>
 </div>
 
-## Documentation
+> [!IMPORTANT]  
+> This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
+> All what has been implemented rely on
+> (Definitions from [Confiance.ai program](https://www.confiance.ai/))
+> Reference publication [HAL link](https://hal.science/hal-04719346v1)
+> For more technical and scientific details, please refer to this [deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf?download=1)
+
+
+> [!WARNING]
+> TODO : Need to update link to the ETAIA place
+> TODO : Need to access the open source deliverable (not confidential one)
+
+## Documentations
 
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
 * **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
 * **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
 * **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
+
+## Wich metrics are availables
+
+Metric computed on **data selection** rely on several approches are developped as described in the figure below. and associated publications
+
+<img src="docs/static/library_view.png" width="1024"/>
+
+In the current version, the available (or to be available) metrics are:
+
+* Representativeness:
+  * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
+  * Kolmogorov Smirnov test for Uniform and Normal Distributions
+  * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
+* Diversity:
+  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml v1)
+  * Gini-Simpson and Simposon indices (only in dqm-ml v1)
+* Completeness:
+  * Ratio of filled information
+* Domain Gap:
+  * MMD (only in dqm-ml v1)
+  * CMD (only in dqm-ml v1)
+  * Wasserstein
+  * H-Divergence
+  * FID
+  * Kullback-Leiblur MultiVariate Normal Distribution
 
 ## Installation
 
@@ -75,7 +111,7 @@ Manually install all packages:
 > :warning: for version <v2.0.0> the dqm-ml version installed is the legacy version, you have access to the **process** command
 
 ```bash
-pip install dqm-ml, dqm-ml-pipeline, dqm-ml-pytorch, dqm-ml-images" 
+pip install dqm-ml, dqm-ml-job, dqm-ml-pytorch, dqm-ml-images" 
 ```
 
 ## Execution with cli provided **dqm-ml**
@@ -104,7 +140,7 @@ def compute_metric() -> None:
         config = yaml.safe_load(f)
 
         # Execute the job with the loaded configuration, output are directly saved to disk
-        exec_qml_job(config["pipeline_config"])
+        exec_qml_job(config["config"])
 
         # A more granular API will be provided in future releases to access intermediate results
 
@@ -124,3 +160,18 @@ this example can be found in `examples/script/completeness.py'` and executed wit
 
 ## Workspace Structure
 
+## References
+
+DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai programme 
+
+``` ref
+@inproceedings{chaouche2024dqm,
+  title={DQM: Data Quality Metrics for AI components in the industry},
+  author={Chaouche, Sabrina and Randon, Yoann and Adjed, Faouzi and Boudjani, Nadira and Khedher, Mohamed Ibn},
+  booktitle={Proceedings of the AAAI Symposium Series},
+  volume={4},
+  number={1},
+  pages={24--31},
+  year={2024}
+}
+```

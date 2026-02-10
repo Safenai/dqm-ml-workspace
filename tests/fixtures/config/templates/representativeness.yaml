@@ -1,7 +1,7 @@
 ## Yaml pipeline configuration
 
 ---
-pipeline_config:
+config:
 
   dataloaders:
     source_dataset:

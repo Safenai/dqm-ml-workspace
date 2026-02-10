@@ -19,7 +19,7 @@ def compatibility(s: Session) -> None:
     s.run(
         "pytest",
         # Only quick tests for compatibility
-        "tests/cli/test_pipeline_cli.py",
+        "tests/cli/test_job_cli.py",
         *s.posargs,
     )
 
@@ -31,7 +31,7 @@ def compatibility(s: Session) -> None:
 def test(s: Session) -> None:
     s.run(
         "pytest",
-        "--cov=packages/dqm-ml-pipeline/src",
+        "--cov=packages/dqm-ml-job/src",
         "--cov=packages/dqm-ml-core/src",
         "--cov=packages/dqm-ml-pytorch/src",
         "--cov=packages/dqm-ml-images/src",
@@ -108,7 +108,7 @@ def lint_fix(s: Session) -> None:
     s.run(
         "ruff",
         "check",
-        "packages/dqm-ml-pipeline",
+        "packages/dqm-ml-job",
         "--extend-fixable",
         "F401",
         "--fix",
@@ -149,7 +149,7 @@ def lint_fix(s: Session) -> None:
 
 @session(venv_backend="none")
 def type_check(s: Session) -> None:
-    s.run("mypy", "packages/dqm-ml-pipeline", "noxfile.py")
+    s.run("mypy", "packages/dqm-ml-job", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-core", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-images", "noxfile.py")
     s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")

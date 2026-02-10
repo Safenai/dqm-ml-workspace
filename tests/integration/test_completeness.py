@@ -5,7 +5,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_pipeline.cli import execute
+from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize("test_name", ["completeness", "completeness_batch"])
@@ -14,7 +14,7 @@ def test_completeness(
     test_path: Path,
     output_path: Path,
     test_name: str,
-    pipeline_completeness: Any,
+    job_completeness: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))

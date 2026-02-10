@@ -6,7 +6,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_pipeline.cli import execute
+from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_representativeness(
     tests_config: Any,
     output_path: Path,
     test_name: str,
-    pipeline_representativeness: Any,
+    job_representativeness: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
 

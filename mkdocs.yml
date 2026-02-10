@@ -10,10 +10,22 @@ theme:
   # By default, fonts are pulled from Google on the Internet. To support offline usage, this is
   # disabled.
   font: false
-  palette:
-    scheme: slate
-    primary: green
-    accent: yellow
+  # palette:
+  #   scheme: slate
+  #   primary: green
+  #   accent: yellow
+  palette: 
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   icon:
     logo: material/math-integral-box
     # GitHub specific.
@@ -25,16 +37,22 @@ theme:
     - content.tabs.link
     - content.tooltips
     - navigation.indexes
-    - navigation.expand
+    #- navigation.expand
     - navigation.footer
     # conflict with navigation.tracking
-    #- navigation.instant
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.top
-    - navigation.tracking
+    #- navigation.tracking
     - search.highlight
     - search.share
     - search.suggest
     - toc.follow
+    - toc.integrate
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.path
+    - navigation.prune
 markdown_extensions:
   - abbr
   - admonition
@@ -78,7 +96,7 @@ plugins:
       modules: [
         "packages/dqm-ml-core/src/dqm_ml_core/",
         "packages/dqm-ml-images/src/dqm_ml_images/",
-        "packages/dqm-ml-pipeline/src/dqm_ml_pipeline/",
+        "packages/dqm-ml-job/src/dqm_ml_job/",
         "packages/dqm-ml-pytorch/src/dqm_ml_pytorch/",
       ]
   # This plugin is used to validate URLs (including anchors).
@@ -88,8 +106,12 @@ plugins:
       validate_external_urls: !ENV [HTMLPROOFER_VALIDATE_EXTERNAL_URLS, false]
       raise_error: false
 watch:
-  # Watch src/ directory to reload on changes to docstrings for mkdocstrings plugin.
-  - src
+  # Watch directories to reload on changes to docstrings for mkdocstrings plugin.
+  - "packages/dqm-ml-core/src/dqm_ml_core/"
+  - "packages/dqm-ml-images/src/dqm_ml_images/"
+  - "packages/dqm-ml-job/src/dqm_ml_job/"
+  - "packages/dqm-ml-pytorch/src/dqm_ml_pytorch/"
+  - "docs"
 site_name: DQM-ML V2
 copyright: Copyright &copy; SafenAI
 # GitHub Specific Configuration.

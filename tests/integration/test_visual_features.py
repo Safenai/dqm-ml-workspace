@@ -5,7 +5,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_pipeline.cli import execute
+from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize("test_name", ["visual_features", "visual_features_batch", "visual_features_path"])
@@ -14,7 +14,7 @@ def test_visual_features(
     test_path: str,
     output_path: str,
     test_name: str,
-    pipeline_visual_features: Any,
+    job_visual_features: Any,
 ) -> None:
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))

@@ -4,7 +4,7 @@ from typing import Any, override
 import pandas as pd
 import pyarrow as pa
 
-from dqm_ml_pipeline.dataloaders.proto import DataSelection
+from dqm_ml_job.dataloaders.proto import DataSelection
 
 logger = logging.getLogger(__name__)
 

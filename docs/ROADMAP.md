@@ -8,7 +8,7 @@ The V2 release focuses on a complete architectural overhaul, introducing a unifi
 
 ### Architectural Limitations
 
-* **Beta Phase**: Both `dqm-ml-pipeline` and `dqm-ml-images` are currently in beta. Configuration schemas and CLI parameters are subject to refinement based on community feedback.
+* **Beta Phase**: Both `dqm-ml-job` and `dqm-ml-images` are currently in beta. Configuration schemas and CLI parameters are subject to refinement based on community feedback.
 * **CLI Renaming**: To better align with its role in MLOps, the pipeline component is slated to be renamed to `dqm-ml-job`.
 * **Submodule Dependency**: The project still maintains a dependency on the legacy `dqm-ml` package for comparison and reference, which will be phased out once full parity is achieved.
 

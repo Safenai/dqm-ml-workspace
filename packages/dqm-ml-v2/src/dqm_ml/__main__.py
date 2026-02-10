@@ -33,7 +33,7 @@ class _HelpAction(argparse._HelpAction):
 def parse_args(arg_list: list[str] | None, command_list: Iterable[str]) -> Any:
     parser = argparse.ArgumentParser(
         prog="dqm-ml-v2",
-        description="DQM-ML Pipeline client",
+        description="DQM-ML Job client",
         epilog="for more informations see README",
         add_help=False,
     )

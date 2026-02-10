@@ -13,19 +13,22 @@ logger = logging.getLogger(__name__)
 
 class DomainGapProcessor(DatametricProcessor):
     """
-    Reduce per-row embeddings into dataset-level summaries and compute deltas.
+    Computes statistical distances between source and target dataselections using image embeddings.
 
-    Config:
-      INPUT:
-        embedding_col: "embedding"
-      Batch level computation:
-        collect_sum_outer: bool   # needed for FID
-        collect_hist_1d: bool     # needed for Wasserstein-1D
-        hist_dims: int            # number of dims to histogram (<= d)
-        hist_bins: int
-        hist_range: [low, high]
-      DELTA: dataset level computation
-        metric: "klmvn_diag" | "mmd_linear" | "fid" | "wasserstein_1d"
+    This processor works in two stages:
+    1. Dataset Summary: Aggregates high-dimensional embeddings into compact statistics
+       (mean, variance, outer products, histograms).
+    2. Delta Computation: Uses these summaries to calculate distance metrics between
+       a source and a target dataset.
+
+    Supported Delta Metrics:
+      - `klmvn_diag`: Kullback-Leibler Divergence assuming a multivariate Normal
+        distribution with a diagonal covariance matrix.
+      - `mmd_linear`: Maximum Mean Discrepancy with a linear kernel.
+      - `fid`: Frechet Inception Distance. Measures distance between two Gaussians
+        fitted to feature representations (requires full covariance calculation).
+      - `wasserstein_1d`: Average 1D Wasserstein distance across embedding dimensions,
+        approximated via histograms.
     """
 
     def __init__(
@@ -33,6 +36,22 @@ class DomainGapProcessor(DatametricProcessor):
         name: str = "image_embedding",
         config: dict[str, Any] | None = None,
     ):
+        """
+        Initialize the domain gap processor.
+
+        Args:
+            name: Unique name of the processor instance.
+            config: Configuration dictionary containing:
+                - INPUT:
+                    - embedding_col: Column name containing embeddings (default: "embedding").
+                - SUMMARY:
+                    - collect_sum_outer: Whether to compute outer products (needed for FID).
+                    - collect_hist_1d: Whether to compute histograms (needed for Wasserstein).
+                    - hist_dims: Number of dimensions to histogram.
+                    - hist_bins: Number of bins per histogram.
+                - DELTA:
+                    - metric: Target metric ("klmvn_diag", "mmd_linear", "fid", "wasserstein_1d").
+        """
         super().__init__(name, config)
         self._checked = False
 
@@ -78,8 +97,15 @@ class DomainGapProcessor(DatametricProcessor):
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """Produce per-batch summaries from the 'embedding' column.
-        Histograms, mean, variance of embeddings could also be added here
+        """
+        Reduce a batch of embeddings into summary statistics.
+
+        Returns a dictionary containing:
+            - count: Number of samples.
+            - sum: Element-wise sum of embeddings.
+            - sum_sq: Element-wise sum of squared embeddings.
+            - sum_outer: (Optional) Sum of outer products (for FID).
+            - hist_counts: (Optional) Flattened histogram counts (for Wasserstein).
         """
         if not getattr(self, "_checked", False):
             self.check_config()
@@ -119,7 +145,9 @@ class DomainGapProcessor(DatametricProcessor):
 
     @override
     def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """Aggregate per-batch summaries into a single dataset-level summary row."""
+        """
+        Aggregate batch-level summary statistics into global dataselection statistics.
+        """
         if not batch_metrics:
             return {}
 
@@ -168,7 +196,16 @@ class DomainGapProcessor(DatametricProcessor):
 
     @override
     def compute_delta(self, source: dict[str, pa.Array], target: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """Compute a domain-gap metric from two dataset-level summaries."""
+        """
+        Calculate the domain gap metric between source and target dataselection statistics.
+
+        Args:
+            source: Dataselection statistics from the source dataset (computed via `compute`).
+            target: Dataselection statistics from the target dataset (computed via `compute`).
+
+        Returns:
+            Dictionary containing the calculated metric value.
+        """
         if not getattr(self, "_checked", False):
             self.check_config()
         # TODO : check config and available metrics outside of computation
@@ -177,12 +214,14 @@ class DomainGapProcessor(DatametricProcessor):
         def vec(
             a: pa.FixedSizeListArray,
         ) -> Any:  # TODO : check type error np.ndarray
+            """Aggregate a FixedSizeListArray into a single numpy vector by summing all lists."""
             len_a = len(a[0])
             # len_a = a.list_size
             array = np.asarray(a.values.to_numpy(), dtype=np.float64).reshape(-1, len_a).sum(axis=0)
             return array  # type : ignore[no-any-return]
 
         def scalar(a: pa.Array) -> float:
+            """Sum all elements in a pyarrow Array and return as a float."""
             return float(np.asarray(a.to_numpy()).sum())
 
         metric = self.delta_metric

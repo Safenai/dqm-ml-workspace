@@ -7,19 +7,31 @@ import yaml
 
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_pipeline.dataloaders import DataLoader
-from dqm_ml_pipeline.outputwriter import OutputWriter
-from dqm_ml_pipeline.pipeline import DatasetPipeline
+from dqm_ml_job.dataloaders import DataLoader
+from dqm_ml_job.job import DatasetJob
+from dqm_ml_job.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
 
 
 def parse_args(arg_list: list[str] | None) -> Any:
+    """
+    Parse command line arguments for the DQM job.
+
+    Args:
+        arg_list: List of arguments (default: sys.argv[1:]).
+
+    Returns:
+        The parsed Namespace object.
+    """
     parser = argparse.ArgumentParser(
-        prog="dqm-ml", description="DQM-ML Pipeline client", epilog="for more informations see README"
+        prog="dqm-ml", description="DQM-ML Job client", epilog="for more informations see README"
     )
 
-    parser.add_argument("-p", "--pipeline", type=str, nargs="+", required=True, help="pipeline files to execute")
+    parser.add_argument(
+        "-p", "--process-config", type=str, nargs="+", required=True, help="configuration files to execute"
+    )
+
     parser.add_argument("--save-config", type=str, help="Path to save the resolved configuration")
 
     # TODO add parameters to pass directly files / directory as inputs for loaders
@@ -30,41 +42,54 @@ def parse_args(arg_list: list[str] | None) -> Any:
 
 # TODO get parameters, logs, ...
 def execute(arg_list: list[str] | None = None) -> None:
+    """
+    Main CLI entry point for executing DQM jobs from YAML configurations.
+    Args:
+        arg_list: List of command line arguments (default: sys.argv[1:]).
+    """
     args = parse_args(arg_list)
     config: dict[str, Any] = {}
 
-    for config_file in args.pipeline:
-        logger.debug("Executing pipeline from config file: %s", config_file)
+    for config_file in args.process_config:
+        logger.debug("Executing job from config file: %s", config_file)
+
         with Path(config_file).open() as stream:
             try:
                 config_content = yaml.safe_load(stream)
                 config.update(config_content)
             except yaml.YAMLError as exc:
-                logger.error("Fail to part pipeline configuration: %s", config_file)
+                logger.error("Fail to part job configuration: %s", config_file)
                 print(exc)
                 return
 
-    # if we succeed to load all config files, run the pipeline
+    # if we succeed to load all config files, run the job
+
     # Optionally save the resolved configuration
     if args.save_config:
         logger.debug("Saving resolved configuration to: %s", args.save_config)
         with Path(args.save_config).open("w") as stream:
             yaml.safe_dump(config, stream)
 
-    run(config["pipeline_config"])
+    if "config" in config:
+        run(config["config"])
+    elif "pipeline_config" in config:
+        logger.warning("'pipeline_config' is deprecated, please use 'config' instead.")
+        run(config["pipeline_config"])
+    else:
+        logger.error("No 'config' found in configuration.")
 
 
 def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], component_name: str) -> dict[str, Any]:
     """
-    Initialize pipeline components from a registry.
+    Initialize job components (loaders, metrics, writers) from their respective registries.
 
     Args:
-        config_dict: Dictionary of component configurations.
+        config_dict: Dictionary of component configurations from YAML.
         registry: The registry containing the component classes.
         component_name: The name of the component type (for error messages).
 
     Returns:
-        A dictionary of initialized components.
+        A dictionary of initialized component instances.
     """
     components = {}
     for key, comp_config in config_dict.items():
@@ -78,12 +103,20 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
 
 
 def run(config: dict[str, Any]) -> None:
+    """
+    Execute a job from a validated configuration dictionary.
+
+    The config must contain:
+    - dataloaders: Map of configurations for data sources.
+    - metrics_processor: Map of configurations for quality metrics.
+    - outputs: Map of configurations for results storage.
+    """
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
 
     if not config:
-        raise ValueError("Pipeline requires a configuration dictionary.")
+        raise ValueError("Job requires a configuration dictionary.")
 
     # Load data loaders
     if "dataloaders" not in config or not isinstance(config["dataloaders"], dict):
@@ -123,11 +156,11 @@ def run(config: dict[str, Any]) -> None:
 
     progress_bar = config.get("progress_bar", True)
 
-    pipeline = DatasetPipeline(
+    job = DatasetJob(
         dataloaders=dataloaders, metrics=metrics, features_output=features_output, progress_bar=progress_bar
     )
 
-    dataselection_metrics_list, delta_metrics_table = pipeline.run()
+    dataselection_metrics_list, delta_metrics_table = job.run()
 
     # If we have computed metrics to store
     if metrics_output:

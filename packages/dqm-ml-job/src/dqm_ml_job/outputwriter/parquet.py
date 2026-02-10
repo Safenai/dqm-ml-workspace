@@ -37,7 +37,10 @@ class ParquetOutputWriter:
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """
-        Write computed metrics to a unique parquet file.
+        Aggregate and write dataset-level metrics for all selections to a Parquet file.
+
+        Args:
+            metrics_dict: Map of selection names to their computed metric dictionaries.
         """
         if len(metrics_dict) > 0:
             logger.debug(f"Writing metrics for the {len(metrics_dict)} data selections")
@@ -51,14 +54,16 @@ class ParquetOutputWriter:
                 metrics_table[metric_name] = pa.array([metrics_dict[key][metric_name] for key in keys])
         self.write_table("", metrics_table)
 
-    def write_table(self, dataloader: str, features_array: dict[str, Any], part: int | None = None) -> None:
+    def write_table(self, path_pattern: str, features_array: dict[str, Any], part: int | None = None) -> None:
         """
-        Write the processed features to a parquet file.
+        Write a table of features or metrics to a Parquet file on disk.
+
+        Handles directory creation if the target path doesn't exist.
 
         Args:
-            dataloader: Name of the data loader that produced the data.
-            features_array: Dictionary of column name -> pyarrow.Array.
-            part: Partition index for splitting large datasets.
+            path_pattern: Identifier for the data detination (used in filename pattern).
+            features_array: Map of column names to pyarrow Arrays.
+            part: Optional partition index for chunked output.
         """
 
         for key in self.columns:
@@ -67,9 +72,9 @@ class ParquetOutputWriter:
 
         table = pa.table(features_array)
         if part is None:
-            filename = self.path_pattern.format(dataloader, "")
+            filename = self.path_pattern.format(path_pattern, "")
         else:
-            filename = self.path_pattern.format(dataloader, part)
+            filename = self.path_pattern.format(path_pattern, part)
 
         output_dir = Path(filename).parent
         if not Path.exists(output_dir):

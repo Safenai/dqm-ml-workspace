@@ -2,6 +2,16 @@
 
 ## 1.1.6 (2026-02-10) - upgrade dependency and security check
 
+This release is dedicated to rename dqm-ml-pipeline as sqm-ml-job, correct security issues detected by github, as well as initiated template for issues, feature and merge request
+
+### Issue ticket number and link
+
+* fix: #42
+* fix: #31
+* fix: #31
+
+### Other details on several changes
+
 * Security warning regarding dependency used in uv.lock as reference package version
   * `urllib3 "2.6.2" => "2.6.3"` : Decompression-bomb safeguards bypassed when following HTTP redirects (streaming API) High
   * `torch 2.7.1 => 2.10.0` : PyTorch Improper Resource Shutdown or Release vulnerability Moderate
@@ -22,12 +32,21 @@
 
 * add default issues template to github workflow
 
+* documentation presentation improvment
+  * Add light/dark mode
+  * Add dynamic horizontal size for content
+  * Disable expand by default in navigation
+  * Add navigation tab
+  * Add navigation path
+   
+* connection to sonarqube for code quality
+
 ## 1.1.5 (2026-02-09)
 
 * Quality correction / ci improvements **Fixed**
   * `noxfile.py`: Added a `docs` session to build the documentation. (Fixes #6)
   * `noxfile.py`: The `format` nox session now runs independently from the `lint` session. (Fixes #8)
-  * `dqm_ml_pipeline/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
+  * `dqm_ml_job/outputwriter/parquet.py`: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  
   * `.github\ci.yml` : adjust security permissions and other code quality checks
 
 * Repository organization changes :
@@ -64,6 +83,6 @@ Version content :
 * dqm-ml-core : API proposal for future generic V2 api to allow generic usage of API
 * dqm-ml-images : beta version of feature computation for images in order to simplify computation on features computed
 * dqm-ml-pytorch : beta implementation of 3 of existing domain gap metrics relying on pytorch
-* dqm-ml-pipeline : beta implementation of of metric computation cli from files, with grouping strategy (see roadmap)
+* dqm-ml-job : beta implementation of of metric computation cli from files, with grouping strategy (see roadmap)
 
 This version allow use to generate metrics on welding uses case to demonstrate values of such an structural evolution
