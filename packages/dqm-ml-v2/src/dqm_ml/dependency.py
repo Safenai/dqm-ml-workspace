@@ -1,3 +1,9 @@
+"""Dependency management utilities for DQM-ML v2.
+
+This module provides functions for handling optional dependencies,
+displaying version information, and discovering available commands.
+"""
+
 from collections.abc import Generator
 from contextlib import contextmanager
 import logging
@@ -12,6 +18,17 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def optional_dependencies(error: str = "ignore") -> Generator[None, None, None]:
+    """Context manager for handling optional dependencies.
+
+    Args:
+        error: How to handle missing optional dependencies:
+            - "ignore": Silently continue (default)
+            - "warn": Print a warning message
+            - "raise": Raise the ImportError
+
+    Yields:
+        None - this is a context manager that doesn't provide any value.
+    """
     assert error in {"raise", "warn", "ignore"}
     try:
         yield None

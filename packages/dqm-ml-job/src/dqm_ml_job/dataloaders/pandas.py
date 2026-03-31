@@ -10,11 +10,24 @@ logger = logging.getLogger(__name__)
 
 
 class PandasDataSelection(DataSelection):
-    """
-    A selection of data from a CSV file loaded via Pandas.
+    """A selection of data from a CSV file loaded via Pandas.
+
+    This class represents data loaded from a CSV file and provides
+    an iterator over PyArrow RecordBatches.
+
+    Attributes:
+        name: Name identifier for this selection.
+        path: Path to the CSV file.
+        data: The loaded pandas DataFrame.
     """
 
     def __init__(self, name: str, path: str):
+        """Initialize a Pandas data selection.
+
+        Args:
+            name: Name identifier for this selection.
+            path: Path to the CSV file.
+        """
         self.name = name
         self.path = path
         self.data: pd.DataFrame | None = None
@@ -42,13 +55,28 @@ class PandasDataSelection(DataSelection):
 
 
 class PandasDataLoader:
-    """
-    Data loader for CSV files using Pandas.
+    """Data loader for CSV files using Pandas.
+
+    This loader reads CSV files and provides DataSelections for
+    processing by the DQM pipeline.
+
+    Attributes:
+        type: The loader type identifier ("csv").
     """
 
     type: str = "csv"
 
     def __init__(self, name: str, config: dict[str, Any] | None = None):
+        """Initialize the Pandas data loader.
+
+        Args:
+            name: Unique name for this loader instance.
+            config: Configuration dictionary containing:
+                - path: Path to CSV file (required)
+
+        Raises:
+            ValueError: If required config keys are missing.
+        """
         if not config or "path" not in config:
             raise ValueError(f"Configuration for dataloader '{name}' must contain 'path'")
         self.name = name

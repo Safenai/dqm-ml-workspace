@@ -1,7 +1,14 @@
-"""
-Data processors module.
+"""Data loaders module for DQM ML Job.
 
-This module contains classes for processing data and computing metrics.
+This module contains classes for loading data from various sources
+and protocols. It provides the DataLoader and DataSelection protocols
+along with concrete implementations for different file formats.
+
+Classes:
+    DataLoader: Protocol for data loader factories.
+    DataSelection: Protocol for data subsets.
+    ParquetDataLoader: Loader for Parquet files.
+    PandasDataLoader: Loader for CSV files using Pandas.
 """
 
 from dqm_ml_job.dataloaders.pandas import PandasDataLoader

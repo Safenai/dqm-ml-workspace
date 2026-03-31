@@ -1,3 +1,10 @@
+"""Main CLI entry point for DQM-ML v2.
+
+This module provides the command-line interface for running DQM-ML
+commands including version display, listing available plugins, and
+processing data quality assessment jobs.
+"""
+
 import argparse
 from collections.abc import Iterable
 import logging
@@ -10,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class _HelpAction(argparse._HelpAction):
+    """Custom help action to support command-specific help."""
+
     @override
     def __call__(
         self,
