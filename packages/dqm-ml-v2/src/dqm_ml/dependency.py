@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import logging
 from typing import Any
 
-from dqm_ml._version_ import version as version
+# from dqm_ml._version_ import version as version
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core._version_ import version as core_version
 
@@ -41,9 +41,12 @@ def optional_dependencies(error: str = "ignore") -> Generator[None, None, None]:
 
 
 def display_version(arg_list: list[str] | None = None) -> None:
-    if core_version != version:
-        logger.warning(f"Different dqm-ml-core version {core_version} from dqm-ml version {version}")
-    print(f"DQM-ML version : {version}")
+    # if core_version != version:
+    #     logger.warning(
+    #         f"Different dqm-ml-core version {core_version} from dqm-ml version {version}"
+    #     )
+    # print(f"DQM-ML version : {version}")
+    print(f"DQM-ML version : {core_version}")
 
 
 def display_list_of(arg_list: list[str] | None = None) -> None:
