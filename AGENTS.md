@@ -56,9 +56,16 @@ Fixable error:
 uv run nox -s lint_fix
 ```
 
+### Spell Checking
+
+Run spell checking with cspell:
+
+```bash
+uv run nox -s spell
+```
+
 Configuration (from pyproject.toml):
-- Line length: 120
-- Enabled rules: F, E, I, N, UP, RUF, B, C4, ISC, PIE, PT, PTH, SIM, TID
+- Checks all files: `files = ["**/*"]`
 
 ### Type Checking
 

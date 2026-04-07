@@ -71,6 +71,7 @@ type_check = [
 
 lint = [
     "ruff",
+    "cspell",
 ]
 
 docs = [
@@ -188,3 +189,6 @@ exclude_also = [
     "raise NotImplementedError",
     "@abstractmethod",
 ]
+
+[tool.cspell]
+files = ["**/*"]

@@ -3,7 +3,7 @@ from nox_uv import session
 
 options.error_on_external_run = True
 options.default_venv_backend = "uv"
-options.sessions = ["lint", "test", "type_check"]
+options.sessions = ["lint", "spell", "test", "type_check"]
 
 
 @session(
@@ -210,3 +210,8 @@ def docs_github_pages(s: Session) -> None:
 @session(uv_groups=["licenses"], uv_no_install_project=True)
 def licenses(s: Session) -> None:
     s.run("pip-licenses", *s.posargs)
+
+
+@session(venv_backend="none")
+def spell(s: Session) -> None:
+    s.run("cspell", "lint", ".", *s.posargs)

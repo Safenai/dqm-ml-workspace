@@ -353,6 +353,11 @@ We welcome contributions! Whether you're fixing a bug, adding a new metric, or i
    uv run nox -s lint
    ```
 
+6. **Check spelling**
+   ```bash
+   uv run nox -s spell
+   ```
+
 For detailed guidelines, see [AGENTS.md](./AGENTS.md).
 
 ## Documentation
