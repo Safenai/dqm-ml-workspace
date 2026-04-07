@@ -24,7 +24,7 @@ def test_representativeness_pandas(tests_config: Any, test_path: Path, output_pa
         output_path: Path to write test outputs.
         test_name: Name of the test configuration to run.
     """
-    command = f"-p tests/fixtures/config/{test_name}.yaml"
+    command = f"-p tests/integration/fixtures/config/{test_name}.yaml"
     execute(shlex.split(command))
 
     # load test configuration

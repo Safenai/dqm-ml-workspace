@@ -41,7 +41,7 @@ def test_domain_gap(
     """
     # pad and cmd not implemented
 
-    command = f"-p tests/fixtures/config/generated/domain_gap_{test_name}.yaml"
+    command = f"-p tests/integration/fixtures/config/generated/domain_gap_{test_name}.yaml"
     start = timer()
     execute(shlex.split(command))
     end = timer()

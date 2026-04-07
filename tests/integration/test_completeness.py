@@ -31,7 +31,7 @@ def test_completeness(
         test_name: Name of the test configuration to run.
         job_completeness: Fixture that generates the test job configuration.
     """
-    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
+    command = f"-p tests/integration/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))
 
     expected_scores = tests_config["completeness"]["expected_scores"]

@@ -39,7 +39,7 @@ def test_representativeness(
         test_name: Name of the test configuration to run.
         job_representativeness: Fixture that generates the test job configuration.
     """
-    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
+    command = f"-p tests/integration/fixtures/config/generated/{test_name}.yaml"
 
     start = timer()
     execute(shlex.split(command))

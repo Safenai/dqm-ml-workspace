@@ -22,7 +22,7 @@ assets
 
 # Test images
 tests/config_generated
-tests/fixtures/config/generated
+tests/integration/fixtures/config/generated
 tests/outputs
 
 # Dynamic versioning
