@@ -26,6 +26,7 @@ def copy_example():
 
 def copy_readme():
     shutil.copy("README.md", "docs/index.md")
+    shutil.copy("AGENTS.md", "docs/AGENTS.md")
 
 
 def rename_coverage_index():

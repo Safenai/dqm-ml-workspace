@@ -133,3 +133,32 @@ uv sync --group lint    # Linting tools
 uv sync --group type_check  # Type checking tools
 uv sync --group test   # Testing tools
 ```
+
+## Documentation
+
+Generate documentation in HTML format using mkdocs:
+
+```bash
+# Build documentation (outputs to docs/site/)
+uv run nox -s docs
+
+# Serve documentation locally (live reload)
+uv run nox -s docs_serve
+```
+
+The documentation site is automatically built and deployed by the CI/CD pipeline to GitHub Pages.
+
+## Contributing
+
+Agents are welcomed to contribute to this project. To contribute:
+
+1. Follow all the rules defined in this document
+2. Make your changes following the coding, linting, and testing rules
+3. Ensure all tests pass before proposing a pull request
+4. Submit a pull request for review
+
+When contributing:
+- Run linting: `uv run nox -s lint`
+- Run type checking: `uv run nox -s type_check`
+- Run tests: `uv run nox -s test`
+- Generate documentation: `uv run nox -s docs`

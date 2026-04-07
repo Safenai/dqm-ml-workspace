@@ -33,6 +33,7 @@ output
 *.parquet
 # Readme is copied during doc pre build
 docs/index.md
+docs/AGENTS.md
 .github/workflows/tests_act.yml
 
 

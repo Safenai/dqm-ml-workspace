@@ -205,39 +205,17 @@ DQM-ML uses a streaming architecture designed for scalability. Here's how data f
 
 ```mermaid
 flowchart LR
-    subgraph DataSources["Data Sources"]
-        A1[Parquet Files]
-        A2[CSV Files]
-        A3[Databases]
-    end
-    
-    subgraph Pipeline["DQM-ML Pipeline"]
-        B[DataLoader]
-        C[Streaming Batches]
-        D[Metric Processor]
-        E[Intermediate Stats]
-        F[Final Metrics]
-        G[Output Writer]
-    end
-    
-    A1 --> B
-    A2 --> B
-    A3 --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-    
-    subgraph Outputs["Outputs"]
-        H1[Parquet Files]
-        H2[CSV Files]
-        H3[Dashboards]
-    end
-    
-    G --> H1
-    G --> H2
-    G --> H3
+    A1[Parquet Files] --> B[DataLoader]
+    A2[CSV Files] --> B
+    A3[Databases] --> B
+    B --> C[Streaming Batches]
+    C --> D[Metric Processor]
+    D --> E[Intermediate Stats]
+    E --> F[Final Metrics]
+    F --> G[Output Writer]
+    G --> H1[Parquet Files]
+    G --> H2[CSV Files]
+    G --> H3[Dashboards]
 ```
 
 **How it works:**
@@ -268,18 +246,10 @@ dqm-ml-workspace/
 
 ```mermaid
 flowchart TB
-    subgraph workspace["DQM-ML Workspace"]
-        core["dqm-ml-core<br/>Core API & Metrics"]
-        job["dqm-ml-job<br/>Orchestration & I/O"]
-        images["dqm-ml-images<br/>Visual Features"]
-        pytorch["dqm-ml-pytorch<br/>PyTorch Metrics"]
-        v2["dqm-ml-v2<br/>CLI Wrapper"]
-    end
-    
-    job --> core
-    images --> core
-    pytorch --> core
-    v2 --> job
+    core[dqm-ml-core<br/>Core API & Metrics] --> job[dqm-ml-job<br/>Orchestration]
+    images[dqm-ml-images<br/>Visual Features] --> core
+    pytorch[dqm-ml-pytorch<br/>PyTorch Metrics] --> core
+    v2[dqm-ml-v2<br/>CLI Wrapper] --> job
     v2 --> core
     v2 --> images
     v2 --> pytorch

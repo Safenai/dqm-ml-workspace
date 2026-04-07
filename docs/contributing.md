@@ -1,81 +1,162 @@
 # Contributing to DQM-ML
 
-DQM-ML is designed to be easily extensible. You can contribute by adding your own metrics, fixing bugs, or improving documentation.
+We welcome contributions! Whether you're fixing a bug, adding a new metric, or improving documentation, your help makes DQM-ML better for everyone.
+
+This guide walks you through setting up your development environment and adding new features.
+
+## What Can You Contribute?
+
+- 🐛 **Bug fixes** - Found an issue? Let us know and potentially fix it!
+- 📊 **New metrics** - Add completeness, representativeness, or domain gap calculations
+- 📝 **Documentation** - Improve docs, add examples, translate
+- 🎨 **Better tests** - Increase test coverage, add edge cases
+- 💡 **Ideas** - Open an issue with your suggestions
+
+## Quick Start
+
+```mermaid
+flowchart TD
+    A[Clone the Repo] --> B[Create Branch]
+    B --> C[Make Your Changes]
+    C --> D[Run Tests]
+    D --> E[Run Lint & Type Check]
+    E --> F[Submit Pull Request]
+    F --> G[Code Review]
+    G --> H[Merge & Celebrate!]
+    
+    style A fill:#e3f2fd
+    style D fill:#fff3e0
+    style E fill:#ffebee
+    style G fill:#fff3e0
+    style H fill:#e8f5e9
+```
 
 ## Development Environment Setup
 
-We rely on `uv` for fast development and workspace management.
+We use [uv](https://github.com/astral-sh/uv) for fast development and workspace management.
 
 ### 1. Prerequisites
 
 ```bash
-# Install uv
+# Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install git-lfs for large test files
 sudo apt-get install git-lfs
 git lfs pull
 
-# Initialize submodules (legacy dqm-ml)
+# Initialize submodules (for legacy dqm-ml comparison)
 git submodule update --init --recursive
 ```
 
-### 2. Workspace Initialization
-
-Synchronize the workspace and install all dependencies:
+### 2. Initialize Workspace
 
 ```bash
+# This installs all dependencies
 uv sync
 ```
 
-### 3. Quality Standards
+### 3. Install Pre-commit Hooks
 
-We enforce strict quality checks via `nox`. Please ensure all checks pass before submitting a PR.
+```bash
+# Runs checks before every commit
+uv run pre-commit install
+```
 
-* `uv run nox -s lint`: Check for style issues.
-* `uv run nox -s fmt`: Automatically format code.
-* `uv run nox -s type_check`: Static type analysis with MyPy.
-* `uv run nox -s test`: Run all tests with coverage.
+## Quality Standards
 
-## Steps to Add a Metric
+Before submitting a PR, please ensure all checks pass:
 
-### 1. Inherit from `DatametricProcessor`
+```bash
+# Run all quality checks
+uv run nox
 
-Create a new class in your package that inherits from `dqm_ml_core.api.data_processor.DatametricProcessor`.
+# Or run individual checks:
+uv run nox -s test       # Run tests
+uv run nox -s lint       # Check code style
+uv run nox -s lint_fix   # Auto-fix style issues
+uv run nox -s type_check # Type checking
+uv run nox -s docs       # Build documentation
+```
+
+## Adding a New Metric
+
+Here's how to add your own metric to DQM-ML:
+
+### 1. Create the Processor Class
+
+Inherit from `DatametricProcessor` and implement the required methods:
 
 ```python
 from dqm_ml_core.api.data_processor import DatametricProcessor
 import pyarrow as pa
 
 class MyNewMetric(DatametricProcessor):
+    """A brief description of what this metric measures."""
+
     def compute_features(self, batch, prev_features=None):
-        # Optional: compute per-sample features
-        return {}
+        """Optional: Extract features from raw data."""
+        return {}  # Return dict of feature arrays
 
     def compute_batch_metric(self, features):
-        # Mandatory: Compute intermediate statistics for the batch
-        return {}
+        """Compute intermediate statistics for one batch."""
+        # Example: count non-null values
+        return {"count": pa.array([len(features)]), "sum": pa.array([...])}
 
     def compute(self, batch_metrics=None):
-        # Mandatory: Compute final dataset-level metric
-        return {}
+        """Aggregate batch results into final metric."""
+        # Compute final score from accumulated batch stats
+        return {"my_metric_score": pa.array([0.95])}
+
+    def compute_delta(self, source, target):
+        """Optional: Compare two datasets."""
+        return {"delta_score": pa.array([...])}
 ```
 
 ### 2. Register via Entry Points
 
-Add your metric to your package's `pyproject.toml` to make it discoverable by the registry.
+Add this to your package's `pyproject.toml`:
 
 ```toml
 [project.entry-points."dqm_ml.metrics"]
 my_new_metric = "my_package:MyNewMetric"
 ```
 
-### 3. Testing
+### 3. Add Tests
 
-Add a unit test for your metric and a configuration example in the `tests/` directory.
+Create a test file in the `tests/` directory. Use existing tests as templates.
 
 ## Best Practices
 
-* **Streaming Friendly**: Ensure your `compute_batch_metric` only computes what is necessary for the final aggregation to keep memory usage low.
-* **Type Safety**: Use PyArrow for data handling to ensure compatibility with the rest of the pipeline.
-* **Documentation**: Provide a docstring for your class explaining what the metric measures and its configuration parameters.
+Following these patterns keeps the codebase consistent:
+
+| Practice | Why it matters |
+|----------|----------------|
+| **Streaming-friendly** | Keep `compute_batch_metric` lightweight - only compute what's needed for final aggregation |
+| **Use PyArrow** | Ensures compatibility with the rest of the pipeline |
+| **Add docstrings** | Helps others understand and use your metric |
+| **Write tests** | Keeps bugs from being introduced |
+
+### Good Docstring Example
+
+```python
+def compute(self, batch_metrics: dict | None = None) -> dict[str, pa.Array]:
+    """Compute final dataset-level metric from batch statistics.
+
+    Args:
+        batch_metrics: Dictionary of aggregated batch statistics.
+
+    Returns:
+        Dictionary containing the final metric values.
+    """
+    # Your code here
+```
+
+## Getting Help
+
+- 📖 Check the [Documentation](index.md) - Start here!
+- 💬 Open an [Issue](https://github.com/Safenai/dqm-ml-workspace/issues) - For bugs or features
+- 💭 Start a [Discussion](https://github.com/Safenai/dqm-ml-workspace/discussions) - For questions
+- ⭐ Star us on [GitHub](https://github.com/Safenai/dqm-ml-workspace) - Motivate the team!
+
+Thanks for considering contributing to DQM-ML!
