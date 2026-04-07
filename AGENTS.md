@@ -169,3 +169,26 @@ When contributing:
 - Run type checking: `uv run nox -s type_check`
 - Run tests: `uv run nox -s test`
 - Generate documentation: `uv run nox -s docs`
+
+### Testing GitHub Workflows Locally
+
+The GitHub workflow can be tested locally using [act](https://github.com/nektos/act).
+
+**List all jobs:**
+```bash
+act --list
+```
+
+**Run a specific job:**
+```bash
+act -j <job_example> -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+```
+
+> **Caution:** act requires significant system resources and may take several minutes to run. Ensure no other Docker containers are running before executing act to avoid conflicts. For quick local validation, prefer running nox sessions directly (e.g., `uv run nox -s spell`).
+
+For spell check, run the quality job which includes it as a matrix:
+```bash
+act -j quality -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+```
+
+Note: The `-P` flag is needed to specify the platform image for ubuntu-24.04.
