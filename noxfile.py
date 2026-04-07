@@ -97,6 +97,8 @@ def fmt(s: Session, command: list[str]) -> None:
     [
         param(["ruff", "check", "packages"], id="lint_check"),
         param(["ruff", "format", "--check", "packages"], id="format_check"),
+        param(["ruff", "check", "tests"], id="lint_check"),
+        param(["ruff", "format", "--check", "tests"], id="format_check"),
     ],
 )
 def lint(s: Session, command: list[str]) -> None:
@@ -141,6 +143,14 @@ def lint_fix(s: Session) -> None:
         "ruff",
         "check",
         "packages/dqm-ml-v2",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "tests",
         "--extend-fixable",
         "F401",
         "--fix",

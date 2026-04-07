@@ -31,7 +31,7 @@ def write_path_list_to_parquet(path_list: list[Path], save_path: Path) -> None:
         path_list: List of Path objects to write.
         save_path: Path where to save the parquet file.
     """
-    path_list = [str(x) for x in path_list]
-    path_array = pa.array(path_list)
+    path_str_list = [str(x) for x in path_list]
+    path_array = pa.array(path_str_list)
     path_table = pa.Table.from_arrays([path_array], names=["image_path"])
     pq.write_table(path_table, save_path)

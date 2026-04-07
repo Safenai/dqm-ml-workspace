@@ -6,13 +6,11 @@ This module provides fixtures for generating and loading test data.
 from pathlib import Path
 from typing import Any
 
-import fiftyone.zoo as foz  # noqa: F401
-import matplotlib.pyplot as plt  # noqa: F401
+import fiftyone.zoo as foz
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-
 from tests.utils.files import write_path_list_to_parquet
 from tests.utils.plots import plot_histograms
 

@@ -4,6 +4,7 @@ This module provides helper functions for generating test job configurations.
 """
 
 from pathlib import Path
+from typing import Any
 
 import ruamel.yaml
 
@@ -33,11 +34,11 @@ def _get_config_name(processor_name: str, test_name: str, metric_name: str | Non
     return f"{processor_name}_{test_name}"
 
 
-def _load_yaml_template(test_path: str, processor_name: str) -> tuple:
+def _load_yaml_template(test_path: str, processor_name: str) -> tuple[Any, int, Any]:
     """Load and parse YAML template file."""
     template_path = Path(test_path) / f"integration/fixtures/config/templates/{processor_name}.yaml"
     with Path(template_path).open() as file:
-        return ruamel.yaml.util.load_yaml_guess_indent(file)
+        return ruamel.yaml.util.load_yaml_guess_indent(file)  # type: ignore[no-any-return]
 
 
 def _configure_dataloaders(
@@ -123,7 +124,8 @@ def generate_job(
         inner_config = full_config["config"]
 
         _configure_dataloaders(inner_config, processor_name, test_name, parquet_path, parquet_source_path)
-        _configure_domain_gap(inner_config, processor_name, metric_name)
+        if metric_name:
+            _configure_domain_gap(inner_config, processor_name, metric_name)
         _configure_metrics_processor(inner_config, processor_name, test_name)
         _configure_output(inner_config, output_category, config_name, output_path)
 
