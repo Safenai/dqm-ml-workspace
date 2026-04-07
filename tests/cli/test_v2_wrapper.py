@@ -1,8 +1,14 @@
+"""Unit tests for the DQM-ML v2 CLI wrapper.
+
+This module contains unit tests that verify the dqm-ml-v2 CLI
+correctly parses arguments, displays version, and lists available plugins.
+"""
+
 import shlex
 import subprocess
 
 from dqm_ml.__main__ import execute, parse_args
-from dqm_ml._version_ import version
+from dqm_ml_core._version_ import version
 import pytest
 
 test_cases = [
@@ -26,9 +32,8 @@ command_list = {"version": None}
 
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
-def test_main(
-    capsys: pytest.CaptureFixture[str], command: str, expected_output: list[str]
-) -> None:
+def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output: list[str]) -> None:
+    """Test that the v2 CLI execute function runs correctly."""
     execute(shlex.split(command))
     output = capsys.readouterr().out.rstrip()
     assert all(val in output for val in expected_output)
@@ -36,6 +41,7 @@ def test_main(
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_app(command: str, expected_output: list[str]) -> None:
+    """Test that the v2 CLI can be invoked as a Python module."""
     import sys
 
     full_command = [sys.executable, "-m", "dqm_ml"] + shlex.split(command)
@@ -55,9 +61,8 @@ def test_app(command: str, expected_output: list[str]) -> None:
         # long params TODO
     ],
 )
-def test_parse_args(
-    prompt: str, command: str, quiet: str, verbose: str
-) -> None:
+def test_parse_args(prompt: str, command: str, quiet: str, verbose: str) -> None:
+    """Test that parse_args correctly extracts command, verbose, and quiet flags."""
     args, _ = parse_args(shlex.split(prompt), command_list)
 
     # or split them up, either works

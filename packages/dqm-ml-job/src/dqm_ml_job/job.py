@@ -1,3 +1,9 @@
+"""Dataset job orchestrator for end-to-end data quality assessment.
+
+This module contains the DatasetJob class that orchestrates the complete
+pipeline: data loading, metric computation, and result persistence.
+"""
+
 import itertools
 import logging
 from typing import Any
@@ -161,8 +167,7 @@ class DatasetJob:
     def _compute_delta_metrics(
         self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, Any]]
     ) -> dict[str, Any] | None:
-        """
-        Compute comparison metrics between every unique pair of data selections.
+        """Compute comparison metrics between every unique pair of data selections.
 
         Args:
             metrics_processors: List of processors capable of computing deltas.
@@ -207,8 +212,7 @@ class DatasetJob:
     def _compute_batches_metrics(
         self, selection_name: str, selection: DataSelection, metrics_processors: list[DatametricProcessor]
     ) -> dict[str, Any]:
-        """
-        Process all batches in a selection to compute intermediate statistics and features.
+        """Process all batches in a selection to compute intermediate statistics and features.
 
         Memory Management:
         - Batch-level statistics (`batch_metrics`) are accumulated in lists and

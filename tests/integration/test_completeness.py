@@ -1,3 +1,9 @@
+"""Integration tests for the completeness metric processor.
+
+This module contains tests that verify the completeness metric processor
+correctly computes completeness scores for tabular data.
+"""
+
 from pathlib import Path
 import shlex
 from typing import Any
@@ -16,6 +22,15 @@ def test_completeness(
     test_name: str,
     job_completeness: Any,
 ) -> None:
+    """Test completeness metric computation for single and batch processing.
+
+    Args:
+        tests_config: Test configuration with expected scores and tolerances.
+        test_path: Path to the tests directory.
+        output_path: Path to write test outputs.
+        test_name: Name of the test configuration to run.
+        job_completeness: Fixture that generates the test job configuration.
+    """
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))
 

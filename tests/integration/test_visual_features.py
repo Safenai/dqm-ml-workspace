@@ -1,3 +1,9 @@
+"""Integration tests for the visual features metric processor.
+
+This module contains tests that verify the visual features processor
+correctly extracts features like luminosity, contrast, blur, and entropy from images.
+"""
+
 from pathlib import Path
 import shlex
 from typing import Any
@@ -16,6 +22,15 @@ def test_visual_features(
     test_name: str,
     job_visual_features: Any,
 ) -> None:
+    """Test visual features metric extraction for various input modes.
+
+    Args:
+        tests_config: Test configuration with expected scores and tolerances.
+        test_path: Path to the tests directory.
+        output_path: Path to write test outputs.
+        test_name: Name of the test configuration to run.
+        job_visual_features: Fixture that generates the test job configuration.
+    """
     command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
     execute(shlex.split(command))
 

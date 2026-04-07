@@ -1,3 +1,9 @@
+"""Unit tests for the MetricRunner utility.
+
+This module contains unit tests that verify the MetricRunner
+correctly orchestrates metric computation on DataFrames.
+"""
+
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -10,15 +16,22 @@ from dqm_ml_core.utils.metric_runner import MetricRunner
 
 @pytest.fixture
 def sample_df():
+    """Provide a sample DataFrame for testing.
+
+    Returns:
+        A pandas DataFrame with columns 'a' and 'b'.
+    """
     return pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
 def test_metric_runner_init():
+    """Test that MetricRunner initializes correctly."""
     runner = MetricRunner(config={})
     assert isinstance(runner, MetricRunner)
 
 
 def test_metric_runner_run_empty_df():
+    """Test that MetricRunner returns empty dict for empty DataFrame."""
     runner = MetricRunner()
     df = pd.DataFrame(columns=["a", "b"])
     metrics = []
@@ -27,6 +40,7 @@ def test_metric_runner_run_empty_df():
 
 
 def test_metric_runner_run_with_mock_metric(sample_df):
+    """Test that MetricRunner correctly runs metrics on DataFrame."""
     runner = MetricRunner()
 
     mock_metric = MagicMock(spec=DatametricProcessor)
@@ -43,10 +57,7 @@ def test_metric_runner_run_with_mock_metric(sample_df):
 
 
 def test_metric_runner_overwrite_behavior(sample_df):
-    """
-    Test that if multiple metrics share keys, the later one overwrites.
-    This documents the current behavior.
-    """
+    """Test that later metrics overwrite earlier ones when sharing keys."""
     runner = MetricRunner()
 
     metric1 = MagicMock(spec=DatametricProcessor)

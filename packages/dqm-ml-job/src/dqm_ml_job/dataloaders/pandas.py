@@ -1,3 +1,9 @@
+"""Pandas data loader for reading CSV files.
+
+This module contains the PandasDataLoader and PandasDataSelection classes
+for loading and iterating over CSV file data using Pandas.
+"""
+
 import logging
 from typing import Any, override
 
@@ -83,4 +89,9 @@ class PandasDataLoader:
         self.path = config["path"]
 
     def get_selections(self) -> list[DataSelection]:
+        """Create a PandasDataSelection for the CSV file.
+
+        Returns:
+            A list containing a single PandasDataSelection instance.
+        """
         return [PandasDataSelection(name=self.name, path=self.path)]

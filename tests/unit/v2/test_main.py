@@ -1,3 +1,9 @@
+"""Unit tests for the DQM-ML v2 main module.
+
+This module contains unit tests that verify the main CLI entry point
+correctly handles help actions, argument parsing, and command execution.
+"""
+
 import argparse
 import logging
 from unittest.mock import MagicMock, patch
@@ -7,6 +13,7 @@ import pytest
 
 
 def test_help_action_no_command():
+    """Test that help action prints general help when no command is specified."""
     parser = MagicMock(spec=argparse.ArgumentParser)
     # MagicMock's exit usually doesn't raise unless we tell it to
     parser.exit.side_effect = SystemExit
@@ -21,6 +28,7 @@ def test_help_action_no_command():
 
 
 def test_help_action_with_valid_command():
+    """Test that help action prints command-specific help for valid commands."""
     parser = MagicMock(spec=argparse.ArgumentParser)
     namespace = argparse.Namespace(command="list")
     action = _HelpAction(option_strings=["-h", "--help"], dest="help")
@@ -33,26 +41,30 @@ def test_help_action_with_valid_command():
 
 
 def test_help_action_with_invalid_command():
+    """Test that help action raises error for invalid commands."""
     parser = MagicMock(spec=argparse.ArgumentParser)
     namespace = argparse.Namespace(command="nonexistent")
     action = _HelpAction(option_strings=["-h", "--help"], dest="help")
 
     mock_commands = {"list": MagicMock()}
-    with patch("dqm_ml.__main__.get_available_command", return_value=mock_commands):
-        with pytest.raises(ValueError, match="Unknown command nonexistent"):
-            action(parser, namespace, None)
+    with (
+        patch("dqm_ml.__main__.get_available_command", return_value=mock_commands),
+        pytest.raises(ValueError, match="Unknown command nonexistent"),
+    ):
+        action(parser, namespace, None)
 
 
 def test_parse_args_invalid_choice():
+    """Test that parse_args raises SystemExit for invalid command choices."""
     command_list = ["list", "version"]
-    with patch("sys.stderr", new=MagicMock()):
-        with pytest.raises(SystemExit):
-            parse_args(["invalid"], command_list)
+    with patch("sys.stderr", new=MagicMock()), pytest.raises(SystemExit):
+        parse_args(["invalid"], command_list)
 
 
 @patch("dqm_ml.__main__.get_available_command")
 @patch("dqm_ml.cli_tools.CustomFormatter.init_log")
 def test_execute_verbose(mock_init_log, mock_get_commands):
+    """Test that execute function correctly sets DEBUG log level with -v flag."""
     mock_cmd = MagicMock()
     mock_get_commands.return_value = {"list": mock_cmd}
 
@@ -66,6 +78,7 @@ def test_execute_verbose(mock_init_log, mock_get_commands):
 
 @patch("dqm_ml.__main__.get_available_command")
 def test_execute_unknown_command(mock_get_commands):
+    """Test that execute function raises error for unknown commands."""
     # This shouldn't happen usually because parse_args validates choices,
     # but the execute function has a secondary check.
     mock_get_commands.return_value = {"list": MagicMock()}

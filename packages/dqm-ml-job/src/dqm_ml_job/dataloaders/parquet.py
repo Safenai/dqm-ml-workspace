@@ -1,3 +1,9 @@
+"""Parquet data loader for reading Parquet files.
+
+This module contains the ParquetDataLoader and ParquetDataSelection classes
+for loading and iterating over Parquet file data.
+"""
+
 import logging
 from typing import Any, override
 
@@ -138,8 +144,12 @@ class ParquetDataLoader:
         self.filters_dict = config.get("filter", None)
 
     def get_selections(self) -> list[DataSelection]:
-        """
-        Create one or more ParquetDataSelection instances based on configuration.
+        """Create one or more ParquetDataSelection instances based on configuration.
+
+        Returns:
+            A list of DataSelection instances. If split_by is configured,
+            returns one selection per unique value. Otherwise, returns a
+            single selection for the entire dataset.
         """
         if not self.split_by:
             # Single selection

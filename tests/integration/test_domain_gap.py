@@ -1,3 +1,9 @@
+"""Integration tests for the domain gap metric processor.
+
+This module contains tests that verify the domain gap metric processor
+correctly computes statistical distances between source and target datasets.
+"""
+
 from pathlib import Path
 import shlex
 from timeit import default_timer as timer
@@ -23,6 +29,16 @@ def test_domain_gap(
     coco_data: Any,
     job_domain_gap: Any,
 ) -> None:
+    """Test domain gap metric computation between source and target datasets.
+
+    Args:
+        tests_config: Test configuration with expected scores and tolerances.
+        test_path: Path to the tests directory.
+        output_path: Path to write test outputs.
+        test_name: Name of the domain gap metric to test.
+        coco_data: Fixture providing COCO dataset for testing.
+        job_domain_gap: Fixture that generates the test job configuration.
+    """
     # pad and cmd not implemented
 
     command = f"-p tests/fixtures/config/generated/domain_gap_{test_name}.yaml"

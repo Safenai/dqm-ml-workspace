@@ -1,3 +1,9 @@
+"""Parquet output writer for persisting pipeline results.
+
+This module contains the ParquetOutputWriter class that writes
+metrics and features to Parquet files.
+"""
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -36,8 +42,7 @@ class ParquetOutputWriter:
         self.name = name
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
-        """
-        Aggregate and write dataset-level metrics for all selections to a Parquet file.
+        """Aggregate and write dataset-level metrics for all selections to a Parquet file.
 
         Args:
             metrics_dict: Map of selection names to their computed metric dictionaries.

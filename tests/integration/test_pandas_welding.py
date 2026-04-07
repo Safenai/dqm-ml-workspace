@@ -1,3 +1,9 @@
+"""Integration tests for pandas welding use case.
+
+This module contains tests that verify the representativeness metric processor
+works correctly with pandas-welding style data.
+"""
+
 from pathlib import Path
 import shlex
 from typing import Any
@@ -10,6 +16,14 @@ from dqm_ml_job.cli import execute
 
 @pytest.mark.parametrize("test_name", ["pandas_welding"])
 def test_representativeness_pandas(tests_config: Any, test_path: Path, output_path: Path, test_name: str) -> None:
+    """Test representativeness metric with pandas welding data.
+
+    Args:
+        tests_config: Test configuration with expected scores and tolerances.
+        test_path: Path to the tests directory.
+        output_path: Path to write test outputs.
+        test_name: Name of the test configuration to run.
+    """
     command = f"-p tests/fixtures/config/{test_name}.yaml"
     execute(shlex.split(command))
 

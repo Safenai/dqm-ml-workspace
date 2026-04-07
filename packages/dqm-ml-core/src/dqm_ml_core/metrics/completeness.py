@@ -1,3 +1,9 @@
+"""Completeness metric processor for evaluating data completeness.
+
+This module contains the CompletenessProcessor class that evaluates
+the completeness of tabular data by computing non-null value ratios.
+"""
+
 import json
 import logging
 from typing import Any, override
