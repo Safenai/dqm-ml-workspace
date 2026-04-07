@@ -1,6 +1,4 @@
-# DQM ML repository
-
-## Workspace common Badge and CI / CD informations
+# DQM-ML: Data Quality Metrics for Machine Learning
 
 [![License: Apache 2.0][license-badge]](https://opensource.org/license/apache-2-0)
 ![Python][python-badge]
@@ -25,147 +23,393 @@
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
 
-## Package last version available on pypi
+---
 
-* [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) :  `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
-* [![PyPI dqm-ml-job version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-job) : `packages/dqm-ml-job`: Orchestration, streaming data loaders, and output writers.
-* [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) :`packages/dqm-ml-images`: Visual feature extraction metrics.
-* [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
-* (not yet delivered as a package)`packages/dqm-ml-v2`: Main wrapper and CLI entry point.
-* `packages/dqm-ml`: **Legacy** version (V1) delivered from original repository, excluded from the active workspace.
+## What is DQM-ML?
 
-[pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
-[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-job.svg
-[pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
-[pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
+DQM-ML (Data Quality Metrics for Machine Learning) is an open-source Python library that helps you assess and quantify the quality of your datasets. Whether you're building ML models, training neural networks, or preparing data for analysis, DQM-ML provides a suite of metrics to measure data completeness, representativeness, and distribution gaps.
 
-The library was originally developed in the program:
+Think of it as a **health check for your data** — just like you might check your car's oil or your health vitals, DQM-ML checks your dataset's vital signs before you feed it to your models.
 
-<div align="center">
-    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
-    <h1 style="font-size: large; font-weight: bold;">dqm-ml v2</h1>
-</div>
+## Why Data Quality Matters
 
-> [!IMPORTANT]  
-> This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
-> All what has been implemented rely on
-> (Definitions from [Confiance.ai program](https://www.confiance.ai/))
-> Reference publication [HAL link](https://hal.science/hal-04719346v1)
-> For more technical and scientific details, please refer to this [deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf?download=1)
+We've all heard the saying "garbage in, garbage out." But how do you *measure* if your data is any good? That's exactly what DQM-ML helps you answer.
 
+Poor data quality can lead to:
+- **Biased models** that don't generalize well
+- **Unexpected failures** in production
+- **Wasted resources** training on bad data
+- **Inconsistent results** across different datasets
 
-> [!WARNING]
-> TODO : Need to update link to the ETAIA place
-> TODO : Need to access the open source deliverable (not confidential one)
+DQM-ML gives you concrete numbers to work with, so you can make informed decisions about your data before investing in training.
 
-## Documentations
+## Key Features
 
-* **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
-* **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
-* **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
-* **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
-* **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
+- **Multiple Quality Metrics** — Measure completeness, representativeness, domain gaps, and visual quality
+- **Streaming Architecture** — Process datasets larger than available memory without loading everything at once
+- **Modular Design** — Install only the components you need
+- **Easy to Use** — Simple CLI for quick checks, powerful Python API for integration
+- **Extensible** — Add your own metrics or data loaders with the plugin system
 
-## Wich metrics are availables
+## Available on PyPI
 
-Metric computed on **data selection** rely on several approches are developped as described in the figure below. and associated publications
+Install individual packages based on your needs:
 
-<img src="docs/static/library_view.png" width="1024"/>
+| Package | Description | PyPI |
+|---------|-------------|------|
+| **dqm-ml-core** | Core API & standard metrics (Completeness, Representativeness) | [![][pypi-core-badge]](https://pypi.org/project/dqm-ml-core/) |
+| **dqm-ml-job** | Orchestration, streaming data loaders, and output writers | [![][pypi-pipeline-badge]](https://pypi.org/project/dqm-ml-job/) |
+| **dqm-ml-images** | Visual feature extraction from images | [![][pypi-images-badge]](https://pypi.org/project/dqm-ml-images/) |
+| **dqm-ml-pytorch** | PyTorch-based metrics (Domain Gap) | [![][pypi-pytorch-badge]](https://pypi.org/project/dqm-ml-pytorch/) |
 
-In the current version, the available (or to be available) metrics are:
+> **Note:** The `dqm-ml-v2` package is the CLI wrapper. For now, install individual packages above or use the full workspace.
 
-* Representativeness:
-  * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
-  * Kolmogorov Smirnov test for Uniform and Normal Distributions
-  * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
-* Diversity:
-  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml v1)
-  * Gini-Simpson and Simposon indices (only in dqm-ml v1)
-* Completeness:
-  * Ratio of filled information
-* Domain Gap:
-  * MMD (only in dqm-ml v1)
-  * CMD (only in dqm-ml v1)
-  * Wasserstein
-  * H-Divergence
-  * FID
-  * Kullback-Leiblur MultiVariate Normal Distribution
+[pypi-core-badge]: https://img.shields.io/pypi/v/dqm-ml-core.svg
+[pypi-pipeline-badge]: https://img.shields.io/pypi/v/dqm-ml-job.svg
+[pypi-images-badge]: https://img.shields.io/pypi/v/dqm-ml-images.svg
+[pypi-pytorch-badge]: https://img.shields.io/pypi/v/dqm-ml-pytorch.svg
 
-## Installation
+## Quick Start
 
-Install the DQM-ML V2 framework with all available metrics and helpers using pip:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+### Installation
 
 ```bash
-pip install "dqm-ml-v2[all]" 
+# Install the core package with basic metrics
+pip install dqm-ml-core
+
+# Install all packages (core + images + PyTorch + job orchestration)
+pip install dqm-ml-core dqm-ml-job dqm-ml-images dqm-ml-pytorch
+
+# Or install the CLI wrapper
+pip install dqm-ml-v2
 ```
 
-Install the DQM-ML V2 framework by passing only needed optional dependency:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+### Using the CLI
 
-```bash
-pip install "dqm-ml-v2[notebooks, pytorch, job, images ]" 
-```
-
-Manually install all packages:
-> :warning: for version <v2.0.0> the dqm-ml version installed is the legacy version, you have access to the **process** command
-
-```bash
-pip install dqm-ml, dqm-ml-job, dqm-ml-pytorch, dqm-ml-images" 
-```
-
-## Execution with cli provided **dqm-ml**
-
-Run a metric processing job using a configuration file:
+Run a data quality check from the command line:
 
 ```bash
 dqm-ml process -p examples/config/completeness.yaml
 ```
 
-Other configuration examples can be found in the `examples/config/` directory.
+That's it! The CLI reads a simple YAML configuration file and outputs your metrics.
 
-## Call the same process from your script / code
+### Using the Python API
+
+Want more control? Use the Python API directly:
 
 ```python
-def compute_metric() -> None:
-    """Example script to compute a metric using a YAML configuration."""
+import pandas as pd
+from dqm_ml_core import CompletenessProcessor
 
-    # Load configuration file or create a dictionary structure with the same keys
-    cur_file_path = os.path.abspath(__file__)
-    config_path = os.path.join(os.path.dirname(cur_file_path), "../config/completeness.yaml")
+# Create a sample dataset
+df = pd.DataFrame({
+    "name": ["Alice", "Bob", None, "Diana"],
+    "age": [25, 30, 35, None],
+    "score": [0.9, 0.8, 0.7, 0.6]
+})
 
-    config: dict[str, Any] = {}
+# Create and run the completeness processor
+processor = CompletenessProcessor(
+    name="my_completeness",
+    config={"input_columns": ["name", "age", "score"]}
+)
 
+# Get the results
+result = processor.compute({})
+print(f"Overall completeness: {result['overall_completeness']}")
+```
+
+### Using the MetricRunner
+
+For quick exploration in a notebook or script:
+
+```python
+import pandas as pd
+from dqm_ml_core import CompletenessProcessor, MetricRunner
+
+df = pd.DataFrame({"a": [1, 2, None, 4], "b": [5, None, 7, 8]})
+runner = MetricRunner()
+
+results = runner.run(df, [CompletenessProcessor(config={"input_columns": ["a", "b"]})])
+print(results)
+```
+
+> **Tip:** For interactive exploration, check out our [Jupyter notebook example](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb).
+
+## Available Metrics
+
+| Metric | What It Measures | Package | When to Use |
+|--------|------------------|---------|-------------|
+| **Completeness** | Ratio of non-null values | `dqm-ml-core` | Check for missing data |
+| **Representativeness** | How well data fits a distribution | `dqm-ml-core` | Validate data distribution |
+| **Domain Gap** | Statistical distance between datasets | `dqm-ml-pytorch` | Compare train/test splits |
+| **Visual Features** | Image quality indicators | `dqm-ml-images` | Check image dataset quality |
+
+### Completeness
+
+Measures what percentage of your data is present (non-null). Great for finding missing values:
+
+```yaml
+metrics_processor:
+  completeness:
+    type: completeness
+    input_columns: [column_a, column_b]
+    include_per_column: true
+    include_overall: true
+```
+
+### Representativeness
+
+Checks if your data follows a known distribution (Normal or Uniform). Useful for:
+
+- Validating synthetic data
+- Checking for data drift
+- Ensuring balanced datasets
+
+Includes multiple statistical tests:
+
+- **Chi-Square (χ²)** — Goodness-of-fit test for categorical/binned data
+- **Kolmogorov-Smirnov (KS)** — Non-parametric test for continuous distributions
+- **Shannon Entropy** — Measures information diversity in your data
+- **GRTE** (Granular Relative Theoretical Entropy) — Developed in the Confiance.ai program
+
+### Domain Gap
+
+Measures how different two datasets are from each other. Use it to:
+
+- Compare training and test distributions
+- Detect data shift over time
+- Validate data augmentation
+
+Available metrics:
+
+- **Wasserstein** — Earth mover's distance for distribution comparison
+- **MMD** (Maximum Mean Discrepancy) — Kernel-based distribution distance
+- **FID** (Fréchet Inception Distance) — Deep learning-based image distance
+- **KLMVN** (Kullback-Leibler Multivariate Normal) — KL divergence for Gaussian distributions
+- **H-Divergence** — Hypothesis-based divergence measure
+
+### Visual Features
+
+Extracts image quality metrics like:
+
+- **Luminosity** — Brightness level
+- **Contrast** — Difference between light and dark
+- **Blur** — Sharpness/clarity
+- **Entropy** — Information diversity
+
+## Architecture
+
+DQM-ML uses a streaming architecture designed for scalability. Here's how data flows through the system:
+
+```mermaid
+flowchart LR
+    subgraph DataSources["Data Sources"]
+        A1[Parquet Files]
+        A2[CSV Files]
+        A3[Databases]
+    end
+    
+    subgraph Pipeline["DQM-ML Pipeline"]
+        B[DataLoader]
+        C[Streaming Batches]
+        D[Metric Processor]
+        E[Intermediate Stats]
+        F[Final Metrics]
+        G[Output Writer]
+    end
+    
+    A1 --> B
+    A2 --> B
+    A3 --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    
+    subgraph Outputs["Outputs"]
+        H1[Parquet Files]
+        H2[CSV Files]
+        H3[Dashboards]
+    end
+    
+    G --> H1
+    G --> H2
+    G --> H3
+```
+
+**How it works:**
+
+1. **DataLoader** discovers and loads your data (Parquet, CSV, etc.)
+2. **Streaming Batches** process data in chunks — never loads the whole dataset into memory
+3. **Metric Processor** computes features and intermediate statistics for each batch
+4. **Intermediate Stats** accumulate as batches are processed
+5. **Final Metrics** aggregate all intermediate stats into dataset-level scores
+6. **Output Writer** saves results to your preferred format
+
+## Project Structure
+
+The project is organized as a Python monorepo using UV workspace:
+
+```
+dqm-ml-workspace/
+├── packages/
+│   ├── dqm-ml-core/          # Core API & standard metrics
+│   ├── dqm-ml-job/           # Pipeline orchestration & data loaders
+│   ├── dqm-ml-images/        # Image feature extraction
+│   ├── dqm-ml-pytorch/       # PyTorch-based metrics (Domain Gap)
+│   └── dqm-ml-v2/            # CLI wrapper & entry point
+├── tests/                    # Test suite
+├── docs/                     # Documentation
+└── examples/                 # Example configurations
+```
+
+```mermaid
+flowchart TB
+    subgraph workspace["DQM-ML Workspace"]
+        core["dqm-ml-core<br/>Core API & Metrics"]
+        job["dqm-ml-job<br/>Orchestration & I/O"]
+        images["dqm-ml-images<br/>Visual Features"]
+        pytorch["dqm-ml-pytorch<br/>PyTorch Metrics"]
+        v2["dqm-ml-v2<br/>CLI Wrapper"]
+    end
+    
+    job --> core
+    images --> core
+    pytorch --> core
+    v2 --> job
+    v2 --> core
+    v2 --> images
+    v2 --> pytorch
+```
+
+**Package breakdown:**
+
+| Package | Purpose |
+|---------|---------|
+| `dqm-ml-core` | Base classes and core metrics (Completeness, Representativeness) |
+| `dqm-ml-job` | Data loading, batch processing, output writing |
+| `dqm-ml-images` | Visual feature extraction from images |
+| `dqm-ml-pytorch` | Deep learning-based metrics (Domain Gap) |
+| `dqm-ml-v2` | CLI entry point and wrapper |
+
+## Configuration
+
+DQM-ML uses YAML configuration files. Here's a complete example:
+
+```yaml
+config:
+  # Data loading configuration
+  dataloaders:
+    my_dataset:
+      type: parquet
+      path: data/my_dataset.parquet
+      batch_size: 10000
+
+  # Metrics to compute
+  metrics_processor:
+    completeness:
+      type: completeness
+      input_columns: [col1, col2, col3]
+      include_per_column: true
+      include_overall: true
+
+  # Output configuration
+  outputs:
+    metrics:
+      type: parquet
+      path_pattern: output/metrics.parquet
+      compression: snappy
+```
+
+### Running from a Python Script
+
+You can also run DQM-ML from a Python script by loading a YAML configuration file:
+
+```python
+import os
+import yaml
+from dqm_ml_job.cli import execute
+
+def run_from_config(config_path: str) -> None:
+    """Run a data quality job from a YAML configuration file.
+    
+    Args:
+        config_path: Path to the YAML configuration file.
+    """
     with open(config_path) as f:
         config = yaml.safe_load(f)
-
-        # Execute the job with the loaded configuration, output are directly saved to disk
-        exec_qml_job(config["config"])
-
-        # A more granular API will be provided in future releases to access intermediate results
+    
+    # Execute the job - outputs are saved directly to disk
+    execute(config["config"])
 
 if __name__ == "__main__":
-    compute_metric()
+    run_from_config("examples/config/completeness.yaml")
 ```
 
-```bash
-python examples/script/completeness.py
-```
+Find more examples in the `examples/config/` directory.
 
-this example can be found in `examples/script/completeness.py'` and executed with
+## Contributing
 
-## Direct usage of metrics from your python code on data
+We welcome contributions! Whether you're fixing a bug, adding a new metric, or improving documentation — help is always appreciated.
 
-* [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
+### Getting Started
 
-## Workspace Structure
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Safenai/dqm-ml-workspace
+   cd dqm-ml-workspace
+   ```
 
-## References
+2. **Install dependencies**
+   ```bash
+   uv sync
+   ```
 
-DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai programme 
+3. **Install pre-commit hooks**
+   ```bash
+   uv run pre-commit install
+   ```
 
-``` ref
-@inproceedings{chaouche2024dqm,
+4. **Run tests**
+   ```bash
+   uv run nox -s test
+   ```
+
+5. **Check linting**
+   ```bash
+   uv run nox -s lint
+   ```
+
+For detailed guidelines, see [AGENTS.md](./AGENTS.md).
+
+## Documentation
+
+More details are available in our docs:
+
+- **[Architecture & Rationale](./docs/dqm-ml-v2.md)** — Why and how V2 was designed
+- **[Metrics Guide](./docs/metrics.md)** — Available metrics and configurations
+- **[Configuration Guide](./docs/configuration.md)** — Writing pipeline configs
+- **[Roadmap & Limitations](./docs/ROADMAP.md)** — Known issues and planned evolutions
+- **[Contributing Guide](./docs/contributing.md)** — Development setup
+
+## License
+
+DQM-ML is licensed under the Apache 2.0 License. See [LICENSE](https://opensource.org/license/apache-2-0) for details.
+
+## Origins
+
+DQM-ML was originally developed as part of the **[Confiance.ai](https://www.confiance.ai/)** research program, which focused on trustworthy AI for industry. The library was inspired by academic research and real-world industrial needs.
+
+For more technical and scientific details, refer to:
+
+- **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
+- **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
+
+```bibtex
+@proceedings{chaouche2024dqm,
   title={DQM: Data Quality Metrics for AI components in the industry},
   author={Chaouche, Sabrina and Randon, Yoann and Adjed, Faouzi and Boudjani, Nadira and Khedher, Mohamed Ibn},
   booktitle={Proceedings of the AAAI Symposium Series},
@@ -175,3 +419,15 @@ DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai 
   year={2024}
 }
 ```
+
+## Links
+
+- **PyPI**: [dqm-ml-core](https://pypi.org/project/dqm-ml-core/), [dqm-ml-job](https://pypi.org/project/dqm-ml-job/), [dqm-ml-images](https://pypi.org/project/dqm-ml-images/), [dqm-ml-pytorch](https://pypi.org/project/dqm-ml-pytorch/)
+- **Documentation**: https://safenai.github.io/dqm-ml-workspace
+- **Repository**: https://github.com/Safenai/dqm-ml-workspace
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ by the DQM-ML community</sub>
+</p>
