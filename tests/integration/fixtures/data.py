@@ -16,6 +16,11 @@ import pytest
 from tests.utils.files import write_path_list_to_parquet
 from tests.utils.plots import plot_histograms
 
+OUTPUT_PLOTS = "outputs/plots"
+OUTPUT_DATA = "outputs/data"
+
+_rng = np.random.default_rng()
+
 
 def _get_test_path() -> str:
     """Get the tests directory path."""
@@ -35,7 +40,7 @@ def coco_data(test_path: str) -> list[Path]:
     Returns:
         List containing paths to source and target parquet files.
     """
-    gen_path = Path(test_path) / "outputs" / "data"
+    gen_path = Path(test_path) / OUTPUT_DATA
     Path.mkdir(gen_path, exist_ok=True, parents=True)
     source_path = Path(gen_path) / "source_1000.parquet"
     target_path = Path(gen_path) / "target_1000.parquet"
@@ -87,24 +92,22 @@ def uniform_dist(test_path: str) -> Any:
     Returns:
         None.
     """
-    plot_path = Path(test_path) / "outputs/plots"
+    plot_path = Path(test_path) / OUTPUT_PLOTS
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "outputs/data/uniform_distribution.parquet"
+    path = Path(test_path) / f"{OUTPUT_DATA}/uniform_distribution.parquet"
 
-    data_1 = np.random.uniform(0, 0.05, 1000000)
-    data_2 = np.random.uniform(1, 0.1, 1000000)
-    data_3 = np.random.uniform(2, 0.2, 1000000)
+    data_1 = _rng.uniform(0, 0.05, 1000000)
+    data_2 = _rng.uniform(0.1, 1, 1000000)
+    data_3 = _rng.uniform(0.2, 2, 1000000)
     pa_table = pa.table({"data_1": data_1, "data_2": data_2, "data_3": data_3})
     pq.write_table(pa_table, path)
 
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "outputs/data",
+        Path(test_path) / OUTPUT_DATA,
         "uniform_distribution.parquet",
     )
-
-    return
 
 
 @pytest.fixture(scope="session")
@@ -120,19 +123,19 @@ def not_uniform_dist(test_path: str) -> Any:
     Returns:
         None.
     """
-    plot_path = Path(test_path) / "outputs/plots"
+    plot_path = Path(test_path) / OUTPUT_PLOTS
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "outputs/data/not_uniform_distribution.parquet"
+    path = Path(test_path) / f"{OUTPUT_DATA}/not_uniform_distribution.parquet"
 
-    a = np.random.uniform(0, 0.05, 500000)
-    b = np.random.uniform(2, 0.05, 500000)
+    a = _rng.uniform(0, 0.05, 500000)
+    b = _rng.uniform(0.05, 2, 500000)
     data_1 = np.concatenate((a, b), axis=None)
-    a = np.random.uniform(1, 0.1, 200000)
-    b = np.random.uniform(3, 0.1, 800000)
+    a = _rng.uniform(0.1, 1, 200000)
+    b = _rng.uniform(0.1, 3, 800000)
     data_2 = np.concatenate((a, b), axis=None)
-    a = np.random.uniform(2, 0.2, 200000)
-    b = np.random.uniform(3, 0.2, 600000)
-    c = np.random.uniform(2, 0.2, 200000)
+    a = _rng.uniform(0.2, 2, 200000)
+    b = _rng.uniform(0.2, 3, 600000)
+    c = _rng.uniform(0.2, 2, 200000)
     data_3 = np.concatenate((a, b, c), axis=None)
     pa_table = pa.table({"data_1": data_1, "data_2": data_2, "data_3": data_3})
     pq.write_table(pa_table, path)
@@ -140,11 +143,9 @@ def not_uniform_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "outputs/data",
+        Path(test_path) / OUTPUT_DATA,
         "not_uniform_distribution.parquet",
     )
-
-    return
 
 
 @pytest.fixture(scope="session")
@@ -160,27 +161,22 @@ def normal_dist(test_path: str) -> Any:
     Returns:
         None.
     """
-    plot_path = Path(test_path) / "outputs/plots"
+    plot_path = Path(test_path) / OUTPUT_PLOTS
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "outputs/data/normal_distribution.parquet"
+    path = Path(test_path) / f"{OUTPUT_DATA}/normal_distribution.parquet"
 
-    mu, sigma = 0, 0.5
-    data_1 = np.random.normal(mu, sigma, 1000000)
-    mu, sigma = 0, 5
-    data_2 = np.random.normal(mu, sigma, 1000000)
-    mu, sigma = 0, 50
-    data_3 = np.random.normal(mu, sigma, 1000000)
+    data_1 = _rng.normal(0, 0.5, 1000000)
+    data_2 = _rng.normal(0, 5, 1000000)
+    data_3 = _rng.normal(0, 50, 1000000)
     pa_table = pa.table({"data_1": data_1, "data_2": data_2, "data_3": data_3})
     pq.write_table(pa_table, path)
 
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "outputs/data",
+        Path(test_path) / OUTPUT_DATA,
         "normal_distribution.parquet",
     )
-
-    return
 
 
 @pytest.fixture(scope="session")
@@ -196,24 +192,18 @@ def not_normal_dist(test_path: str) -> Any:
     Returns:
         None.
     """
-    plot_path = Path(test_path) / "outputs/plots"
+    plot_path = Path(test_path) / OUTPUT_PLOTS
     Path.mkdir(plot_path, exist_ok=True, parents=True)
-    path = Path(test_path) / "outputs/data/not_normal_distribution.parquet"
+    path = Path(test_path) / f"{OUTPUT_DATA}/not_normal_distribution.parquet"
 
-    mu, sigma = 0, 0.5
-    a = np.random.normal(mu, sigma, 500000)
-    mu, sigma = 5, 0.5
-    b = np.random.normal(mu, sigma, 500000)
+    a = _rng.normal(0, 0.5, 500000)
+    b = _rng.normal(5, 0.5, 500000)
     data_1 = np.concatenate((a, b), axis=None)
-    mu, sigma = 0, 5
-    a = np.random.normal(mu, sigma, 500000)
-    mu, sigma = 50, 5
-    b = np.random.normal(mu, sigma, 500000)
+    a = _rng.normal(0, 5, 500000)
+    b = _rng.normal(50, 5, 500000)
     data_2 = np.concatenate((a, b), axis=None)
-    mu, sigma = 0, 50
-    a = np.random.normal(mu, sigma, 500000)
-    mu, sigma = 500, 50
-    b = np.random.normal(mu, sigma, 500000)
+    a = _rng.normal(0, 50, 500000)
+    b = _rng.normal(500, 50, 500000)
     data_3 = np.concatenate((a, b), axis=None)
     pa_table = pa.table({"data_1": data_1, "data_2": data_2, "data_3": data_3})
     pq.write_table(pa_table, path)
@@ -221,8 +211,6 @@ def not_normal_dist(test_path: str) -> Any:
     plot_histograms(
         plot_path,
         ["data_1", "data_2", "data_3"],
-        Path(test_path) / "outputs/data",
+        Path(test_path) / OUTPUT_DATA,
         "not_normal_distribution.parquet",
     )
-
-    return
