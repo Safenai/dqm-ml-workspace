@@ -19,6 +19,3 @@ from tests.integration.fixtures.jobs import (  # noqa: F401
     job_visual_features,
 )
 from tests.integration.fixtures.paths import output_path, test_path  # noqa: F401
-from tests.utils.files import get_files_list, write_path_list_to_parquet  # noqa: F401
-from tests.utils.jobs import generate_job  # noqa: F401
-from tests.utils.plots import plot_histograms  # noqa: F401
