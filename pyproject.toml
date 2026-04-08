@@ -71,7 +71,10 @@ type_check = [
 
 lint = [
     "ruff",
-    "cspell",
+]
+
+spell = [
+    "cspell"
 ]
 
 docs = [

@@ -1376,11 +1376,13 @@ licenses = [
     { name = "pip-licenses-cli" },
 ]
 lint = [
-    { name = "cspell" },
     { name = "ruff" },
 ]
 nox = [
     { name = "nox-uv" },
+]
+spell = [
+    { name = "cspell" },
 ]
 test = [
     { name = "fiftyone" },
@@ -1421,11 +1423,9 @@ docs = [
     { name = "pymdown-extensions" },
 ]
 licenses = [{ name = "pip-licenses-cli" }]
-lint = [
-    { name = "cspell" },
-    { name = "ruff" },
-]
+lint = [{ name = "ruff" }]
 nox = [{ name = "nox-uv" }]
+spell = [{ name = "cspell" }]
 test = [
     { name = "fiftyone" },
     { name = "pytest" },

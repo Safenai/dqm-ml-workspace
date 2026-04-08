@@ -91,18 +91,12 @@ def fmt(s: Session, command: list[str]) -> None:
     s.run(*command)
 
 
-@session(venv_backend="none")
-@parametrize(
-    "command",
-    [
-        param(["ruff", "check", "packages"], id="lint_check"),
-        param(["ruff", "format", "--check", "packages"], id="format_check"),
-        param(["ruff", "check", "tests"], id="lint_check"),
-        param(["ruff", "format", "--check", "tests"], id="format_check"),
-    ],
-)
-def lint(s: Session, command: list[str]) -> None:
-    s.run(*command)
+@session(uv_groups=["lint"])
+def lint(s: Session) -> None:
+    s.run("ruff", "check", "packages")
+    s.run("ruff", "format", "--check", "packages")
+    s.run("ruff", "check", "tests")
+    s.run("ruff", "format", "--check", "tests")
 
 
 @session(venv_backend="none")
@@ -157,13 +151,13 @@ def lint_fix(s: Session) -> None:
     )
 
 
-@session(venv_backend="none")
+@session(uv_groups=["type_check"])
 def type_check(s: Session) -> None:
-    s.run("mypy", "packages/dqm-ml-job", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-core", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-images", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-v2", "noxfile.py")
+    s.run("mypy", "packages/dqm-ml-job")
+    s.run("mypy", "packages/dqm-ml-core")
+    s.run("mypy", "packages/dqm-ml-images")
+    s.run("mypy", "packages/dqm-ml-pytorch")
+    s.run("mypy", "packages/dqm-ml-v2")
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.
@@ -222,6 +216,6 @@ def licenses(s: Session) -> None:
     s.run("pip-licenses", *s.posargs)
 
 
-@session(venv_backend="none")
+@session(uv_groups=["spell"])
 def spell(s: Session) -> None:
     s.run("cspell", "lint", ".", *s.posargs)
