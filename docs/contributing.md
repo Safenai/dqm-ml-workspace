@@ -95,7 +95,10 @@ class MyNewMetric(DatametricProcessor):
     """A brief description of what this metric measures."""
 
     def compute_features(self, batch, prev_features=None):
-        """Optional: Extract features from raw data."""
+        """
+        Extract features from raw data.
+        Optional: compute per-sample features.
+        """
         return {}  # Return dict of feature arrays
 
     def compute_batch_metric(self, features):
@@ -154,7 +157,7 @@ def compute(self, batch_metrics: dict | None = None) -> dict[str, pa.Array]:
 
 ## Getting Help
 
-- 📖 Check the [Documentation](index.md) - Start here!
+- 📖 Check the [Documentation](https://safenai.github.io/dqm-ml-workspace/) - Start here!
 - 💬 Open an [Issue](https://github.com/Safenai/dqm-ml-workspace/issues) - For bugs or features
 - 💭 Start a [Discussion](https://github.com/Safenai/dqm-ml-workspace/discussions) - For questions
 - ⭐ Star us on [GitHub](https://github.com/Safenai/dqm-ml-workspace) - Motivate the team!

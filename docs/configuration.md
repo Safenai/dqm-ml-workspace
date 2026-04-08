@@ -103,15 +103,15 @@ metrics_processor:
     grayscale: true
 
 outputs:
-  save_features:
+  save_results:
     type: parquet
-    path: "output/train_features.parquet"
+    path: "output/enriched_data.parquet"
     columns: ["sample_id", "m_luminosity", "m_contrast"]
 ```
 
 ## Running Your Configuration
 
-Once you've written your config file, run it with:
+Once you've written your config file, run it with the `-p` (or `--path-config`) flag:
 
 ```bash
 uv run dqm-ml process -p my_config.yaml

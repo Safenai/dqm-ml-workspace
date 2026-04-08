@@ -362,6 +362,8 @@ For detailed guidelines, see [AGENTS.md](./AGENTS.md).
 
 ## Documentation
 
+- **[Website version](https://safenai.github.io/dqm-ml-workspace/)**
+
 More details are available in our docs:
 
 - **[Architecture & Rationale](./docs/dqm-ml-v2.md)** — Why and how V2 was designed
