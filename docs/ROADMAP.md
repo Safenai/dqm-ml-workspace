@@ -18,9 +18,10 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 | Area | Current State | Notes |
 |------|---------------|-------|
 | **Beta packages** | `dqm-ml-job`, `dqm-ml-images` | Config schemas may change based on feedback |
-| **V1 metrics** | Some not yet ported | Diversity metric, PAD/CMD domain gap variants |
+| **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD |
 | **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
+| **Legacy dependency** | Submodule still present | Legacy `dqm-ml` for comparison (to be phased out) |
 
 > 📝 **Your feedback matters!** If you encounter issues or have suggestions, please [open an issue](https://github.com/Safenai/dqm-ml-workspace/issues).
 
@@ -65,6 +66,31 @@ Want to influence the roadmap? Here's how:
 - 🐛 [Report bugs](https://github.com/Safenai/dqm-ml-workspace/issues) - Help us prioritize fixes
 - 💡 [Suggest features](https://github.com/Safenai/dqm-ml-workspace/discussions) - Share your use case
 - 👩‍💻 [Contribute](contributing.md) - Help build V2.0.0
+
+## Priorities for Contributors
+
+Looking to contribute? Here's what needs help most:
+
+### High Priority
+
+- **Porting V1 metrics**: Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD
+- **Test coverage**: More edge cases and integration tests
+
+### Medium Priority
+
+- **Documentation**: Examples, use cases, better explanations
+- **Performance optimizations**: Batch processing improvements
+
+### Lower Priority
+
+- **New features**: Time series support, database connectors
+- **Tooling**: IDE integrations, IDE plugins
+
+### How to Start
+
+1. Check [open issues](https://github.com/Safenai/dqm-ml-workspace/issues) tagged `good first issue`
+2. Read the [contributing guide](contributing.md) for setup instructions
+3. Join discussions to propose new features
 
 ## Version History
 

@@ -34,6 +34,7 @@ output
 # Readme is copied during doc pre build
 docs/index.md
 docs/AGENTS.md
+docs/packages/
 .github/workflows/tests_act.yml
 
 

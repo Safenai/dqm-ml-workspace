@@ -38,6 +38,10 @@ We use [uv](https://github.com/astral-sh/uv) for fast development and workspace 
 ### 1. Prerequisites
 
 ```bash
+# Clone the repository
+git clone https://github.com/Safenai/dqm-ml-workspace
+cd dqm-ml-workspace
+
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -128,6 +132,66 @@ my_new_metric = "my_package:MyNewMetric"
 ### 3. Add Tests
 
 Create a test file in the `tests/` directory. Use existing tests as templates.
+
+## Non-Code Contributions
+
+You don't need to write code to contribute to DQM-ML!
+
+**Documentation**
+
+- Improve existing docs
+- Add examples and tutorials
+- Fix typos and improve clarity
+- Translate documentation
+
+**Testing**
+
+- Report bugs you find
+- Test on different platforms
+- Suggest edge cases we haven't covered
+- Review pull requests
+
+**Community**
+
+- Answer questions in discussions
+- Share your use case
+- Write blog posts or tutorials
+- Speak at meetups or conferences
+
+**Design**
+
+- Suggest UI improvements for CLI
+- Design better documentation layouts
+- Create logos or graphics
+
+## Submit changes for review
+
+**Step 1: Create a Branch**
+
+```bash
+git checkout -b your-feature-name
+```
+
+**Step 2: Make Your Changes**
+
+Follow the [quality standards](#quality-standards) below.
+
+**Step 3: Submit a Pull Request**
+
+1. Push: `git push origin your-feature-name`
+2. Copy paste the link in the terminal into your browser
+3. Select dev branch instead of main (default)
+4. Click "Compare & pull request"
+5. Fill out the PR template
+6. Submit!
+7. Reviewers will read your submission
+
+**Tips for First-Timers**
+
+- Start with documentation improvements (easier to review)
+- Don't worry about making mistakes — we all started somewhere
+- Ask questions in the PR if you're unsure
+- It's okay if your first PR takes a few attempts
 
 ## Best Practices
 

@@ -2,6 +2,30 @@
 
 The Representativeness metric compares the distribution of your data to a target reference distribution (such as Normal or Uniform). It ensures that the dataset conforms to a given specification or requirement.
 
+## What It Measures
+
+Representativeness checks if your data follows a known distribution. Use it to:
+
+- **Validate synthetic data** — Ensure generated data matches expected patterns
+- **Check for data drift** — Detect changes in data distribution over time
+- **Ensure balanced datasets** — Verify class distributions in classification tasks
+
+### Available Statistical Tests
+
+| Test | What It Does | Best For |
+|------|-------------|----------|
+| **Chi-Square (χ²)** | Goodness-of-fit test | Categorical/binned data |
+| **Kolmogorov-Smirnov (KS)** | Non-parametric test | Continuous distributions |
+| **Shannon Entropy** | Measures information diversity | General diversity |
+| **GRTE** | Granular Relative Theoretical Entropy | Complex distributions (Confiance.ai) |
+
+### Use Cases
+
+- Validate that training data matches expected distributions
+- Detect distribution shifts in production data
+- Check if data augmentation preserved original distribution
+- Verify synthetic data quality
+
 ## Processor Information
 
 * **Class**: `RepresentativenessProcessor`

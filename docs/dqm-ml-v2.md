@@ -19,25 +19,33 @@ V2 was designed around four key principles:
 3. **Extensibility**: Add new metrics via plugins without touching core code
 4. **Unified API**: One consistent interface for all metric types
 
-## Core Architecture
+## Architecture
 
-The system splits responsibilities into three main components:
+DQM-ML uses a streaming architecture designed for scalability. Here's how data flows through the system:
 
 ```mermaid
 flowchart LR
-    DL[DataLoader] --> DS[DataSelection]
-    DS --> MP[Metric Processor]
-    MP --> IA[Intermediate Stats]
-    IA --> FM[Final Metrics]
-    FM --> OW[Output Writer]
+    A1[Parquet Files] --> B[DataLoader]
+    A2[CSV Files] --> B
+    A3[Databases] --> B
+    B --> C[Streaming Batches]
+    C --> D[Metric Processor]
+    D --> E[Intermediate Stats]
+    E --> F[Final Metrics]
+    F --> G[Output Writer]
+    G --> H1[Parquet Files]
+    G --> H2[CSV Files]
+    G --> H3[Dashboards]
 ```
 
-| Component | What it does |
-|----------|--------------|
-| **DataLoader** | Discovers available data (parquet files, CSV files, etc.) |
-| **DataSelection** | Iterates through data in manageable batches |
-| **Metric Processor** | Computes features and statistics on each batch |
-| **Output Writer** | Saves results to your preferred format |
+**How it works:**
+
+1. **DataLoader** discovers and loads your data (Parquet, CSV, etc.)
+2. **Streaming Batches** process data in chunks — never loads the whole dataset into memory
+3. **Metric Processor** computes features and intermediate statistics for each batch
+4. **Intermediate Stats** accumulate as batches are processed
+5. **Final Metrics** aggregate all intermediate stats into dataset-level scores
+6. **Output Writer** saves results to your preferred format
 
 ## How Streaming Works
 
