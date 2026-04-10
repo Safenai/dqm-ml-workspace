@@ -122,6 +122,46 @@ That's it! DQM-ML will:
 2. Run the metrics you specified
 3. Save results to the output location
 
+## Choosing Your Data Format
+
+| Format | Best For | Limitations |
+|--------|----------|-------------|
+| **Parquet** | Large datasets, columnar data, analytics | Not human-readable |
+| **CSV** | Small datasets, interoperability | Slower, larger files |
+| **Protobuf** | Streaming, schema evolution | Requires schema definition |
+
+### Recommendation
+
+- **< 1 GB**: CSV is fine
+- **> 1 GB**: Use Parquet for speed and memory efficiency
+- **Production pipelines**: Parquet with compression
+
+## Batch Size Guide
+
+How to choose the right batch size:
+
+| Data Size | Recommended Batch Size | Why |
+|-----------|------------------------|-----|
+| **< 100 MB** | 10,000 | Default works well |
+| **100 MB - 1 GB** | 10,000 - 50,000 | Balance memory/performance |
+| **1 - 10 GB** | 50,000 - 100,000 | Larger batches more efficient |
+| **> 10 GB** | 100,000+ | Adjust based on available RAM |
+
+> **Tip:** Start with the default (10,000) and increase if you have plenty of RAM. The smaller the batch, the more overhead.
+
+## Production vs Development
+
+For production environments, consider:
+
+- **Environment variables**: Set `DQM_ML_BATCH_SIZE` to override config
+- **Monitoring**: Add logging to track metric computation time
+- **Error handling**: Use `try/except` around `execute()` for graceful failures
+
+For development:
+
+- Use smaller sample data to iterate faster
+- Enable debug logging with `logging.basicConfig(level=logging.DEBUG)`
+
 ## Common Patterns
 
 ### Running Multiple Metrics

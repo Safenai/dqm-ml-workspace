@@ -146,7 +146,6 @@ nav:
     - Performance Report: TBD2.md
   - Developer Guide:
     - Contributing: contributing.md
-    - AGENTS.md: AGENTS.md
     - Roadmap: ROADMAP.md
     - Packages:
       - Core: packages/dqm-ml-core.md

@@ -2,9 +2,35 @@
 
 DQM-ML provides several types of metrics to assess different aspects of data quality. This guide helps you choose the right metric for your needs.
 
+## Quick Decision Guide
+
+Not sure which metric you need? Use this guide:
+
+| If you need to... | Use this metric | Complexity |
+|-------------------|-----------------|------------|
+| **Find missing values** | [Completeness](metrics/completeness.md) | Low (CPU only) |
+| **Check if data matches a distribution** | [Representativeness](metrics/representativeness.md) | Low (CPU only) |
+| **Compare train/test distributions** | [Domain Gap](metrics/domain_gap.md) | High (requires PyTorch) |
+| **Check image quality** | [Visual Features](metrics/visual_features.md) | Medium (CPU only) |
+
+### Complexity Guide
+
+- **Low (CPU only)**: Completeness, Representativeness — runs on any machine
+- **Medium**: Visual Features — requires opencv, but no GPU needed
+- **High (GPU recommended)**: Domain Gap — uses PyTorch, faster with GPU
+
+### For Researchers
+
+Each metric is based on established statistical methods:
+
+- **Completeness**: Ratio of non-null values
+- **Representativeness**: χ² (Chi-Square), KS (Kolmogorov-Smirnov), Shannon Entropy, GRTE
+- **Domain Gap**: MMD (Maximum Mean Discrepancy), FID (Fréchet Inception Distance), Wasserstein
+- **Visual Features**: Laplacian variance, histogram entropy
+
 ## Choosing a Metric
 
-Not sure which metric you need? Here's a quick guide:
+Detailed guide for specific needs:
 
 | What you want to check | Use this metric |
 |------------------------|-----------------|

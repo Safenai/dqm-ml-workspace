@@ -67,6 +67,31 @@ Want to influence the roadmap? Here's how:
 - 💡 [Suggest features](https://github.com/Safenai/dqm-ml-workspace/discussions) - Share your use case
 - 👩‍💻 [Contribute](contributing.md) - Help build V2.0.0
 
+## Priorities for Contributors
+
+Looking to contribute? Here's what needs help most:
+
+### High Priority
+
+- **Porting V1 metrics**: Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD
+- **Test coverage**: More edge cases and integration tests
+
+### Medium Priority
+
+- **Documentation**: Examples, use cases, better explanations
+- **Performance optimizations**: Batch processing improvements
+
+### Lower Priority
+
+- **New features**: Time series support, database connectors
+- **Tooling**: IDE integrations, IDE plugins
+
+### How to Start
+
+1. Check [open issues](https://github.com/Safenai/dqm-ml-workspace/issues) tagged `good first issue`
+2. Read the [contributing guide](contributing.md) for setup instructions
+3. Join discussions to propose new features
+
 ## Version History
 
 | Version | Release Date | Highlights |

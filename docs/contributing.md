@@ -129,6 +129,79 @@ my_new_metric = "my_package:MyNewMetric"
 
 Create a test file in the `tests/` directory. Use existing tests as templates.
 
+## Non-Code Contributions
+
+You don't need to write code to contribute to DQM-ML!
+
+### Documentation
+
+- Improve existing docs
+- Add examples and tutorials
+- Fix typos and improve clarity
+- Translate documentation
+
+### Testing
+
+- Report bugs you find
+- Test on different platforms
+- Suggest edge cases we haven't covered
+- Review pull requests
+
+### Community
+
+- Answer questions in discussions
+- Share your use case
+- Write blog posts or tutorials
+- Speak at meetups or conferences
+
+### Design
+
+- Suggest UI improvements for CLI
+- Design better documentation layouts
+- Create logos or graphics
+
+## First Contribution Guide
+
+New to open source? Here's how to get started:
+
+### Step 1: Find an Issue
+
+1. Go to [GitHub Issues](https://github.com/Safenai/dqm-ml-workspace/issues)
+2. Look for tags: `good first issue`, `beginner`, `documentation`
+3. Comment on the issue to say you'd like to work on it
+
+### Step 2: Fork and Clone
+
+```bash
+# Fork on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/dqm-ml-workspace
+cd dqm-ml-workspace
+```
+
+### Step 3: Create a Branch
+
+```bash
+git checkout -b your-feature-name
+```
+
+### Step 4: Make Your Changes
+
+Follow the [quality standards](#quality-standards) below.
+
+### Step 5: Submit a Pull Request
+
+1. Push to your fork: `git push origin your-feature-name`
+2. Go to the original repository and click "Compare & pull request"
+3. Fill out the PR template
+4. Submit!
+
+### Tips for First-Timers
+
+- Start with documentation improvements (easier to review)
+- Don't worry about making mistakes — we all started somewhere
+- Ask questions in the PR if you're unsure
+- It's okay if your first PR takes a few attempts
+
 ## Best Practices
 
 Following these patterns keeps the codebase consistent:
