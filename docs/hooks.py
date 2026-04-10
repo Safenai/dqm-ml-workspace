@@ -1,9 +1,11 @@
 from pathlib import Path
 import shutil
 
+DOCS_INDEX = "docs/index.md"
+
 
 def update_readme_relative_links():
-    index = Path("docs/index.md")
+    index = Path(DOCS_INDEX)
     with index.open() as f:
         md = f.read()
         # Replace various forms of docs/ paths
@@ -27,7 +29,7 @@ def copy_example():
 
 
 def copy_readme():
-    shutil.copy("README.md", "docs/index.md")
+    shutil.copy("README.md", DOCS_INDEX)
 
 
 def copy_package_readmes():
@@ -62,7 +64,7 @@ def rename_coverage_index():
 
 def add_repository_link():
     """Add repository link before Available on PyPI section."""
-    index = Path("docs/index.md")
+    index = Path(DOCS_INDEX)
     with index.open() as f:
         md = f.read()
 
