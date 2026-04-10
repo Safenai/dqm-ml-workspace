@@ -19,7 +19,7 @@ Not sure which metric you need? Use this guide:
 - **Medium**: Visual Features — requires opencv, but no GPU needed
 - **High (GPU recommended)**: Domain Gap — uses PyTorch, faster with GPU
 
-### For Researchers
+### The Math behind the metrics
 
 Each metric is based on established statistical methods:
 
@@ -27,17 +27,6 @@ Each metric is based on established statistical methods:
 - **Representativeness**: χ² (Chi-Square), KS (Kolmogorov-Smirnov), Shannon Entropy, GRTE
 - **Domain Gap**: MMD (Maximum Mean Discrepancy), FID (Fréchet Inception Distance), Wasserstein
 - **Visual Features**: Laplacian variance, histogram entropy
-
-## Choosing a Metric
-
-Detailed guide for specific needs:
-
-| What you want to check | Use this metric |
-|------------------------|-----------------|
-| **Missing values** | [Completeness](metrics/completeness.md) |
-| **Data distribution matches expected pattern** | [Representativeness](metrics/representativeness.md) |
-| **Train/test data drift** | [Domain Gap](metrics/domain_gap.md) |
-| **Image brightness, blur, quality** | [Visual Features](metrics/visual_features.md) |
 
 ## Available Metrics by Package
 

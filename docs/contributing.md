@@ -38,6 +38,10 @@ We use [uv](https://github.com/astral-sh/uv) for fast development and workspace 
 ### 1. Prerequisites
 
 ```bash
+# Clone the repository
+git clone https://github.com/Safenai/dqm-ml-workspace
+cd dqm-ml-workspace
+
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -133,69 +137,56 @@ Create a test file in the `tests/` directory. Use existing tests as templates.
 
 You don't need to write code to contribute to DQM-ML!
 
-### Documentation
+**Documentation**
 
 - Improve existing docs
 - Add examples and tutorials
 - Fix typos and improve clarity
 - Translate documentation
 
-### Testing
+**Testing**
 
 - Report bugs you find
 - Test on different platforms
 - Suggest edge cases we haven't covered
 - Review pull requests
 
-### Community
+**Community**
 
 - Answer questions in discussions
 - Share your use case
 - Write blog posts or tutorials
 - Speak at meetups or conferences
 
-### Design
+**Design**
 
 - Suggest UI improvements for CLI
 - Design better documentation layouts
 - Create logos or graphics
 
-## First Contribution Guide
+## Submit changes for review
 
-New to open source? Here's how to get started:
-
-### Step 1: Find an Issue
-
-1. Go to [GitHub Issues](https://github.com/Safenai/dqm-ml-workspace/issues)
-2. Look for tags: `good first issue`, `beginner`, `documentation`
-3. Comment on the issue to say you'd like to work on it
-
-### Step 2: Fork and Clone
-
-```bash
-# Fork on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/dqm-ml-workspace
-cd dqm-ml-workspace
-```
-
-### Step 3: Create a Branch
+**Step 1: Create a Branch**
 
 ```bash
 git checkout -b your-feature-name
 ```
 
-### Step 4: Make Your Changes
+**Step 2: Make Your Changes**
 
 Follow the [quality standards](#quality-standards) below.
 
-### Step 5: Submit a Pull Request
+**Step 3: Submit a Pull Request**
 
-1. Push to your fork: `git push origin your-feature-name`
-2. Go to the original repository and click "Compare & pull request"
-3. Fill out the PR template
-4. Submit!
+1. Push: `git push origin your-feature-name`
+2. Copy paste the link in the terminal into your browser
+3. Select dev branch instead of main (default)
+4. Click "Compare & pull request"
+5. Fill out the PR template
+6. Submit!
+7. Reviewers will read your submission
 
-### Tips for First-Timers
+**Tips for First-Timers**
 
 - Start with documentation improvements (easier to review)
 - Don't worry about making mistakes — we all started somewhere

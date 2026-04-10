@@ -9,6 +9,7 @@ def update_readme_relative_links():
         # Replace various forms of docs/ paths
         updated_md = md.replace("./docs/", "./")
         updated_md = updated_md.replace("(docs/", "(")
+        updated_md = updated_md.replace('src="docs/static/', 'src="./static/')
         updated_md = updated_md.replace(
             "(packages/",
             "(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/",
@@ -59,9 +60,24 @@ def rename_coverage_index():
         )
 
 
+def add_repository_link():
+    """Add repository link before Available on PyPI section."""
+    index = Path("docs/index.md")
+    with index.open() as f:
+        md = f.read()
+
+    repository_link = "- **[Repository](https://github.com/Safenai/dqm-ml-workspace)**"
+
+    if "## Available on PyPI" in md and repository_link not in md:
+        updated_md = md.replace("## Available on PyPI", f"{repository_link}\n\n## Available on PyPI")
+        with index.open("w") as f:
+            f.write(updated_md)
+
+
 def pre_build(*args, **kwargs):
     copy_example()
     copy_readme()
+    add_repository_link()
     copy_package_readmes()
     rename_coverage_index()
     update_readme_relative_links()

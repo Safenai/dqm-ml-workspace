@@ -80,6 +80,7 @@ spell = [
 docs = [
     "mkdocs-material",
     "mkdocs-htmlproofer-plugin",
+    "markdown-callouts",
 
     # Python API documentation (not necessary for applications).
     "mkdocstrings[python]",
