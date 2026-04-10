@@ -2,6 +2,30 @@
 
 The Visual Features metric extracts standard image quality indicators from image datasets. It is used to analyze characteristics like brightness, contrast, and sharpness.
 
+## What It Measures
+
+Visual Features extracts image quality metrics to assess your image dataset. Use it to:
+
+- **Check image quality** — Identify blurry or dark images
+- **Validate dataset health** — Ensure images meet quality thresholds
+- **Preprocessing validation** — Check augmentation results
+
+### Available Features
+
+| Feature | What It Measures | Use Case |
+|---------|-----------------|----------|
+| **Luminosity** | Brightness level | Detect under/over-exposed images |
+| **Contrast** | RMS contrast | Find low-contrast images |
+| **Blur** | Laplacian variance | Identify blurry images |
+| **Entropy** | Shannon entropy | Measure information content |
+
+### Use Cases
+
+- Filter low-quality images from training data
+- Validate image preprocessing pipeline
+- Monitor image quality in production
+- Check dataset balance across brightness levels
+
 ## Processor Information
 
 * **Class**: `VisualFeaturesProcessor`

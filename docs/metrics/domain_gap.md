@@ -2,6 +2,31 @@
 
 The Domain Gap metric measures the statistical distance between a source and a target distribution based on their embeddings. It is used to quantify drift or differences between datasets.
 
+## What It Measures
+
+Domain Gap measures how different two datasets are from each other. Use it to:
+
+- **Compare train/test distributions** — Ensure test data resembles training data
+- **Detect data drift over time** — Monitor distribution shifts in production
+- **Validate data augmentation** — Check if augmented data maintains original characteristics
+
+### Available Distance Metrics
+
+| Metric | Full Name | Best For |
+|--------|-----------|----------|
+| **FID** | Fréchet Inception Distance | Image embeddings |
+| **MMD** | Maximum Mean Discrepancy | General kernel-based |
+| **Wasserstein** | Earth Mover's Distance | 1D distributions |
+| **KLMVN** | Kullback-Leibler Multivariate Normal | Gaussian distributions |
+| **H-Divergence** | Hypothesis-based Divergence | Binary classification |
+
+### Use Cases
+
+- Validate train/test split quality
+- Monitor data drift in production pipelines
+- Compare different data versions
+- Evaluate data augmentation strategies
+
 ## Processor Information
 
 * **Class**: `DomainGapProcessor`
