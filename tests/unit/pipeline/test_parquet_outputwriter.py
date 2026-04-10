@@ -1,7 +1,14 @@
+"""Unit tests for the Parquet output writer.
+
+This module contains unit tests that verify the ParquetOutputWriter
+class correctly writes metrics and features to Parquet files.
+"""
+
 import shutil
 import pytest
 import pyarrow.parquet as pq
 from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
+
 
 @pytest.fixture
 def temp_output_dir(tmp_path):
@@ -11,16 +18,12 @@ def temp_output_dir(tmp_path):
     if path.exists():
         shutil.rmtree(path)
 
+
 def test_parquet_output_writer_creates_directory(temp_output_dir):
-    """
-    Test that ParquetOutputWriter creates the output directory if it doesn't exist.
-    """
+    """Test that ParquetOutputWriter creates the output directory if it doesn't exist."""
     output_path_pattern = str(temp_output_dir / "metrics.parquet")
-    
-    config = {
-        "path_pattern": output_path_pattern,
-        "columns": ["metric_name", "value"]
-    }
+
+    config = {"path_pattern": output_path_pattern, "columns": ["metric_name", "value"]}
     writer = ParquetOutputWriter(name="test_writer", config=config)
 
     metrics_data = {

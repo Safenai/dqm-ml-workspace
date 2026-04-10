@@ -1,3 +1,10 @@
+"""Base data metric processor class.
+
+This module contains the DatametricProcessor base class that all
+metric processors must inherit from. It provides the streaming
+architecture for processing large datasets.
+"""
+
 import logging
 from typing import Any
 

@@ -1,3 +1,10 @@
+"""Representativeness metric processor for evaluating distribution fit.
+
+This module contains the RepresentativenessProcessor class that evaluates
+how well a dataset represents a target statistical distribution using
+various statistical tests.
+"""
+
 import logging
 from typing import Any, override
 

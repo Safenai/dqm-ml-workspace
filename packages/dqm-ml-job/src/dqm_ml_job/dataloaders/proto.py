@@ -1,3 +1,9 @@
+"""Protocol definitions for data loaders and selections.
+
+This module contains the DataLoader and DataSelection protocol classes
+that define the interface for data loading implementations.
+"""
+
 from typing import Any, Protocol, runtime_checkable
 
 

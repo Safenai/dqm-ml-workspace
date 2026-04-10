@@ -1,25 +1,44 @@
 # DQM-ML V2 Project Overview
 
-DQM-ML V2 is a modular Python framework designed to compute data quality metrics for Machine Learning datasets at scale. It evolves from the original `dqm-ml` library with a focus on a unified API, streaming processing for large datasets, and a decoupled package architecture.
+This page is for developers who want to understand how DQM-ML is structured and how to work with the codebase. For a general introduction to what DQM-ML does, check out the [Home](index.md) page.
 
-## Architecture
+## Package Architecture
 
-The project is managed as a `uv` workspace with several specialized packages located in the `packages/` directory:
+The project is organized as a Python monorepo using [uv workspace](https://github.com/astral-sh/uv). Here's how the packages relate to each other:
 
-* `dqm-ml-core`: Defines the base API (`DatametricProcessor`) and provides core metrics like Completeness and Representativeness.
-* `dqm-ml-job`: Orchestrates the data processing flow. It handles data loading via `DataSelection` and `DataLoader` protocols and executes metric processors in a streaming fashion.
-* `dqm-ml-images`: Provides metrics and feature extraction specifically for image data (luminosity, contrast, blur, entropy).
-* `dqm-ml-pytorch`: Implements advanced metrics requiring PyTorch, such as Domain Gap (FID, KLMVN, MMD).
-* `dqm-ml-v2`: A wrapper package providing the main CLI (`dqm-ml-v2`) and handling optional dependencies.
+```mermaid
+flowchart TB
+    core[dqm-ml-core<br/>Core API] --> job[dqm-ml-job<br/>Orchestration]
+    core --> images[dqm-ml-images<br/>Visual Features]
+    core --> pytorch[dqm-ml-pytorch<br/>PyTorch Metrics]
+    v2[dqm-ml-v2<br/>CLI Wrapper] --> job
+    v2 --> core
+    v2 --> images
+    v2 --> pytorch
+```
+
+### What Each Package Does
+
+| Package | Purpose |
+|---------|---------|
+| **dqm-ml-core** | Defines the base `DatametricProcessor` class and core metrics (Completeness, Representativeness). The foundation everything else builds on. |
+| **dqm-ml-job** | Handles the data pipeline: loading data, processing batches, and writing results. Think of it as the "engine room." |
+| **dqm-ml-images** | Extracts visual features from images (luminosity, contrast, blur, entropy) - useful for checking image dataset quality. |
+| **dqm-ml-pytorch** | Advanced metrics that need PyTorch, like Domain Gap (measuring difference between train/test distributions). |
+| **dqm-ml-v2** | The CLI entry point - what you use from the command line to run jobs. |
 
 ## Key Technologies
 
-* `uv`: Fast Python package manager and workspace orchestrator.
-* `pyarrow`: Primary data format for efficient batch processing and I/O.
-* `nox`: Task runner for testing, linting, and documentation building.
-* `mkdocs-material`: Documentation framework.
+DQM-ML uses these tools to be fast and reliable:
+
+- **[uv](https://github.com/astral-sh/uv)**: Fast Python package manager and workspace orchestrator
+- **[PyArrow](https://arrow.apache.org/)**: Efficient batch processing and memory-efficient data handling
+- **[nox](https://nox.thea.codes/)**: Task runner for testing, linting, and documentation
+- **[mkdocs-material](https://squidfunk.github.io/mkdocs-material/)**: The beautiful documentation you're reading now
 
 ## Building and Running
+
+Here's how to get started with development:
 
 ### Setup
 
@@ -28,51 +47,77 @@ The project is managed as a `uv` workspace with several specialized packages loc
 uv sync
 ```
 
-### Execution
+### Running the CLI
 
 The main entry point is the `dqm-ml-v2` CLI:
 
 ```bash
-# List available metrics and loaders
+# List available metrics and data loaders
 uv run dqm-ml-v2 list
 
 # Execute a pipeline from a configuration file
 uv run dqm-ml-v2 process -p config.yaml
 ```
 
-### Testing and Quality
+### Testing and Quality Checks
+
+We maintain high code quality with automated checks:
 
 ```bash
 # Run all tests, linting, and type checking
 uv run nox
 
-# Run a specific session
-uv run nox -s test_dev
-uv run nox -s lint
-uv run nox -s type_check
+# Run specific checks
+uv run nox -s test      # Run tests
+uv run nox -s lint      # Check code style
+uv run nox -s type_check # Type checking
+uv run nox -s docs      # Build documentation
 ```
 
-## Development Conventions
+## Developing New Metrics
 
-### Metric Implementation
+If you want to add a new metric (awesome!), here's how it works:
 
-All new metrics should inherit from `dqm_ml_core.api.data_processor.DatametricProcessor` and implement:
+### The Metric Processor Pattern
 
-* `compute_features()`: for computing sample features used by metrics
-* `compute_batch_metric()`: For intermediate statistics.
-* `compute()`: For final dataset-level aggregation.
-* `compute_delta()`: (Optional) For comparing two datasets.
+All metrics inherit from `DatametricProcessor` and implement these methods:
 
-### Data Loading
+```mermaid
+flowchart TB
+    F[compute_features] --> B[compute_batch_metric]
+    B --> C[compute]
+    C --> D[compute_delta]
+```
 
-Data loaders follow a two-tier abstraction:
+| Method | Purpose | Required? |
+|--------|---------|------------|
+| `compute_features()` | Extract per-sample features from raw data | Optional |
+| `compute_batch_metric()` | Compute intermediate stats for one batch | Yes |
+| `compute()` | Aggregate all batches into final metric | Yes |
+| `compute_delta()` | Compare two datasets (e.g., train vs test) | Optional |
 
-1. `DataLoader`: Factory that discovers available `DataSelection`s.
-2. `DataSelection`: Handles actual batch iteration for a specific subset of data.
+### Data Loading Pattern
 
-### Coding Style
+Data loaders work in two tiers:
 
-* `linting`: Managed by `ruff`. Line length is set to 120.
-* `typing`: Strict type checking with `mypy`.
-* `formatting`: Handled by `ruff format`.
-* `flake8`: Strictly adhere to rules, specifically:
+1. **`DataLoader`**: Factory that discovers what data is available
+2. **`DataSelection`**: Handles iterating through a specific data subset in batches
+
+## Coding Standards
+
+We keep the codebase consistent with these tools:
+
+- **Linting**: [ruff](https://docs.astral.sh/ruff/) - Line length is 120 characters
+- **Type Checking**: [mypy](https://mypy-lang.org/) - Strict mode enabled
+- **Formatting**: `ruff format` - Consistent code style
+- **Testing**: pytest with 300-second timeout per test
+
+### Running Quality Checks
+
+```bash
+# Fix auto-fixable issues
+uv run nox -s lint_fix
+
+# Run type checking
+uv run nox -s type_check
+```

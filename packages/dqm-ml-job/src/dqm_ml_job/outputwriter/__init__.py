@@ -1,7 +1,11 @@
-"""
-Data processors module.
+"""Output writers module for DQM ML Job.
 
-This module contains classes for processing data and computing metrics.
+This module contains classes for writing pipeline results (features
+and metrics) to various storage backends.
+
+Classes:
+    OutputWriter: Protocol for output writer implementations.
+    ParquetOutputWriter: Writer that saves data to Parquet files.
 """
 
 from typing import Any, Protocol, runtime_checkable

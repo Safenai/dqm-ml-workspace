@@ -73,6 +73,10 @@ lint = [
     "ruff",
 ]
 
+spell = [
+    "cspell"
+]
+
 docs = [
     "mkdocs-material",
     "mkdocs-htmlproofer-plugin",
@@ -83,6 +87,9 @@ docs = [
     "mkdocs-api-autonav",
     "mkdocs-jupyter",
     "mkdocs-simple-hooks",
+    # Markdown extensions for mermaid and more
+    "pymdown-extensions",
+    "mkdocs-mermaid2-plugin"
 ]
 
 licenses = [
@@ -185,3 +192,6 @@ exclude_also = [
     "raise NotImplementedError",
     "@abstractmethod",
 ]
+
+[tool.cspell]
+files = ["**/*"]

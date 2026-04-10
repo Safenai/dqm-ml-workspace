@@ -4,7 +4,7 @@ config:
   dataloaders:
     source_dataset:
       type: parquet
-      path: tests/fixtures/data/completeness.parquet
+      path: tests/integration/fixtures/data/completeness.parquet
       batch_size: 10000
       memory_limit: 1GB
       threads: 2
