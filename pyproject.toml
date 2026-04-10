@@ -60,7 +60,7 @@ test = [
     "pytest-timeout",
     # to download open source datasets
     "fiftyone",
-    "strawberry-graphql==0.287.3" # TODO : pinning to avoid deprecated dependency issue with fiftyone
+    "strawberry-graphql>=0.312.3" # Security: CVE-2026-35526, CVE-2026-35523
 ]
 
 type_check = [
@@ -167,6 +167,8 @@ filterwarnings = [
     # Add additional warning suppressions as needed here. For example, if a third-party library
     # is throwing a deprecation warning that needs to be fixed upstream:
     # "ignore::DeprecationWarning:typer",
+    "ignore::DeprecationWarning:strawberry",
+    "ignore::DeprecationWarning:fiftyone",
     "ignore::SyntaxWarning",
 ]
 markers = [
