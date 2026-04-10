@@ -1,16 +1,103 @@
 # DQM-ML Images
 
-An extension for DQM-ML V2 providing metrics and feature extraction specifically for image data.
+Image feature extraction package for DQM-ML V2. Provides metrics for assessing image dataset quality.
+
+## Installation
+
+```bash
+pip install dqm-ml-images
+```
+
+> **Note:** `dqm-ml-images` provides metric processors only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+
+## Usage
+
+### Using Python Directly
+
+```python
+import numpy as np
+from pathlib import Path
+from dqm_ml_images import VisualFeaturesProcessor
+from PIL import Image
+
+# Load or generate sample images
+images = [Image.open("path/to/image1.jpg"), Image.open("path/to/image2.jpg")]
+
+# Create and configure the processor
+processor = VisualFeaturesProcessor(
+    name="image_quality",
+    config={
+        "input_columns": ["image_bytes"],
+        "grayscale": True
+    }
+)
+
+# Process images to extract features
+batch = {"image_bytes": images}
+features = processor.compute_features(batch)
+print(f"Luminosity: {features['m_luminosity']}")
+print(f"Contrast: {features['m_contrast']}")
+print(f"Blur: {features['m_blur_level']}")
+print(f"Entropy: {features['m_entropy']}")
+```
+
+### With dqm-ml-job
+
+For running from a YAML config, install together with `dqm-ml-job`:
+
+```bash
+pip install dqm-ml-job dqm-ml-images
+```
+
+Then use this config:
+
+```yaml
+metrics_processor:
+  image_quality:
+    type: visual_metric
+    input_columns: ["image_data"]
+    grayscale: true
+```
 
 ## Features
 
-* Luminosity: Mean gray level calculation.
-* Contrast: RMS contrast.
-* Blur: Variance of Laplacian (sharpness measurement).
-* Entropy: Information entropy of image histograms.
+| Feature | Description |
+|---------|-------------|
+| **Luminosity** | Mean gray level — measures overall brightness |
+| **Contrast** | RMS contrast — measures tonal range |
+| **Blur** | Variance of Laplacian — estimates sharpness/focus |
+| **Entropy** | Shannon entropy — measures information content |
+
+## Output
+
+The processor adds these columns to your data:
+- `m_luminosity`
+- `m_contrast`
+- `m_blur_level`
+- `m_entropy`
 
 ## Requirements
 
-* `opencv-python`
-* `pillow`
-* `numpy`
+- `opencv-python`
+- `pillow`
+- `numpy`
+
+## Dependencies
+
+DQM-ML is modular. For visual features:
+
+```bash
+# Minimal: use as library only
+pip install dqm-ml-images
+
+# For YAML config execution
+pip install dqm-ml-job dqm-ml-images
+
+# Full stack with all metrics
+pip install dqm-ml-job dqm-ml-core dqm-ml-images dqm-ml-pytorch
+```
+
+## See Also
+
+- [Visual Features Documentation](https://safenai.github.io/dqm-ml-workspace/docs/metrics/visual_features/)
+- [Configuration Guide](https://safenai.github.io/dqm-ml-workspace/docs/configuration/)

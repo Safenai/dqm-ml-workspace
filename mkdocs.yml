@@ -148,6 +148,12 @@ nav:
     - Contributing: contributing.md
     - AGENTS.md: AGENTS.md
     - Roadmap: ROADMAP.md
+    - Packages:
+      - Core: packages/dqm-ml-core.md
+      - Job: packages/dqm-ml-job.md
+      - Images: packages/dqm-ml-images.md
+      - PyTorch: packages/dqm-ml-pytorch.md
+      - CLI: packages/dqm-ml-v2.md
 
   - API Reference: reference/
 
