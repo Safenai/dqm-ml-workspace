@@ -85,7 +85,7 @@ docs = [
     "mkdocstrings[python]",
     # Autodoc.
     "mkdocs-api-autonav",
-    "mkdocs-jupyter",
+    "mkdocs-jupyter<0.26",  # Pin to <0.26 to avoid abs_src_path=None bug with api-autonav
     "mkdocs-simple-hooks",
     # Markdown extensions for mermaid and more
     "pymdown-extensions",
