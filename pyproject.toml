@@ -3,7 +3,7 @@ name = "dqm-workspace"
 version = "1.1.4"
 requires-python = ">=3.10"
 dependencies = [
-    "dqm-ml-v2>=1.1.4",
+    "dqm-ml>=1.1.4",
     "dqm-ml-core",
     "dqm-ml-images",
     "dqm-ml-job",
@@ -32,14 +32,13 @@ dqm-ml-job = { workspace = true }
 dqm-ml-images = { workspace = true }
 dqm-ml-pytorch = { workspace = true }
 # dqm-ml = { workspace = true }
-dqm-ml-v2 = { workspace = true }
+dqm-ml = { workspace = true }
 
 [tool.uv]
 default-groups = ["nox", "lint", "type_check"]
 
 [tool.uv.workspace]
 members = ["packages/*"]
-exclude = ["packages/dqm-ml"]
 
 # Dependency groups of the workspace depending actions performed in the workspace
 [dependency-groups]
@@ -60,7 +59,7 @@ test = [
     "pytest-timeout",
     # to download open source datasets
     "fiftyone",
-    "strawberry-graphql==0.287.3" # TODO : pinning to avoid deprecated dependency issue with fiftyone
+    "strawberry-graphql>=0.312.3" # Security: CVE-2026-35526, CVE-2026-35523
 ]
 
 type_check = [
@@ -109,8 +108,7 @@ enable_error_code = ["deprecated", "exhaustive-match", "explicit-override"]
 
 [tool.ruff]
 line-length = 120
-src = ["src", "packages/dqm-ml-core/src", "packages/dqm-ml-job/src"]
-extend-exclude = ["packages/dqm-ml/*"]
+src = ["src", "packages/dqm-ml-core/src", "packages/dqm-ml-job/src", "packages/dqm-ml/src"]
 # Ruff will automatically exclude all files listed in .gitignore as well as common temporary Python
 # tool directories.
 # To exclude additional folders, use extend-exclude.
@@ -175,6 +173,8 @@ filterwarnings = [
     # Add additional warning suppressions as needed here. For example, if a third-party library
     # is throwing a deprecation warning that needs to be fixed upstream:
     # "ignore::DeprecationWarning:typer",
+    "ignore::DeprecationWarning:strawberry",
+    "ignore::DeprecationWarning:fiftyone",
     "ignore::SyntaxWarning",
 ]
 markers = [
