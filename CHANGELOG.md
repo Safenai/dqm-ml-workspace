@@ -1,5 +1,77 @@
 # Changelog
 
+## 2.0.0-rc (2026-04-10) - Release Candidate for V2
+
+This release is the V2.0.0 release candidate, featuring major refactoring, security fixes, and documentation improvements.
+
+### Issue ticket number and link
+
+* fix: #41 - Security warnings addressed
+* fix: #31 - Test package dependencies upgraded
+* fix: #29 - dqm-ml-pipeline renamed to dqm-ml-job
+* fix: #28 - Tests moved to workspace root
+* fix: #27 - Multi data selection configuration
+* fix: #26 - Domain gap computation for multiple selections
+* fix: #25 - Multiple data selection in same job
+* fix: #24 - Progress messages during post-processing
+* fix: #22 - Output folder auto-creation
+* fix: #11 - MkDocs documentation generation
+
+### Breaking Changes
+
+* **Package rename**: `dqm-ml-v2` → `dqm-ml` (CLI entry point)
+* **CLI command**: `dqm-ml-v2` → `dqm-ml`
+* **Legacy removal**: Removed dependency on legacy `dqm-ml` submodule
+
+### Security Fixes (10 vulnerabilities fixed)
+
+| Package | Old Version | New Version |
+|---------|-------------|-------------|
+| strawberry-graphql | 0.287.3 | 0.314.3 |
+| tornado | 6.5.4 | 6.5.5 |
+| cryptography | 46.0.4 | 46.0.7 |
+| requests | - | 2.33.0 |
+| pygments | - | 2.20.0 |
+
+CVEs addressed: CVE-2026-35526, CVE-2026-35523, CVE-2026-31958, CVE-2025-47287, CVE-2026-26007, CVE-2026-34073, CVE-2026-37990, CVE-2026-25645
+
+### New Features
+
+* **Test Strategy Documentation**: Comprehensive testing docs in `contributing.md` with mermaid diagrams
+* **Git LFS Guide**: Added to `quickstart.md` for development setup
+* **Test Fixtures**: Session-scoped fixtures (`coco_data`, `normal_dist`, `uniform_dist`, etc.)
+* **Test Utils**: New `tests/utils/` with helpers for files, jobs, plots
+* **tqdm dependency added**: Added to `dqm-ml-job` for progress display
+
+### Documentation Improvements
+
+* **AGENTS.md**: New contribution guidelines for AI agents
+* **Test Strategy**: Complete testing documentation with diagrams
+* **Git LFS Section**: Added to quickstart for large file handling
+* **TODO/ROADMAP Sync**: Aligned V1 metrics lists and version references
+* **Mermaid Diagrams**: Fixed dependency direction (core ← job, not →)
+* **All docs updated**: Replaced `dqm-ml-v2` references with `dqm-ml`
+
+### Technical Changes
+
+* Pinned `mkdocs-jupyter<0.26` to fix api-autonav compatibility
+* Refactored `conftest.py` - restructured fixtures
+* Added deprecation warning filters for strawberry and fiftyone
+
+### Dependencies Updated
+
+* fiftyone: 1.14.1 → 1.13.0
+* torch: 2.10.0 → 2.11.0
+* torchvision: 0.25.0 → 0.26.0
+* Many other transitive dependencies upgraded
+
+### Testing
+
+* 54 tests passing
+* Integration test fixtures for real data testing
+* CLI end-to-end tests
+* Test coverage reports available in `docs/reports/`
+
 ## 1.1.6 (2026-02-10) - upgrade dependency and security check
 
 This release is dedicated to rename dqm-ml-pipeline as sqm-ml-job, correct security issues detected by github, as well as initiated template for issues, feature and merge request
