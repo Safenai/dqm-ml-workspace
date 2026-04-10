@@ -146,58 +146,7 @@ print(results)
 | **Domain Gap** | Statistical distance between datasets | `dqm-ml-pytorch` | Compare train/test splits |
 | **Visual Features** | Image quality indicators | `dqm-ml-images` | Check image dataset quality |
 
-### Completeness
-
-Measures what percentage of your data is present (non-null). Great for finding missing values:
-
-```yaml
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [column_a, column_b]
-    include_per_column: true
-    include_overall: true
-```
-
-### Representativeness
-
-Checks if your data follows a known distribution (Normal or Uniform). Useful for:
-
-- Validating synthetic data
-- Checking for data drift
-- Ensuring balanced datasets
-
-Includes multiple statistical tests:
-
-- **Chi-Square (χ²)** — Goodness-of-fit test for categorical/binned data
-- **Kolmogorov-Smirnov (KS)** — Non-parametric test for continuous distributions
-- **Shannon Entropy** — Measures information diversity in your data
-- **GRTE** (Granular Relative Theoretical Entropy) — Developed in the Confiance.ai program
-
-### Domain Gap
-
-Measures how different two datasets are from each other. Use it to:
-
-- Compare training and test distributions
-- Detect data shift over time
-- Validate data augmentation
-
-Available metrics:
-
-- **Wasserstein** — Earth mover's distance for distribution comparison
-- **MMD** (Maximum Mean Discrepancy) — Kernel-based distribution distance
-- **FID** (Fréchet Inception Distance) — Deep learning-based image distance
-- **KLMVN** (Kullback-Leibler Multivariate Normal) — KL divergence for Gaussian distributions
-- **H-Divergence** — Hypothesis-based divergence measure
-
-### Visual Features
-
-Extracts image quality metrics like:
-
-- **Luminosity** — Brightness level
-- **Contrast** — Difference between light and dark
-- **Blur** — Sharpness/clarity
-- **Entropy** — Information diversity
+> **Detailed metric documentation**: See [Metrics Guide](docs/metrics.md) for configuration options and examples.
 
 ## Architecture
 
@@ -229,41 +178,9 @@ flowchart LR
 
 ## Project Structure
 
-The project is organized as a Python monorepo using UV workspace:
+The project is organized as a Python monorepo using UV workspace.
 
-```
-dqm-ml-workspace/
-├── packages/
-│   ├── dqm-ml-core/          # Core API & standard metrics
-│   ├── dqm-ml-job/           # Pipeline orchestration & data loaders
-│   ├── dqm-ml-images/        # Image feature extraction
-│   ├── dqm-ml-pytorch/       # PyTorch-based metrics (Domain Gap)
-│   └── dqm-ml-v2/            # CLI wrapper & entry point
-├── tests/                    # Test suite
-├── docs/                     # Documentation
-└── examples/                 # Example configurations
-```
-
-```mermaid
-flowchart TB
-    core[dqm-ml-core<br/>Core API & Metrics] --> job[dqm-ml-job<br/>Orchestration]
-    images[dqm-ml-images<br/>Visual Features] --> core
-    pytorch[dqm-ml-pytorch<br/>PyTorch Metrics] --> core
-    v2[dqm-ml-v2<br/>CLI Wrapper] --> job
-    v2 --> core
-    v2 --> images
-    v2 --> pytorch
-```
-
-**Package breakdown:**
-
-| Package | Purpose |
-|---------|---------|
-| `dqm-ml-core` | Base classes and core metrics (Completeness, Representativeness) |
-| `dqm-ml-job` | Data loading, batch processing, output writing |
-| `dqm-ml-images` | Visual feature extraction from images |
-| `dqm-ml-pytorch` | Deep learning-based metrics (Domain Gap) |
-| `dqm-ml-v2` | CLI entry point and wrapper |
+> **Detailed structure**: See [Project Overview](docs/dqm-ml-overview.md) for package directories and architecture.
 
 ## Configuration
 
@@ -366,11 +283,21 @@ For detailed guidelines, see [AGENTS.md](./AGENTS.md).
 
 More details are available in our docs:
 
+- **[Metrics Guide](./docs/metrics.md)** — Detailed metric documentation and configurations
 - **[Architecture & Rationale](./docs/dqm-ml-v2.md)** — Why and how V2 was designed
-- **[Metrics Guide](./docs/metrics.md)** — Available metrics and configurations
+- **[Project Overview](./docs/dqm-ml-overview.md)** — Package structure and development conventions
 - **[Configuration Guide](./docs/configuration.md)** — Writing pipeline configs
-- **[Roadmap & Limitations](./docs/ROADMAP.md)** — Known issues and planned evolutions
+- **[Roadmap & Limitations](./docs/ROADMAP.md)** — Known issues, missing V1 metrics, and planned evolutions
 - **[Contributing Guide](./docs/contributing.md)** — Development setup
+
+## Current Limitations
+
+Some V1 metrics are not yet ported to V2:
+
+- **Diversity** — Gini-Simpson, Simpson indices, Relative Diversity
+- **Domain Gap variants** — PAD, CMD
+
+> See [Roadmap](docs/ROADMAP.md) for what's coming.
 
 ## License
 
@@ -379,6 +306,8 @@ DQM-ML is licensed under the Apache 2.0 License. See [LICENSE](https://opensourc
 ## Origins
 
 DQM-ML was originally developed as part of the **[Confiance.ai](https://www.confiance.ai/)** research program, which focused on trustworthy AI for industry. The library was inspired by academic research and real-world industrial needs.
+
+> Originally derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml) by [IRT SystemX](https://www.irt-systemx.fr/).
 
 For more technical and scientific details, refer to:
 
@@ -396,6 +325,8 @@ For more technical and scientific details, refer to:
   year={2024}
 }
 ```
+
+Thank you to [IRT SystemX](https://www.irt-systemx.fr/) for the original work that inspired this project.
 
 ## Links
 

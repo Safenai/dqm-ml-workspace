@@ -18,9 +18,10 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 | Area | Current State | Notes |
 |------|---------------|-------|
 | **Beta packages** | `dqm-ml-job`, `dqm-ml-images` | Config schemas may change based on feedback |
-| **V1 metrics** | Some not yet ported | Diversity metric, PAD/CMD domain gap variants |
+| **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD |
 | **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
+| **Legacy dependency** | Submodule still present | Legacy `dqm-ml` for comparison (to be phased out) |
 
 > 📝 **Your feedback matters!** If you encounter issues or have suggestions, please [open an issue](https://github.com/Safenai/dqm-ml-workspace/issues).
 

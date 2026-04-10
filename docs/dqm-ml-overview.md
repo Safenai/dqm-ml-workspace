@@ -4,7 +4,24 @@ This page is for developers who want to understand how DQM-ML is structured and 
 
 ## Package Architecture
 
-The project is organized as a Python monorepo using [uv workspace](https://github.com/astral-sh/uv). Here's how the packages relate to each other:
+The project is organized as a Python monorepo using [uv workspace](https://github.com/astral-sh/uv).
+
+### Directory Structure
+
+```
+dqm-ml-workspace/
+├── packages/
+│   ├── dqm-ml-core/          # Core API & standard metrics
+│   ├── dqm-ml-job/           # Pipeline orchestration & data loaders
+│   ├── dqm-ml-images/        # Image feature extraction
+│   ├── dqm-ml-pytorch/       # PyTorch-based metrics (Domain Gap)
+│   └── dqm-ml-v2/            # CLI wrapper & entry point
+├── tests/                    # Test suite
+├── docs/                     # Documentation
+└── examples/                 # Example configurations
+```
+
+Here's how the packages relate to each other:
 
 ```mermaid
 flowchart TB
