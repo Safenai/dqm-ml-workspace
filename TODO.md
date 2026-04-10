@@ -4,8 +4,8 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 ## General & Workspace
 
-* [ ] Improve test management in `noxfile.py`.
-* [ ] Finalize Autodoc configuration in `mkdocs.yml`.
+* [x] Improve test management in `noxfile.py`.
+* [x] Finalize Autodoc configuration in `mkdocs.yml`.
 * [ ] Mark original repository as deprecated and reference this one.
 * [ ] Set version to V2.0.0 upon completion of core migration.
 * [ ] Choose between `pyyaml` and `ruamel.yaml` to standardize dependency.
@@ -25,7 +25,7 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 ## Pipeline & Orchestration (`dqm-ml-job`)
 
-* [ ] Rename `dqm-ml-job` to `dqm-ml-job` to better reflect its role in MLOps.
+* [x] Rename `dqm-ml-pipeline` to `dqm-ml-job` to better reflect its role in MLOps.
 * [ ] Add parameters to the CLI to pass file or directory paths directly as inputs for loaders.
 * [ ] Improve generic parameter and log handling in `cli.py`.
 * [ ] Implement proper metric ordering based on dependencies in `DatasetPipeline`.
@@ -58,7 +58,7 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 ## Data Formats & I/O
 
-* [ ] Support reading from CSV files in the pipeline.
+* [x] Support reading from CSV files in the pipeline.
 * [ ] Support writing metric results in JSON and YAML formats.
 * [ ] Implement database read/write support (SQL).
 
@@ -67,7 +67,7 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 * [ ] Create a dedicated "How to create a new metric" guide (building on the contributing guide).
 * [ ] Document performance configuration and optimization strategies for large-scale usage.
 
-## Wrapper & CLI (`dqm-ml-v2`)
+## Wrapper & CLI (`dqm-ml`)
 
 * [ ] Move logging configuration to a dedicated module.
 * [ ] Forward generic parameters from `init_log` to `logging.basicConfig`.

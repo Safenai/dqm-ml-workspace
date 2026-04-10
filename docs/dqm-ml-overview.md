@@ -28,10 +28,10 @@ flowchart TB
     core[dqm-ml-core<br/>Core API] --> job[dqm-ml-job<br/>Orchestration]
     core --> images[dqm-ml-images<br/>Visual Features]
     core --> pytorch[dqm-ml-pytorch<br/>PyTorch Metrics]
-    v2[dqm-ml-v2<br/>CLI Wrapper] --> job
-    v2 --> core
-    v2 --> images
-    v2 --> pytorch
+    cli[dqm-ml<br/>CLI Wrapper] --> job
+    cli --> core
+    cli --> images
+    cli --> pytorch
 ```
 
 ### What Each Package Does
@@ -42,7 +42,7 @@ flowchart TB
 | **dqm-ml-job** | Handles the data pipeline: loading data, processing batches, and writing results. Think of it as the "engine room." |
 | **dqm-ml-images** | Extracts visual features from images (luminosity, contrast, blur, entropy) - useful for checking image dataset quality. |
 | **dqm-ml-pytorch** | Advanced metrics that need PyTorch, like Domain Gap (measuring difference between train/test distributions). |
-| **dqm-ml-v2** | The CLI entry point - what you use from the command line to run jobs. |
+| **dqm-ml** | The CLI entry point - what you use from the command line to run jobs. |
 
 ## Key Technologies
 
@@ -66,14 +66,14 @@ uv sync
 
 ### Running the CLI
 
-The main entry point is the `dqm-ml-v2` CLI:
+The main entry point is the `dqm-ml` CLI:
 
 ```bash
 # List available metrics and data loaders
-uv run dqm-ml-v2 list
+uv run dqm-ml list
 
 # Execute a pipeline from a configuration file
-uv run dqm-ml-v2 process -p config.yaml
+uv run dqm-ml process -p config.yaml
 ```
 
 ### Testing and Quality Checks

@@ -24,6 +24,7 @@ assets
 tests/config_generated
 tests/integration/fixtures/config/generated
 tests/outputs
+**/generated/*
 
 # Dynamic versioning
 **/_version_.py

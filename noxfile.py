@@ -35,7 +35,7 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-core/src",
         "--cov=packages/dqm-ml-pytorch/src",
         "--cov=packages/dqm-ml-images/src",
-        "--cov=packages/dqm-ml-v2/src",
+        "--cov=packages/dqm-ml/src",
         "--cov-report=html:docs/reports/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
@@ -136,7 +136,7 @@ def lint_fix(s: Session) -> None:
     s.run(
         "ruff",
         "check",
-        "packages/dqm-ml-v2",
+        "packages/dqm-ml",
         "--extend-fixable",
         "F401",
         "--fix",
@@ -157,7 +157,7 @@ def type_check(s: Session) -> None:
     s.run("mypy", "packages/dqm-ml-core")
     s.run("mypy", "packages/dqm-ml-images")
     s.run("mypy", "packages/dqm-ml-pytorch")
-    s.run("mypy", "packages/dqm-ml-v2")
+    s.run("mypy", "packages/dqm-ml")
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.

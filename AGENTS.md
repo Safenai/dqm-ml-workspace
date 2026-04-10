@@ -13,7 +13,7 @@ dqm-ml-workspace/
 │   ├── dqm-ml-job/       # Orchestration, data loaders, output writers
 │   ├── dqm-ml-images/   # Visual feature extraction
 │   ├── dqm-ml-pytorch/  # PyTorch-based metrics (Domain Gap)
-│   ├── dqm-ml-v2/      # Main wrapper & CLI entry point
+│   ├── dqm-ml/        # Main wrapper & CLI entry point
 │   └── dqm-ml/         # Legacy V1 (excluded from workspace)
 ├── tests/               # Test suite
 └── src/                # Workspace-level code

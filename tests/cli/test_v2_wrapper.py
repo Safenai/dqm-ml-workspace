@@ -1,6 +1,6 @@
-"""Unit tests for the DQM-ML v2 CLI wrapper.
+"""Unit tests for the DQM-ML CLI wrapper.
 
-This module contains unit tests that verify the dqm-ml-v2 CLI
+This module contains unit tests that verify the dqm-ml CLI
 correctly parses arguments, displays version, and lists available plugins.
 """
 
