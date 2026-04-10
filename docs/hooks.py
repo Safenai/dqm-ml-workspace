@@ -43,7 +43,7 @@ def copy_package_readmes():
         "dqm-ml-job",
         "dqm-ml-images",
         "dqm-ml-pytorch",
-        "dqm-ml-v2",
+        "dqm-ml",
     ]
 
     for pkg in packages_to_copy:

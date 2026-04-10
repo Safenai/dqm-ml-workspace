@@ -15,7 +15,7 @@ dqm-ml-workspace/
 │   ├── dqm-ml-job/           # Pipeline orchestration & data loaders
 │   ├── dqm-ml-images/        # Image feature extraction
 │   ├── dqm-ml-pytorch/       # PyTorch-based metrics (Domain Gap)
-│   └── dqm-ml-v2/            # CLI wrapper & entry point
+│   └── dqm-ml/            # CLI wrapper & entry point
 ├── tests/                    # Test suite
 ├── docs/                     # Documentation
 └── examples/                 # Example configurations
@@ -25,9 +25,9 @@ Here's how the packages relate to each other:
 
 ```mermaid
 flowchart TB
-    core[dqm-ml-core<br/>Core API] --> job[dqm-ml-job<br/>Orchestration]
-    core --> images[dqm-ml-images<br/>Visual Features]
-    core --> pytorch[dqm-ml-pytorch<br/>PyTorch Metrics]
+    job[dqm-ml-job<br/>Orchestration] --> core[dqm-ml-core<br/>Core API]
+    images[dqm-ml-images<br/>Visual Features] --> core
+    pytorch[dqm-ml-pytorch<br/>PyTorch Metrics] --> core
     cli[dqm-ml<br/>CLI Wrapper] --> job
     cli --> core
     cli --> images

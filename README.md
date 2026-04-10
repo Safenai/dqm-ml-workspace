@@ -36,7 +36,7 @@ Install individual packages based on your needs:
 | **dqm-ml-images** | Visual feature extraction from images | [![][pypi-images-badge]](https://pypi.org/project/dqm-ml-images/) |
 | **dqm-ml-pytorch** | PyTorch-based metrics (Domain Gap) | [![][pypi-pytorch-badge]](https://pypi.org/project/dqm-ml-pytorch/) |
 
-> **Note:** The `dqm-ml-v2` package is the CLI wrapper, not yet delivered as a package. For now, install individual packages above or use the full workspace.
+> **Note:** The `dqm-ml` package is the CLI wrapper.
 
 [pypi-core-badge]: https://img.shields.io/pypi/v/dqm-ml-core.svg
 [pypi-pipeline-badge]: https://img.shields.io/pypi/v/dqm-ml-job.svg
@@ -88,6 +88,7 @@ Think of it as a **health check for your data** — DQM-ML checks your dataset's
 We've all heard the saying "garbage in, garbage out." But how do you *measure* if your data is any good? That's exactly what DQM-ML helps you answer.
 
 Poor data quality can lead to:
+
 - **Biased models** that don't generalize well
 - **Unexpected failures** in production
 - **Wasted resources** training on bad data
@@ -130,18 +131,16 @@ In the current version, the available (or to be available) metrics are:
 
 # Installation
 
-Install the DQM-ML V2 framework with all available metrics and helpers using pip:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+Install the DQM-ML framework with all available metrics and helpers using pip:
 
 ```bash
-pip install "dqm-ml-v2[all]" 
+pip install "dqm-ml[all]" 
 ```
 
-Install the DQM-ML V2 framework by passing only needed optional dependency:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+Install the DQM-ML framework by passing only needed optional dependency:
 
 ```bash
-pip install "dqm-ml-v2[notebooks, pytorch, job, images ]" 
+pip install "dqm-ml[notebooks, pytorch, job, images]" 
 ```
 
 Manually install all packages:

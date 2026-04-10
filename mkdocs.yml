@@ -154,7 +154,7 @@ nav:
       - PyTorch: packages/dqm-ml-pytorch.md
       - CLI: packages/dqm-ml.md
     - Test Reports:
-      - Pytest report: reports/pytest/pytest_report.html
-      - Coverage Report: reports/htmlcov/coverage_report.html
+      - Results: reports/pytest/pytest_report.html
+      - Coverage: reports/htmlcov/coverage_report.html
       - Performance Report: TBD2.md
 

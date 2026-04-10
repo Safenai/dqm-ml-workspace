@@ -12,8 +12,24 @@ pip install dqm-ml-core
 pip install dqm-ml-core dqm-ml-job dqm-ml-images dqm-ml-pytorch
 
 # Or install the CLI wrapper
-pip install dqm-ml-v2
+pip install dqm-ml
 ```
+
+## Large Files (Git LFS)
+
+Some test datasets are stored with Git LFS. If you're running tests or working with large datasets:
+
+```bash
+# Install git-lfs
+sudo apt-get install git-lfs  # Linux
+brew install git-lfs          # macOS
+
+# Pull large files
+git lfs pull
+```
+
+> **Note**: This is mainly needed for development and testing. CI/CD handles this automatically.
+> For most users installing via pip, no additional setup is required.
 
 ## Using the CLI
 
