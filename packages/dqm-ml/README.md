@@ -1,19 +1,19 @@
-# DQM-ML V2 CLI Wrapper
+# DQM-ML CLI Wrapper
 
-Main CLI entry point for DQM-ML V2. Consolidates all modular packages into a single command-line interface.
+Main CLI entry point for DQM-ML. Consolidates all modular packages into a single command-line interface.
 
 ## Installation
 
 ```bash
 # Basic installation (core only)
-pip install dqm-ml-v2
+pip install dqm-ml
 
 # Installation with optional components
-pip install "dqm-ml-v2[all]"      # Everything
-pip install "dqm-ml-v2[pipeline]" # core + job
-pip install "dqm-ml-v2[pytorch]"  # core + pytorch
-pip install "dqm-ml-v2[images]"   # core + images
-pip install "dqm-ml-v2[notebooks]" # Jupyter support
+pip install "dqm-ml[all]"      # Everything
+pip install "dqm-ml[job]"      # core + job
+pip install "dqm-ml[pytorch]" # core + pytorch
+pip install "dqm-ml[images]"  # core + images
+pip install "dqm-ml[notebooks]" # Jupyter support
 ```
 
 ## Quick Start

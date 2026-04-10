@@ -18,10 +18,11 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 | Area | Current State | Notes |
 |------|---------------|-------|
 | **Beta packages** | `dqm-ml-job`, `dqm-ml-images` | Config schemas may change based on feedback |
-| **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD |
+| **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD, Diversity (pending scientific discussion) |
 | **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
-| **Legacy dependency** | Submodule still present | Legacy `dqm-ml` for comparison (to be phased out) |
+~~| Legacy dependency | Submodule still present | Legacy `dqm-ml` for comparison (to be phased out) |~~
+
 
 > 📝 **Your feedback matters!** If you encounter issues or have suggestions, please [open an issue](https://github.com/Safenai/dqm-ml-workspace/issues).
 
@@ -29,15 +30,27 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 
 Here's our vision for DQM-ML, organized into phases:
 
+### Phase 1: Complete V2.0.0-rc (Now - open for comment dqm-ml v2)
+
+Usable version of dqm-ml v2 open for comment before official release.
+- [x] **Standalone release** - Finalize V2.0.0 as a proper package
+
 ### Phase 1: Complete V2.0.0 (Near term)
 
 What's coming in the next release:
 
 - [ ] **Feature parity** - Port remaining V1 metrics to V2 API
 - [ ] **API freeze** - Lock down `dqm-ml-core` for stability
-- [ ] **Standalone release** - Finalize V2.0.0 as a proper package
 
-### Phase 2: Performance & Scale (Mid term)
+### Phase 2: New Domains 
+
+Expanding what DQM-ML can analyze:
+
+- [ ] **Time series** - New package for sequential data quality
+- [ ] **Multi-modal** - Support for text + image datasets
+- [ ] **SQL integration** - Compute metrics directly via DuckDB
+
+### Phase 3: Performance & Scale 
 
 Improving for larger workloads:
 
@@ -45,13 +58,7 @@ Improving for larger workloads:
 - [ ] **Parallelization** - Multi-core processing for image features and deep learning metrics
 - [ ] **Database support** - Read directly from databases, not just files
 
-### Phase 3: New Domains (Long term)
 
-Expanding what DQM-ML can analyze:
-
-- [ ] **Time series** - New package for sequential data quality
-- [ ] **Multi-modal** - Support for text + image datasets
-- [ ] **SQL integration** - Compute metrics directly via DuckDB
 
 ## How We Prioritize
 
@@ -96,7 +103,8 @@ Looking to contribute? Here's what needs help most:
 
 | Version | Release Date | Highlights |
 |---------|-------------|------------|
-| 1.1.x | Current | V2 architecture, streaming, plugins |
+| 2.0.0-rc | 2026 | V2 architecture, streaming, plugins, `dqm-ml` CLI (renamed from dqm-ml-v2) |
+| 1.1.x | Q1 2026 | V2 release candidate series |
 | 1.0.x | Earlier | Original library (V1) |
 
-The original `dqm-ml` package is still available as a submodule for comparison, but new development uses the V2 API.
+

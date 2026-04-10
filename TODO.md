@@ -6,8 +6,8 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 * [x] Improve test management in `noxfile.py`.
 * [x] Finalize Autodoc configuration in `mkdocs.yml`.
-* [ ] Mark original repository as deprecated and reference this one.
-* [ ] Set version to V2.0.0 upon completion of core migration.
+* [x] Mark original repository as deprecated and reference this one. (Legacy dqm-ml submodule removed, now using dqm-ml as main CLI)
+* [X] Set version to V2.0.0-rc upon completion of core migration. (CLI renamed from dqm-ml-v2 to dqm-ml)
 * [ ] Choose between `pyyaml` and `ruamel.yaml` to standardize dependency.
 
 ## Core API (`dqm-ml-core`)
@@ -49,7 +49,7 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 * [ ] Fix type-checking errors in `image_embedding.py` and `domain_gap.py` (e.g., `vec` function).
 * [ ] Improve configuration and available metrics check in `domain_gap.py`.
 * [ ] Add proper error return codes to the Domain Gap API.
-* [ ] Re-implement missing V1 Domain Gap metrics: PAD, CMD.
+* [ ] Re-implement missing V1 metrics: Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD.
 * [ ] Investigate result variations between V1 and V2 for KLMVN and FID metrics.
 
 ### New Domains
@@ -76,7 +76,7 @@ This file tracks planned improvements, bug fixes, and refactoring tasks for the 
 
 ## Scientific & Community
 
-* [ ] Re-implement the Diversity metric (pending scientific discussion on target content and entropy position).
+* [ ] Re-implement the Diversity metric (pending scientific discussion on target content and entropy position). See ROADMAP for full V1 metrics list.
 * [ ] Rationalize the level of parametrization across all metrics.
 * [ ] Scientific committee review: allocation of methods between Diversity and Representativeness.
 * [ ] Expand supported reference distributions for Representativeness to reflect real-world data.
