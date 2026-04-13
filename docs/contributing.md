@@ -227,11 +227,12 @@ This section describes how tests are organized in DQM-ML and how to add new test
 
 ```mermaid
 flowchart TB
+
     subgraph "Test Types"
-        direction TB
-        U[Unit Tests<br/>tests/unit/]
-        I[Integration Tests<br/>tests/integration/]
-        C[CLI Tests<br/>tests/cli/]
+  
+        U[Unit Tests <br/>tests/unit]
+        I[Integration Tests<br/>tests/integration]
+        C[CLI Tests <br/>tests/cli]
     end
     
     subgraph "Test Pyramid"
@@ -243,11 +244,11 @@ flowchart TB
     U --> TP
     I --> TI
     C --> TC
-    
-    F[Fixtures - Shared test data<br/>tests/integration/fixtures/]
+
+    F[Fixtures - Shared test data tests/integration/fixtures/ ]
     TP --> F
     TI --> F
-end
+
 ```
 
 ### Test Directory Structure

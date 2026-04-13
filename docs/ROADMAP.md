@@ -6,6 +6,7 @@ This page documents where DQM-ML is headed and current limitations. We believe i
 
 V2 represents a major architectural improvement, but it's still evolving. Here's what you should know:
 
+
 ### What's Working Great ✅
 
 - Streaming architecture handles large datasets efficiently
@@ -21,8 +22,9 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 | **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD, Diversity (pending scientific discussion) |
 | **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
-~~| Legacy dependency | Submodule still present | Legacy `dqm-ml` for comparison (to be phased out) |~~
+| ~~Legacy dependency~~ | ~~Submodule still present~~ | ~~Legacy `dqm-ml` for comparison (to be phased out)~~ |
 
+For more information see * **[Why a dqm-ml V2](./dqm-ml-v2.md)**: The "why" and "how" of V2.
 
 > 📝 **Your feedback matters!** If you encounter issues or have suggestions, please [open an issue](https://github.com/Safenai/dqm-ml-workspace/issues).
 
@@ -30,15 +32,17 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 
 Here's our vision for DQM-ML, organized into phases:
 
-### Phase 1: Complete V2.0.0-rc (Now - open for comment dqm-ml v2)
+### Phase 0: Complete V2.0.0-rc (Now - open for comment dqm-ml v2)
 
 Usable version of dqm-ml v2 open for comment before official release.
 - [x] **Standalone release** - Finalize V2.0.0 as a proper package
 
-### Phase 1: Complete V2.0.0 (Near term)
+
+### Phase 1: Complete V2.0.0 (Near term - Q2 T2026)
 
 What's coming in the next release:
-
+- [ ] **Configuration consitency** - make configuration metrics consistent, and check configuration validity
+- [ ] **Comminuty feedback** - implement user feedback quick correction and upgrade roadmap with others
 - [ ] **Feature parity** - Port remaining V1 metrics to V2 API
 - [ ] **API freeze** - Lock down `dqm-ml-core` for stability
 

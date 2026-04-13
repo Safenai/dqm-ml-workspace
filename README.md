@@ -25,6 +25,25 @@
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
 
+
+
+## Origins - who create first the DQM-ML
+
+> [!IMPORTANT]
+> This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
+> All what has been implemented rely on
+> (Definitions from [Confiance.ai program](https://www.confiance.ai/)) a research program, which focused on trustworthy AI for industry.
+
+For more technical and scientific details, refer to:
+
+- **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
+- **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
+- **[Why creating DQM-ML-V2](./docs/dqm-ml-v2.md)** — Evolution need in dqm-ml
+
+> [!WARNING]
+> TODO : Need to update link to the ETAIA place
+> TODO : Need to access the open source deliverable (not confidential one)
+
 ## Available on PyPI
 
 Install individual packages based on your needs:
@@ -48,22 +67,6 @@ The library was originally developed in the program:
 <div align="center">
     <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
 </div>
-
-## Origins
-
-> [!IMPORTANT]
-> This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
-> All what has been implemented rely on
-> (Definitions from [Confiance.ai program](https://www.confiance.ai/)) a research program, which focused on trustworthy AI for industry.
-
-For more technical and scientific details, refer to:
-
-- **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
-- **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
-
-> [!WARNING]
-> TODO : Need to update link to the ETAIA place
-> TODO : Need to access the open source deliverable (not confidential one)
 
 ## Documentations
 
