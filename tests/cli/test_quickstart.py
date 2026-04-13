@@ -46,7 +46,7 @@ class TestQuickstartCLI:
         # Run CLI from fixtures directory so relative path works
         import os
 
-        original_cwd = os.getcwd()
+        original_cwd = Path.cwd()
         try:
             os.chdir(fixtures_path)
             # Run CLI - should complete without error
@@ -78,6 +78,7 @@ class TestQuickstartDataFiles:
     def test_completeness_config_valid(self, fixtures_path: Path) -> None:
         """Verify the completeness.yaml has valid configuration."""
         config_path = fixtures_path / "completeness.yaml"
+
         with open(config_path) as f:
             config = yaml.safe_load(f)
 

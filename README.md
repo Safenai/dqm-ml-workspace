@@ -29,6 +29,13 @@
 
 ## Origins - who create first the DQM-ML
 
+The library was originally developed in the program:
+
+<div align="center">
+    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
+</div>
+
+
 > [!IMPORTANT]
 > This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
 > All what has been implemented rely on
@@ -62,11 +69,6 @@ Install individual packages based on your needs:
 [pypi-images-badge]: https://img.shields.io/pypi/v/dqm-ml-images.svg
 [pypi-pytorch-badge]: https://img.shields.io/pypi/v/dqm-ml-pytorch.svg
 
-The library was originally developed in the program:
-
-<div align="center">
-    <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
-</div>
 
 ## Documentations
 

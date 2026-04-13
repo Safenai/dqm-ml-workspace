@@ -24,14 +24,22 @@ def get_files_list(path: Path, pattern: str = "*.parquet") -> list[str]:
     return path_list
 
 
-def write_path_list_to_parquet(path_list: list[Path], save_path: Path) -> None:
+def write_path_list_to_parquet(path_list: list[Path], save_path: Path, class_list: list[str] | None = None) -> None:
     """Write list of file paths to a parquet file.
 
     Args:
         path_list: List of Path objects to write.
         save_path: Path where to save the parquet file.
+        class_list: Optional list of class names corresponding to each path.
+                    If provided, adds a 'class' column to the parquet.
     """
     path_str_list = [str(x) for x in path_list]
     path_array = pa.array(path_str_list)
-    path_table = pa.Table.from_arrays([path_array], names=["image_path"])
+
+    if class_list is not None:
+        class_array = pa.array(class_list)
+        path_table = pa.Table.from_arrays([path_array, class_array], names=["image_path", "class"])
+    else:
+        path_table = pa.Table.from_arrays([path_array], names=["image_path"])
+
     pq.write_table(path_table, save_path)

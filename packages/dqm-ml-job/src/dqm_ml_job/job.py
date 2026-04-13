@@ -8,6 +8,7 @@ import itertools
 import logging
 from typing import Any
 
+import numpy as np
 import pyarrow as pa
 from tqdm import tqdm
 
@@ -164,6 +165,32 @@ class DatasetJob:
 
         return dataselection_metrics_list, delta_metrics_table
 
+    @staticmethod
+    def _to_pa_array(value: Any, key: str) -> pa.Array:
+        """Convert a delta metric value to PyArrow array.
+
+        Args:
+            value: The value to convert (float, int, str, np.ndarray, or pa.Array).
+            key: The metric name for error logging.
+
+        Returns:
+            PyArrow array containing the value.
+
+        Raises:
+            TypeError: If the value type is not supported.
+        """
+        if isinstance(value, pa.Array):
+            return value
+        elif isinstance(value, (int, float, np.number)):
+            return pa.array([float(value)])
+        elif isinstance(value, str):
+            return pa.array([value])
+        elif isinstance(value, np.ndarray):
+            return pa.array([value.tolist()])
+        else:
+            logger.error(f"Cannot convert delta metric '{key}' to pa.Array: type={type(value)}")
+            raise TypeError(f"Unsupported delta metric type: {type(value)} for key '{key}'")
+
     def _compute_delta_metrics(
         self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, Any]]
     ) -> dict[str, Any] | None:
@@ -192,19 +219,15 @@ class DatasetJob:
                     continue
 
                 if delta_metrics_table is None:
-                    delta_metrics_table = delta_metrics
+                    delta_metrics_table = {key: self._to_pa_array(value, key) for key, value in delta_metrics.items()}
                     delta_metrics_table["selection_source"] = pa.array([combinaison[0]])
                     delta_metrics_table["selection_target"] = pa.array([combinaison[1]])
                 else:
                     for m_name, value in delta_metrics.items():
-                        delta_metrics_table[m_name] = pa.concat_arrays([delta_metrics_table[m_name], pa.array([value])])
+                        delta_metrics_table[m_name] = pa.concat_arrays([delta_metrics_table[m_name], self._to_pa_array(value, m_name)])
 
-                    delta_metrics_table["selection_source"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_source"], pa.array([combinaison[0]])]
-                    )  # noqa: E501
-                    delta_metrics_table["selection_target"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_target"], pa.array([combinaison[1]])]
-                    )  # noqa: E501
+                    delta_metrics_table["selection_source"] = pa.concat_arrays([delta_metrics_table["selection_source"], pa.array([combinaison[0]])])  # noqa: E501
+                    delta_metrics_table["selection_target"] = pa.concat_arrays([delta_metrics_table["selection_target"], pa.array([combinaison[1]])])  # noqa: E501
                     logger.debug(f"Writing delta metrics for dataloader {'_'.join(combinaison)}")
 
         return delta_metrics_table

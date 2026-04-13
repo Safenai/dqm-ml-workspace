@@ -30,7 +30,7 @@ def coco_data(test_path: str) -> list[Path]:
     """Generate COCO dataset for domain gap tests.
 
     Downloads COCO-2017 dataset and creates source/target parquet files
-    for domain gap testing.
+    with class information for domain gap testing.
 
     Args:
         test_path: Path to the tests directory.
@@ -65,14 +65,44 @@ def coco_data(test_path: str) -> list[Path]:
         max_samples=2000,
     )
     dataset_path = Path.home() / "fiftyone" / "coco-2017" / "train" / "data"
+    annotations_path = Path.home() / "fiftyone" / "coco-2017" / "raw" / "instances_train2017.json"
+
+    import json
+
+    with open(annotations_path) as f:
+        coco_data = json.load(f)
+
+    categories = {cat["id"]: cat["name"] for cat in coco_data["categories"]}
+    image_to_class = {}
+    for ann in coco_data["annotations"]:
+        img_id = ann["image_id"]
+        cat_id = ann["category_id"]
+        if img_id not in image_to_class:
+            image_to_class[img_id] = categories[cat_id]
 
     files = sorted(Path(dataset_path).glob("*.jpg"))
 
-    source = files[: len(files) // 2]
-    target = files[len(files) // 2 :]
+    source_files = files[: len(files) // 2]
+    target_files = files[len(files) // 2 :]
 
-    write_path_list_to_parquet(source, source_path)
-    write_path_list_to_parquet(target, target_path)
+    source_classes = []
+    source_paths = []
+    for f in source_files:
+        img_id = int(f.stem)
+        class_name = image_to_class.get(img_id, "unknown")
+        source_classes.append(class_name)
+        source_paths.append(f)
+
+    target_classes = []
+    target_paths = []
+    for f in target_files:
+        img_id = int(f.stem)
+        class_name = image_to_class.get(img_id, "unknown")
+        target_classes.append(class_name)
+        target_paths.append(f)
+
+    write_path_list_to_parquet(source_paths, source_path, source_classes)
+    write_path_list_to_parquet(target_paths, target_path, target_classes)
 
     return [source_path, target_path]
 
