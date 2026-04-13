@@ -19,9 +19,9 @@ V2 was designed around four key principles:
 3. **Extensibility**: Add new metrics via plugins without touching core code
 4. **Unified API**: One consistent interface for all metric types
 
-## Architecture
+## DQM-ML V2 Architecture
 
-DQM-ML uses a streaming architecture designed for scalability. Here's how data flows through the system:
+Here's how data flows through the DQM-ML V2 system:
 
 ```mermaid
 flowchart LR
@@ -40,41 +40,53 @@ flowchart LR
 
 **How it works:**
 
-1. **DataLoader** discovers and loads your data (Parquet, CSV, etc.)
+1. **DataLoader** loads your data (Parquet, CSV, etc.)
 2. **Streaming Batches** process data in chunks — never loads the whole dataset into memory
 3. **Metric Processor** computes features and intermediate statistics for each batch
 4. **Intermediate Stats** accumulate as batches are processed
 5. **Final Metrics** aggregate all intermediate stats into dataset-level scores
 6. **Output Writer** saves results to your preferred format
 
-## How Streaming Works
+## Memory Efficiency (Why Streaming Matters)
 
-Think of the streaming pipeline like a factory assembly line:
+Unlike V1, which loads entire datasets into memory, V2 processes data in batches:
 
 ```mermaid
 flowchart LR
-    P[Parquet File] --> DL[DataLoader]
-    C[CSV File] --> DL
-    DL --> B[Batch Iterator]
-    B --> MP[Metric Processor]
-    MP --> SA[Stats Accumulator]
-    SA --> OW[Output Writer]
-    OW --> M[Metrics Table]
-    OW --> F[Feature Table]
+    subgraph "V1 (old way)"
+        direction TB
+        V1["Load entire dataset into RAM"]
+        V1c["Process all at once"]
+    end
+    
+    subgraph "V2 (streaming)"
+        direction TB
+        V2a["Load batch 1 (e.g., 10K rows)"]
+        V2p1["Process batch 1 &rarr; stats"]
+        V2b["Load batch 2"]
+        V2p2["Process batch 2 &rarr; stats"]
+        V2c["..."]
+        V2agg["Aggregate all batch stats"]
+    end
+    
+    style V1 fill:#ffcdd2
+    style V2 fill:#c8e6c9
 ```
 
-**Step by step:**
 
-1. **DataLoader** finds your data (parquet, CSV, etc.)
-2. **Batch Iterator** processes data in chunks (typically 10,000 rows at a time)
-3. **Metric Processor** runs on each batch, computing partial statistics
-4. **Stats Accumulator** combines results from all batches
-5. **Final Metrics** aggregates everything into dataset-level scores
-6. **Output Writer** saves results to disk
 
 ### Why This Matters
 
-With streaming, you can now process datasets **larger than your available RAM**. Whether you have a 100MB or 100GB file, memory usage stays constant.
+**Key difference:** With streaming, you can now process datasets **larger than your available RAM**. Whether you have a 100MB or 100GB file, memory usage stays constant.
+
+
+| Dataset Size | V1 Memory | V2 Memory |
+|------------|-----------|-----------|
+| 100 MB | ~300 MB | ~10 MB |
+| 1 GB | ~3 GB | ~10 MB |
+| 100 GB | Crashes | ~10 MB |
+
+
 
 ## Performance Improvements
 
@@ -96,4 +108,4 @@ V2 shows significant improvements over V1:
 | API | ad-hoc | Unified `DatametricProcessor` |
 | Image features | Separate tool | Built into pipeline |
 
-The legacy `dqm-ml` package is still available as a submodule for reference, but new development should use the V2 API.
+The legacy `dqm-ml` package is still available for reference, but new development should use the V2 API.

@@ -5,43 +5,70 @@ Get up and running with DQM-ML in minutes.
 ## Installation
 
 ```bash
-# Install the core package with basic metrics
-pip install dqm-ml-core
+# Install the CLI wrapper with core metrics
+pip install dqm-ml
 
-# Install all packages (core + images + PyTorch + job orchestration)
+# Or install all packages (core + images + PyTorch + job orchestration)
 pip install dqm-ml-core dqm-ml-job dqm-ml-images dqm-ml-pytorch
 
-# Or install the CLI wrapper
-pip install dqm-ml
+# Install with extras
+pip install "dqm-ml[all]"         # Everything
+pip install "dqm-ml[job]"         # CLI + pipeline
+pip install "dqm-ml[notebooks]"   # Jupyter support
 ```
 
-## Large Files (Git LFS)
+## Quick Usage
 
-Some test datasets are stored with Git LFS. If you're running tests or working with large datasets:
+### CLI
 
-```bash
-# Install git-lfs
-sudo apt-get install git-lfs  # Linux
-brew install git-lfs          # macOS
-
-# Pull large files
-git lfs pull
-```
-
-> **Note**: This is mainly needed for development and testing. CI/CD handles this automatically.
-> For most users installing via pip, no additional setup is required.
-
-## Using the CLI
-
-Run a data quality check from the command line:
+Run a data quality pipeline from a configuration file:
 
 ```bash
-dqm-ml process -p examples/config/completeness.yaml
+dqm-ml process -p config.yaml
 ```
 
 That's it! The CLI reads a simple YAML configuration file and outputs your metrics.
 
-## Using the Python API
+### CLI Example with Config File
+
+Here's a complete example matching the Python API below:
+
+**1. Create a data file (`data.csv`):**
+```csv
+name,age,score
+Alice,25,0.9
+Bob,30,0.8,35,0.7
+Diana,,0.6
+```
+
+**2. Create a config file (`config.yaml`):**
+```yaml
+config:
+  dataloaders:
+    my_data:
+      type: csv
+      path: ./data.csv
+
+  metrics_processor:
+    completeness:
+      type: completeness
+      input_columns: [name, age, score]
+
+  outputs:
+    metrics:
+      type: parquet
+      path_pattern: output_metrics.parquet
+      columns: []
+```
+
+**3. Run the pipeline:**
+```bash
+dqm-ml process -p config.yaml
+```
+
+> **Note:** Example files are available in `tests/fixtures/getting_started/` in the repository.
+
+### Python API
 
 Want more control? Use the Python API directly:
 
@@ -67,7 +94,7 @@ result = processor.compute({})
 print(f"Overall completeness: {result['overall_completeness']}")
 ```
 
-## Using the MetricRunner
+### MetricRunner (Interactive)
 
 For quick exploration in a notebook or script:
 
@@ -89,3 +116,22 @@ print(results)
 - Learn about [available metrics](metrics.md)
 - Understand [configuration](configuration.md) options
 - Explore [package-specific documentation](dqm-ml-overview.md#packages)
+
+## Troubleshooting
+
+**"Command not found" after pip install?**
+
+```bash
+# Ensure you're in the right environment
+pip show dqm-ml
+
+# Or use python -m module
+python -m dqm_ml --help
+```
+
+**Missing dependencies?**
+
+```bash
+# Install with extras
+pip install "dqm-ml[all]"
+```

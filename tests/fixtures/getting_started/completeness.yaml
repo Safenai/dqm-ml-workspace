@@ -1,0 +1,24 @@
+config:
+
+  dataloaders:
+    my_data:
+      type: csv
+      path: data.csv
+      batch_size: 1000
+      memory_limit: 1GB
+      threads: 1
+
+  metrics_processor:
+    completeness:
+      type: completeness
+      input_columns: [name, age, score]
+      include_per_column: true
+      include_overall: true
+      include_metadata: false
+
+  outputs:
+    metrics:
+      type: parquet
+      path_pattern: output_metrics.parquet
+      columns: []
+      compression: snappy

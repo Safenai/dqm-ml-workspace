@@ -128,9 +128,9 @@ edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
   - Getting Started:
-    - Overview: dqm-ml-overview.md
     - Quick Start: quickstart.md
     - Why a dqm-ml V2: dqm-ml-v2.md
+    - Overview: dqm-ml-overview.md
   - User Guide:
     - CLI Usage: configuration.md
     - Direct Call: TBD1.md
@@ -145,6 +145,7 @@ nav:
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md
   - Developer Guide:
+    - What to consider: developer.md
     - Contributing: contributing.md
     - Roadmap: ROADMAP.md
     - Packages:
