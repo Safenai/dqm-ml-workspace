@@ -79,7 +79,7 @@ class TestQuickstartDataFiles:
         """Verify the completeness.yaml has valid configuration."""
         config_path = fixtures_path / "completeness.yaml"
 
-        with open(config_path) as f:
+        with Path(config_path).open() as f:
             config = yaml.safe_load(f)
 
         # Verify config structure

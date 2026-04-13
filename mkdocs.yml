@@ -132,7 +132,11 @@ nav:
     - Why a dqm-ml V2: dqm-ml-v2.md
     - Overview: dqm-ml-overview.md
   - User Guide:
-    - CLI Usage: configuration.md
+    - CLI Reference: cli.md
+    - Configuration: configuration.md
+    - YAML Basics: yaml_basics.md
+    - Data Loaders: dataloaders.md
+    - Metrics Computation: metrics_computation.md
     - Direct Call: TBD1.md
   - Metrics: 
     - Overview: metrics.md

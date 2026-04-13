@@ -35,12 +35,14 @@ Here's our vision for DQM-ML, organized into phases:
 ### Phase 0: Complete V2.0.0-rc (Now - open for comment dqm-ml v2)
 
 Usable version of dqm-ml v2 open for comment before official release.
+
 - [x] **Standalone release** - Finalize V2.0.0 as a proper package
 
 
 ### Phase 1: Complete V2.0.0 (Near term - Q2 T2026)
 
 What's coming in the next release:
+
 - [ ] **Configuration consitency** - make configuration metrics consistent, and check configuration validity
 - [ ] **Comminuty feedback** - implement user feedback quick correction and upgrade roadmap with others
 - [ ] **Feature parity** - Port remaining V1 metrics to V2 API

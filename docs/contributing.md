@@ -394,7 +394,7 @@ Tests run automatically on every push via GitHub Actions:
 - **Test**: Full test suite with pytest
 - **Docs**: Documentation build
 
-See the [README](../index.md) for current status badges.
+See the [README](https://github.com/anomalyco/dqm-ml-workspace#readme) for current status badges.
 
 ## Getting Help
 

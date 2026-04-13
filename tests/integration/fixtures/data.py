@@ -69,7 +69,7 @@ def coco_data(test_path: str) -> list[Path]:
 
     import json
 
-    with open(annotations_path) as f:
+    with Path(annotations_path).open() as f:
         coco_data = json.load(f)
 
     categories = {cat["id"]: cat["name"] for cat in coco_data["categories"]}

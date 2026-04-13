@@ -2,24 +2,54 @@
 
 DQM-ML pipelines are configured using **YAML** files. This guide explains how to write configuration files that tell DQM-ML where to find data, which metrics to compute, and where to save results.
 
-Don't know YAML? No problem! It's just a way to write structured data. Think of it like a structured to-do list:
+## Quick Links
 
-```yaml
-# This is a comment (ignored by DQM-ML)
-dataloaders:           # "Here's where I define data sources"
-  my_data:             # "Name this data source"
-    type: parquet      # "Use the parquet reader"
-    path: "data.csv"   # "Look for the file here"
+- [YAML Basics](yaml_basics.md) - Quick reference for YAML syntax
+- [Data Loaders](dataloaders.md) - Define data sources and selections
+- [Metrics Computation](metrics_computation.md) - How metrics are computed
+- [CLI Reference](cli.md) - Command-line interface
+
+## Configuration Structure Overview
+
+```mermaid
+flowchart TB
+    subgraph "config.yaml"
+        direction TB
+        
+        subgraph "dataloaders"
+            DL1["data_1: parquet"]
+            DL2["data_2: csv"]
+            DLn["..."]
+        end
+        
+        subgraph "metrics_processor"
+            MP1["completeness"]
+            MP2["domain_gap"]
+            MPn["..."]
+        end
+        
+        subgraph "outputs"
+            O1["metrics"]
+            O2["delta_metrics"]
+        end
+    end
+    
+    DL1 --> MP1
+    DL2 --> MP1
+    DL1 --> MP2
+    DLn --> MPn
+    
+    MP1 --> O1
+    MP2 --> O2
 ```
 
-## YAML Basics (Quick Refresher)
+**Configuration has 3 main sections:**
 
-| YAML | Meaning |
-|------|---------|
-| `key: value` | Assign a value |
-| `- item` | List item |
-| `# comment` | Comment (ignored) |
-| `"string"` | Explicit string (use quotes if value has special chars) |
+| Section | Description |
+|---------|-------------|
+| `dataloaders` | Where to load data from (files, filters, splits) |
+| `metrics_processor` | Which metrics to compute |
+| `outputs` | Where to save results |
 
 ## Configuration Structure
 
@@ -109,6 +139,55 @@ outputs:
     columns: ["sample_id", "m_luminosity", "m_contrast"]
 ```
 
+See [Data Loaders](dataloaders.md) for detailed documentation on:
+- Single selection (full dataset)
+- Filtered selection (`filter:` config)
+- Split selection (`split_by:` + `split_values:` config)
+- Selection names
+
+## Metrics Processor
+
+Defines which metrics or feature extractors to run on your data.
+
+```yaml
+metrics_processor:
+  # Give each metric a unique name
+  null_check:
+    # The type of metric (from the registry)
+    type: completeness
+    # Which columns to analyze
+    input_columns: ["age", "income", "email"]
+    # Include per-column scores?
+    include_per_column: true
+    # Include overall score?
+    include_overall: true
+```
+
+See [Metrics Computation](metrics_computation.md) for detailed documentation on:
+- Per-selection metrics
+- Delta metrics (pairwise comparisons)
+- Which metrics support delta
+- Output file formats
+
+## Output Files
+
+Defines where to save generated metrics and features.
+
+```yaml
+outputs:
+  feature_output:
+    type: parquet
+    # Where to save
+    path: "output/enriched_data.parquet"
+    # Which columns to include (original + generated)
+    columns: ["sample_id", "m_luminosity", "m_blur_level"]
+```
+
+See [Metrics Computation](metrics_computation.md) for detailed documentation on:
+- Per-selection output format
+- Delta output format
+- Filename patterns
+
 ## Running Your Configuration
 
 Once you've written your config file, run it with the `-p` (or `--path-config`) flag:
@@ -178,24 +257,22 @@ metrics_processor:
     distribution: "normal"
 ```
 
-### Processing Multiple Datasets
+### Using split_by for Multiple Selections
+
+Instead of defining multiple dataloaders, use `split_by` to create multiple selections from a single source:
 
 ```yaml
 dataloaders:
-  train_data:
+  data:
     type: parquet
-    path: "data/train.parquet"
-  
-  test_data:
-    type: parquet
-    path: "data/test.parquet"
+    path: "data/all.parquet"
+    split_by: dataset
+    split_values: [train, test]
 
 metrics_processor:
-  train_completeness:
-    type: completeness
-    input_columns: ["col_a"]
-  
-  test_completeness:
+  completeness:
     type: completeness
     input_columns: ["col_a"]
 ```
+
+This creates `data_train` and `data_test` selections, and computes completeness for both in one run.
