@@ -4,24 +4,13 @@ This module contains unit tests that verify the ParquetOutputWriter
 class correctly writes metrics and features to Parquet files.
 """
 
-import shutil
-import pytest
 import pyarrow.parquet as pq
 from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 
 
-@pytest.fixture
-def temp_output_dir(tmp_path):
-    """Provides a temporary output directory and cleans it up."""
-    path = tmp_path / "output"
-    yield path
-    if path.exists():
-        shutil.rmtree(path)
-
-
-def test_parquet_output_writer_creates_directory(temp_output_dir):
+def test_parquet_output_writer_creates_directory(temp_output_path):
     """Test that ParquetOutputWriter creates the output directory if it doesn't exist."""
-    output_path_pattern = str(temp_output_dir / "metrics.parquet")
+    output_path_pattern = str(temp_output_path / "metrics.parquet")
 
     config = {"path_pattern": output_path_pattern, "columns": ["metric_name", "value"]}
     writer = ParquetOutputWriter(name="test_writer", config=config)
@@ -32,13 +21,13 @@ def test_parquet_output_writer_creates_directory(temp_output_dir):
     }
 
     # Ensure the directory does not exist initially
-    assert not temp_output_dir.exists()
+    assert not temp_output_path.exists()
 
     writer.write_metrics_dict(metrics_data)
 
     # Assert that the directory was created and the file exists
-    assert temp_output_dir.exists()
-    assert (temp_output_dir / "metrics.parquet").is_file()
+    assert temp_output_path.exists()
+    assert (temp_output_path / "metrics.parquet").is_file()
 
     # Verify content (optional, but good practice)
     table = pq.read_table(output_path_pattern)

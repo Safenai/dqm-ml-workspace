@@ -12,17 +12,6 @@ import pytest
 from dqm_ml_job.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
 
 
-@pytest.fixture
-def mock_parquet_dataset():
-    """Provide a mocked ParquetDataset for testing.
-
-    Yields:
-        Mocked ParquetDataset class.
-    """
-    with patch("pyarrow.parquet.ParquetDataset") as mock:
-        yield mock
-
-
 def test_parquet_dataloader_init_no_path():
     """Test that ParquetDataLoader raises error when path is not provided."""
     with pytest.raises(ValueError, match="must contain 'path'"):

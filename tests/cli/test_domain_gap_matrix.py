@@ -6,6 +6,7 @@ in the parquet file, creating a full matrix of pairwise distances.
 
 from pathlib import Path
 import shlex
+from typing import Any
 
 import pyarrow.parquet as pq
 import pytest
@@ -14,34 +15,19 @@ import yaml
 from dqm_ml_job.cli import execute
 
 
-FIXTURES_DIR = Path("tests/fixtures/getting_started")
-COCO_DATA_DIR = Path("tests/outputs/data")
-
-
 class TestDomainGapMatrixFull:
     """Tests for full domain gap matrix across all classes."""
 
-    @pytest.fixture
-    def coco_parquet_path(self) -> Path:
-        """Return path to source COCO parquet with class column."""
-        return COCO_DATA_DIR / "source_1000.parquet"
-
-    @pytest.fixture
-    def all_classes(self, coco_parquet_path: Path) -> list[str]:
-        """Get all unique classes from the parquet file."""
-        table = pq.read_table(coco_parquet_path)
-        df = table.to_pandas()
-        classes = sorted(df["class"].unique().tolist())
-        return classes
-
-    def test_get_all_unique_classes(self, coco_parquet_path: Path, all_classes: list[str]) -> None:
+    def test_get_all_unique_classes(self, coco_parquet_path: Path, all_classes: list[str], coco_data: Any) -> None:
         """Verify we can extract all unique classes from parquet."""
         assert len(all_classes) > 0, "No classes found in parquet"
         print(f"Found {len(all_classes)} classes: {all_classes}")
 
     @pytest.mark.slow
     @pytest.mark.skip(reason="Not yet implemented - requires config file generation for each pair")
-    def test_domain_gap_all_classes_matrix(self, coco_parquet_path: Path, all_classes: list[str]) -> None:
+    def test_domain_gap_all_classes_matrix(
+        self, coco_parquet_path: Path, all_classes: list[str], coco_data: Any
+    ) -> None:
         """Test computing domain gap between all class pairs.
 
         This would create a matrix of domain gaps between all unique classes
@@ -70,8 +56,12 @@ class TestDomainGapMatrixFull:
                 "metrics_processor": {
                     "image_embedding": {
                         "type": "image_embedding",
-                        "DATA": {"image_column": "image_path", "mode": "path"},
-                        "model_config": {"arch": "resnet18", "n_layer_feature": -2, "device": "cpu"},
+                        "data": {"image_column": "image_path", "mode": "path"},
+                        "model_config": {
+                            "arch": "resnet18",
+                            "n_layer_feature": -2,
+                            "device": "cpu",
+                        },
                         "infer": {
                             "batch_size": 10,
                             "width": 224,
@@ -82,8 +72,8 @@ class TestDomainGapMatrixFull:
                     },
                     "domain_gap": {
                         "type": "domain_gap",
-                        "INPUT": {"embedding_col": "embedding"},
-                        "DELTA": {"metric": "mmd_linear"},
+                        "input": {"embedding_col": "embedding"},
+                        "delta": {"metric": "mmd_linear"},
                     },
                 },
                 "compute_delta": True,
@@ -117,11 +107,7 @@ class TestDomainGapMatrixFull:
 class TestDomainGapWithColumnFilter:
     """Test using class column directly as data selection filter."""
 
-    @pytest.fixture
-    def coco_parquet_path(self) -> Path:
-        return COCO_DATA_DIR / "source_1000.parquet"
-
-    def test_config_uses_filter_for_class_selection(self, coco_parquet_path: Path) -> None:
+    def test_config_uses_filter_for_class_selection(self, coco_parquet_path: Path, coco_data: Any) -> None:
         """Verify filter can select by class column."""
         table = pq.read_table(coco_parquet_path)
         df = table.to_pandas()
@@ -144,14 +130,6 @@ class TestDomainGapWithColumnFilter:
 class TestDomainGapWithSplitBy:
     """Test using split_by config option to create selections per class."""
 
-    @pytest.fixture
-    def coco_parquet_path(self) -> Path:
-        return COCO_DATA_DIR / "source_1000.parquet"
-
-    @pytest.fixture
-    def split_by_config_path(self) -> Path:
-        return FIXTURES_DIR / "domain_gap_split_top10.yaml"
-
     def test_split_by_config_exists(self, split_by_config_path: Path) -> None:
         """Verify split_by config file exists."""
         assert split_by_config_path.exists(), f"Config not found: {split_by_config_path}"
@@ -167,13 +145,24 @@ class TestDomainGapWithSplitBy:
         assert len(dataloader["split_values"]) == 10, "Should have 10 classes"
         print(f"Top 10 classes configured: {dataloader['split_values']}")
 
-    def test_top_10_classes_have_enough_samples(self, coco_parquet_path: Path) -> None:
+    def test_top_10_classes_have_enough_samples(self, coco_parquet_path: Path, coco_data: Any) -> None:
         """Verify top 10 classes have sufficient samples."""
         table = pq.read_table(coco_parquet_path)
         df = table.to_pandas()
         class_counts = df["class"].value_counts()
 
-        top_10_classes = ["dog", "cat", "horse", "bird", "giraffe", "zebra", "cow", "person", "sheep", "elephant"]
+        top_10_classes = [
+            "dog",
+            "cat",
+            "horse",
+            "bird",
+            "giraffe",
+            "zebra",
+            "cow",
+            "person",
+            "sheep",
+            "elephant",
+        ]
         min_count = class_counts[top_10_classes].min()
         print(f"Minimum sample count among top 10: {min_count}")
         assert min_count >= 40, "All top 10 classes should have >= 40 samples"
@@ -188,9 +177,9 @@ class TestDomainGapWithSplitBy:
         assert split_by_config_path.exists(), f"Config not found: {split_by_config_path}"
 
     @pytest.mark.slow
-    def test_split_by_2classes_computation(self) -> None:
+    def test_split_by_2classes_computation(self, fixtures_dir: Path) -> None:
         """Test split_by with 2 classes actually computes domain gap."""
-        config_2_path = FIXTURES_DIR / "domain_gap_split_2classes.yaml"
+        config_2_path = fixtures_dir / "domain_gap_split_2classes.yaml"
         assert config_2_path.exists(), f"Config not found: {config_2_path}"
 
         execute(shlex.split(f"-p {config_2_path}"))
