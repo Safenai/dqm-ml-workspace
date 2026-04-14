@@ -7,25 +7,15 @@ It tests both the CLI and configuration examples.
 from pathlib import Path
 
 import pandas as pd
-import pytest
 import yaml
 
 from dqm_ml_job.cli import execute
 
 
-FIXTURES_DIR = Path("tests/fixtures/getting_started")
-
-
-@pytest.fixture
-def fixtures_path() -> Path:
-    """Return the path to getting started fixtures."""
-    return FIXTURES_DIR
-
-
 class TestQuickstartCLI:
     """Tests for CLI examples in quickstart.md."""
 
-    def test_completeness_cli_with_config(self, fixtures_path: Path) -> None:
+    def test_completeness_cli_with_config(self, fixtures_dir: Path) -> None:
         """Test CLI with getting_started completeness config works.
 
         This tests the example:
@@ -34,21 +24,21 @@ class TestQuickstartCLI:
         The config expects to be run from the fixtures directory or the path
         needs to be adjusted. For this test, we'll change to the fixtures directory.
         """
-        config_path = fixtures_path / "completeness.yaml"
+        config_path = fixtures_dir / "completeness.yaml"
 
         # Verify config file exists
         assert config_path.exists(), f"Config file not found: {config_path}"
 
         # Verify data file exists
-        data_path = fixtures_path / "data.csv"
+        data_path = fixtures_dir / "data.csv"
         assert data_path.exists(), f"Data file not found: {data_path}"
 
         # Run CLI from fixtures directory so relative path works
         import os
 
-        original_cwd = os.getcwd()
+        original_cwd = Path.cwd()
         try:
-            os.chdir(fixtures_path)
+            os.chdir(fixtures_dir)
             # Run CLI - should complete without error
             execute(["-p", "completeness.yaml"])
         finally:
@@ -58,27 +48,28 @@ class TestQuickstartCLI:
 class TestQuickstartDataFiles:
     """Test data files for quickstart examples."""
 
-    def test_data_csv_structure(self, fixtures_path: Path) -> None:
+    def test_data_csv_structure(self, fixtures_dir: Path) -> None:
         """Verify the data.csv has expected structure."""
-        data_path = fixtures_path / "data.csv"
+        data_path = fixtures_dir / "data.csv"
         df = pd.read_csv(data_path)
 
         assert list(df.columns) == ["name", "age", "score"]
         assert len(df) == 4
 
-    def test_data_csv_has_nulls(self, fixtures_path: Path) -> None:
+    def test_data_csv_has_nulls(self, fixtures_dir: Path) -> None:
         """Verify the data.csv has null values for testing completeness."""
-        data_path = fixtures_path / "data.csv"
+        data_path = fixtures_dir / "data.csv"
         df = pd.read_csv(data_path)
 
         # Check that there are null values (for testing completeness)
         assert df["name"].isna().sum() == 1  # Diana has no name
         assert df["age"].isna().sum() == 1  # Diana has no age
 
-    def test_completeness_config_valid(self, fixtures_path: Path) -> None:
+    def test_completeness_config_valid(self, fixtures_dir: Path) -> None:
         """Verify the completeness.yaml has valid configuration."""
-        config_path = fixtures_path / "completeness.yaml"
-        with open(config_path) as f:
+        config_path = fixtures_dir / "completeness.yaml"
+
+        with Path(config_path).open() as f:
             config = yaml.safe_load(f)
 
         # Verify config structure

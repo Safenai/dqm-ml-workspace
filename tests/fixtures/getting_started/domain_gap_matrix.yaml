@@ -1,0 +1,55 @@
+# Domain gap configuration comparing class groups
+# Source: bird class
+# Target: elephant class
+
+config:
+  dataloaders:
+    bird_class:
+      type: parquet
+      path: tests/outputs/data/source_1000.parquet
+      batch_size: 50
+      memory_limit: 2GB
+      threads: 4
+      filter:
+        class: bird
+
+    elephant_class:
+      type: parquet
+      path: tests/outputs/data/source_1000.parquet
+      batch_size: 50
+      memory_limit: 2GB
+      threads: 4
+      filter:
+        class: elephant
+
+  metrics_processor:
+    image_embedding:
+      type: image_embedding
+      DATA:
+        image_column: image_path
+        mode: path
+      model_config:
+        arch: resnet18
+        n_layer_feature: -2
+        device: cpu
+      infer:
+        batch_size: 10
+        width: 224
+        height: 224
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
+
+    domain_gap:
+      type: domain_gap
+      INPUT:
+        embedding_col: embedding
+      DELTA:
+        metric: mmd_linear
+
+  compute_delta: true
+
+  outputs:
+    delta_metrics:
+      type: parquet
+      path_pattern: tests/outputs/data/metrics_domain_gap_matrix_delta-.parquet
+      columns: []

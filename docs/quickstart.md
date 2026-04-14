@@ -115,6 +115,7 @@ print(results)
 
 - Learn about [available metrics](metrics.md)
 - Understand [configuration](configuration.md) options
+- Read [CLI Reference](cli.md) for command details
 - Explore [package-specific documentation](dqm-ml-overview.md#packages)
 
 ## Troubleshooting

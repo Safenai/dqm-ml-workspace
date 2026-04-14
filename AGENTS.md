@@ -84,10 +84,36 @@ Configuration:
 
 ### Running Tests
 
-Run tests using:
+Two nox test sessions are available:
 
+**test_dev** - Runs all tests without coverage:
+```bash
+uv run nox -s test_dev
+```
+- Runs ALL tests in `tests/` (including slow tests)
+- No coverage reporting
+
+**test** - Runs tests with coverage (for PRs):
 ```bash
 uv run nox -s test
+```
+- Runs only non-slow tests (`-m "not slow"`)
+- Includes coverage reporting
+
+**Running a single test:**
+```bash
+# Run a specific test file
+uv run nox -s test_dev -- tests/cli/test_quickstart.py
+
+# Run a specific test
+uv run nox -s test_dev -- -v "tests/cli/test_quickstart.py::TestQuickstartCLI::test_completeness_cli_with_config"
+```
+
+**Adding extra pytest arguments:**
+```bash
+uv run nox -s test_dev -- -v           # verbose output
+uv run nox -s test_dev -- -k "pattern" # filter by name
+uv run nox -s test_dev -- -q           # quiet mode
 ```
 
 ### Test Configuration
@@ -246,6 +272,12 @@ When contributing:
 
 The GitHub workflow can be tested locally using [act](https://github.com/nektos/act).
 
+**Available jobs (from CI):**
+- `quality` - Runs lint, spell, type_check (matrix job with 3 variants)
+- `compatibility` - Runs tests on Python 3.12, 3.13 (matrix job)
+- `test` - Runs full test suite on Python 3.12
+- `pages` - Builds and deploys documentation
+
 **List all jobs:**
 ```bash
 act --list
@@ -253,14 +285,69 @@ act --list
 
 **Run a specific job:**
 ```bash
-act -j <job_example> -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+# Run quality checks (lint, spell, type_check)
+act -j quality -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+
+# Run compatibility tests
+act -j compatibility -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+
+# Run test suite
+act -j test -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
 ```
 
 > **Caution:** act requires significant system resources and may take several minutes to run. Ensure no other Docker containers are running before executing act to avoid conflicts. For quick local validation, prefer running nox sessions directly (e.g., `uv run nox -s spell`).
 
-For spell check, run the quality job which includes it as a matrix:
+Note: The `-P` flag is needed to specify the platform image for ubuntu-24.04.
+
+### Committing and Pushing
+
+- NEVER commit or push without user approval
+- Always propose a meaningful commit title and message
+- The message should summarize what changed (1-2 sentences), not list every file
+- Use imperative mood ("Add", "Fix", "Update" - not "Added", "Fixed")
+- Keep title under 72 characters
+- Ask "commit?" before executing after proposing
+- After commit succeeds, ask "push?" before pushing
+- When pushing:
+  - First check the current branch with `git branch -vv`
+  - If on dev or main branch, refuse to push and ask user to create a new branch
+  - Use `git push origin <branch_name>`
+
+### Checking Quality Gates
+
+All quality gates (lint, spell, type_check, tests, SonarCloud) must pass before merging.
+
+**1. Check via GitHub CLI:**
 ```bash
-act -j quality -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
+gh pr view <MR_number> --json state,mergeable,statusCheckRollup
 ```
 
-Note: The `-P` flag is needed to specify the platform image for ubuntu-24.04.
+**2. Check SonarQube issues (required):**
+```bash
+curl -s "https://sonarcloud.io/api/issues/search?componentKeys=Safenai_dqm-ml-workspace&pullRequest=<MR_number>&statuses=OPEN,CONFIRMED" | jq '.total'
+```
+
+If `.total` > 0, there are issues to fix before merging.
+
+## Request Guidelines
+
+- **Rate limit**: Do not exceed 1 request/second to any website or API
+- **What counts**:
+  - Direct HTTP calls (`curl`, `requests`, `fetch`, etc.)
+  - Web scraping or crawling
+  - Web searches
+  - Third-party API calls (e.g., SonarCloud API)
+- **Safe to use without limits**:
+  - Local file operations
+  - Codebase searches (grep, glob, read tools)
+
+**Example - checking MR quality gates:**
+```bash
+# GOOD - single request
+curl -s "https://sonarcloud.io/api/issues/..." | jq '.total'
+
+# BAD - multiple rapid requests (loop without delays)
+for i in {1..10}; do curl ...; done
+```
+
+When checking MR status, run commands one at a time with natural pauses between them.
