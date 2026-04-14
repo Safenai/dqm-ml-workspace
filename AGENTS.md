@@ -300,6 +300,7 @@ act -j test -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
 Note: The `-P` flag is needed to specify the platform image for ubuntu-24.04.
 
 ### Committing and Pushing
+
 - NEVER commit or push without user approval
 - Always propose a meaningful commit title and message
 - The message should summarize what changed (1-2 sentences), not list every file
@@ -327,3 +328,26 @@ curl -s "https://sonarcloud.io/api/issues/search?componentKeys=Safenai_dqm-ml-wo
 ```
 
 If `.total` > 0, there are issues to fix before merging.
+
+## Request Guidelines
+
+- **Rate limit**: Do not exceed 1 request/second to any website or API
+- **What counts**:
+  - Direct HTTP calls (`curl`, `requests`, `fetch`, etc.)
+  - Web scraping or crawling
+  - Web searches
+  - Third-party API calls (e.g., SonarCloud API)
+- **Safe to use without limits**:
+  - Local file operations
+  - Codebase searches (grep, glob, read tools)
+
+**Example - checking MR quality gates:**
+```bash
+# GOOD - single request
+curl -s "https://sonarcloud.io/api/issues/..." | jq '.total'
+
+# BAD - multiple rapid requests (loop without delays)
+for i in {1..10}; do curl ...; done
+```
+
+When checking MR status, run commands one at a time with natural pauses between them.
