@@ -177,7 +177,7 @@ class TestDomainGapWithSplitBy:
         assert split_by_config_path.exists(), f"Config not found: {split_by_config_path}"
 
     @pytest.mark.slow
-    def test_split_by_2classes_computation(self, fixtures_dir: Path) -> None:
+    def test_split_by_2classes_computation(self, fixtures_dir: Path, coco_data: Any) -> None:
         """Test split_by with 2 classes actually computes domain gap."""
         config_2_path = fixtures_dir / "domain_gap_split_2classes.yaml"
         assert config_2_path.exists(), f"Config not found: {config_2_path}"
