@@ -4,6 +4,7 @@ This module provides fixtures used in unit and integration tests.
 """
 
 import shutil
+from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,7 +13,7 @@ import pytest
 
 
 @pytest.fixture
-def temp_output_path(tmp_path: Path) -> Path:
+def temp_output_path(tmp_path: Path) -> Generator[Path, None, None]:
     """Provide a temporary output directory and clean it up.
 
     Args:
