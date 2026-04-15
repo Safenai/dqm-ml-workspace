@@ -6,13 +6,21 @@ This module provides fixtures for generating and loading test data.
 from pathlib import Path
 from typing import Any
 
-import fiftyone.zoo as foz
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.files import write_path_list_to_parquet
 from tests.utils.plots import plot_histograms
+
+
+# COMPATIBILITY : Lazy import fiftyone.zoo to avoid Python 3.10/3.11 compatibility issues
+# (glob2 package has SyntaxError on older Python versions)
+def _get_fiftyone():
+    import fiftyone.zoo as foz
+
+    return foz
+
 
 OUTPUT_PLOTS = "outputs/plots"
 OUTPUT_DATA = "outputs/data"
@@ -47,6 +55,7 @@ def coco_data(test_path: str) -> list[Path]:
         print("Parquet found, no need to recreate")
         return [source_path, target_path]
 
+    foz = _get_fiftyone()
     foz.download_zoo_dataset(
         "coco-2017",
         splits=["train"],

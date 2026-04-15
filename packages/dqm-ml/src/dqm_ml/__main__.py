@@ -8,7 +8,8 @@ processing data quality assessment jobs.
 import argparse
 from collections.abc import Iterable
 import logging
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
 
 from dqm_ml.cli_tools import CustomFormatter
 from dqm_ml.dependency import get_available_command

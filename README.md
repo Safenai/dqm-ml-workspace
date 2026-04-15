@@ -40,16 +40,37 @@ The library was originally developed in the program:
 > This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
 > All what has been implemented rely on
 > (Definitions from [Confiance.ai program](https://www.confiance.ai/)) a research program, which focused on trustworthy AI for industry.
+> Asset developped during the program were transfered to [European Trustworthy AI Association](https://trustworthy-ai-association.eu) and [SafenAi](https://safenai.io) is prood to extend the initial work by proposing the dqm-ml 2.0.0
+
+>This work was carried out as part of activities conducted and funded by the European Trustworthy AI Association, which aims to shape trustworthy AI and empower industry through state-of-the-art, open-source methodologies and tools. 
+
+ 
 
 For more technical and scientific details, refer to:
 
 - **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
+- **[ETAIA Asset](https://catalog.trustworthy-ai-association.eu/records/968fj-fk177)
 - **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
 - **[Why creating DQM-ML-V2](./docs/dqm-ml-v2.md)** — Evolution need in dqm-ml
 
 > [!WARNING]
 > TODO : Need to update link to the ETAIA place
 > TODO : Need to access the open source deliverable (not confidential one)
+@software{etaia_2026_asset,
+  title   = {Name of the Software},
+  author  = {{Company Name or Author}},
+  year    = {2026},
+  version = {v1.0},
+  url     = {https://github.com/username/repository},
+ howpublished = { https://catalog.trustworthy-ai-association.eu/records/968fj-fk177}
+  note    = {This work was carried out as part of activities conducted and funded by the European Trustworthy AI Association, which aims to shape trustworthy AI and empower industry through state-of-the-art, open-source methodologies and tools.
+}
+ 
+## README 
+ 
+
+
+
 
 ## Available on PyPI
 

@@ -10,7 +10,9 @@ from __future__ import annotations
 import io
 import logging
 from pathlib import Path
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 
 import numpy as np
 from PIL import Image
