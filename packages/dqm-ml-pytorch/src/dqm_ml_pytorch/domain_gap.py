@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from typing_extensions import override
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 
 import numpy as np
 import pyarrow as pa
+
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
 

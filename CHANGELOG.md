@@ -6,6 +6,9 @@ This release is the V2.0.0 release candidate, featuring major refactoring, secur
 
 ### Issue ticket number and link
 
+* fix: #61 - Python 3.10/3.11 compatibility
+* fix: #60 - Fix parquet dataloader with image_path column
+* fix: #59 - Data selection tests for CLI
 * fix: #41 - Security warnings addressed
 * fix: #31 - Test package dependencies upgraded
 * fix: #29 - dqm-ml-pipeline renamed to dqm-ml-job
@@ -52,11 +55,48 @@ CVEs addressed: CVE-2026-35526, CVE-2026-35523, CVE-2026-31958, CVE-2025-47287, 
 * **Mermaid Diagrams**: Fixed dependency direction (core ← job, not →)
 * **All docs updated**: Replaced `dqm-ml-v2` references with `dqm-ml`
 
+### Documentation Restructuring
+
+* **New CLI Reference**: `docs/cli.md`
+* **New YAML Basics**: `docs/yaml_basics.md`
+* **New Data Loaders**: `docs/dataloaders.md`
+* **New Metrics Computation**: `docs/metrics_computation.md`
+* **New Python Compatibility**: `docs/python_compatibility.md`
+* **Mermaid diagrams**: Config structure visualization
+* **Navigation**: Organized into separate pages in mkdocs.yml
+
 ### Technical Changes
 
 * Pinned `mkdocs-jupyter<0.26` to fix api-autonav compatibility
 * Refactored `conftest.py` - restructured fixtures
 * Added deprecation warning filters for strawberry and fiftyone
+
+### New CLI and Integration Tests
+
+* Test domain gap matrix between class pairs
+* Test quickstart examples with completeness config
+* New test fixtures and config files in `tests/fixtures/getting_started/`
+* Test data: COCO dataset with class information (102+ classes)
+* 18 tests added (unit + CLI)
+
+### Python Compatibility (Issue #61)
+
+* **Python 3.10/3.11 support added**
+* Fixed `typing.override` import: Changed from `typing` to `typing_extensions` in 9 package files
+* Fixed fiftyone lazy import in test fixtures (glob2 SyntaxError workaround)
+* Fixed domain gap delta metrics: Handle both pa.Array and scalar returns from compute_delta
+* Added `_to_pa_array` helper for robust type conversion in job.py
+* CI now tests: Python 3.10, 3.11, 3.12, 3.13
+* New documentation: `docs/python_compatibility.md`
+
+### Data Selection Features (Issues #25, #27, #59, #60)
+
+* **split_by configuration**: Create multiple selections from single dataloader based on column values
+* **split_values**: Specify values to create selections (e.g., split_by: class, split_values: [dog, cat])
+* **filter configuration**: Filter rows by column values
+* Fixed parquet dataloader with image_path column handling
+* New fixtures: `coco_classes`, `bird`, `elephant` for domain gap testing
+* Example configs: `domain_gap_split_2classes.yaml`, `domain_gap_split_top10.yaml`, `domain_gap_matrix.yaml`
 
 ### Dependencies Updated
 
@@ -67,10 +107,11 @@ CVEs addressed: CVE-2026-35526, CVE-2026-35523, CVE-2026-31958, CVE-2025-47287, 
 
 ### Testing
 
-* 54 tests passing
+* 72 tests passing (18 new tests)
 * Integration test fixtures for real data testing
 * CLI end-to-end tests
 * Test coverage reports available in `docs/reports/`
+* Python compatibility tests: 3.10, 3.11, 3.12, 3.13
 
 ## 1.1.6 (2026-02-10) - upgrade dependency and security check
 

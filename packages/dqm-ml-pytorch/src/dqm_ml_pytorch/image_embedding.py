@@ -11,8 +11,6 @@ import io
 import logging
 from pathlib import Path
 from typing import Any
-from typing_extensions import override
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 
 import numpy as np
 from PIL import Image
@@ -21,6 +19,9 @@ import torch
 import torchvision
 from torchvision import transforms
 from torchvision.models.feature_extraction import create_feature_extractor
+
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
 

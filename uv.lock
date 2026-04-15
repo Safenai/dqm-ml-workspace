@@ -1386,12 +1386,14 @@ source = { editable = "packages/dqm-ml-job" }
 dependencies = [
     { name = "dqm-ml-core" },
     { name = "pyyaml" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "tqdm", specifier = ">=4.65.0" },
 ]
 
 [[package]]
