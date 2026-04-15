@@ -47,7 +47,7 @@ The library was originally developed in the program:
 For more technical and scientific details, refer to:
 
 - **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
-- **[ETAIA Asset](https://catalog.trustworthy-ai-association.eu/records/968fj-fk177)
+- **[ETAIA Asset](https://catalog.trustworthy-ai-association.eu/records/968fj-fk177)**
 - **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
 - **[Why creating DQM-ML-V2](./docs/dqm-ml-v2.md)** — Evolution need in dqm-ml
 
@@ -116,24 +116,26 @@ Metric computed on **data selection** rely on several approches are developped a
 
 <img src="docs/static/library_view.png" width="1024"/>
 
-In the current version, the available (or to be available) metrics are:
+In the current version, the available metrics are:
 
 * Representativeness:
   * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
   * Kolmogorov Smirnov test for Uniform and Normal Distributions
   * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
 * Diversity:
-  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml v1)
-  * Gini-Simpson and Simposon indices (only in dqm-ml v1)
+  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
+  * Gini-Simpson and Simposon indices (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
 * Completeness:
   * Ratio of filled information
 * Domain Gap:
-  * MMD (only in dqm-ml v1)
-  * CMD (only in dqm-ml v1)
+  * MMD 
+  * CMD (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
   * Wasserstein
   * H-Divergence
   * FID
   * Kullback-Leiblur MultiVariate Normal Distribution
+
+**Missing metrics will be integrate during the process to convert 2.0.0-rc into 2.0.0**
 
 # Installation
 

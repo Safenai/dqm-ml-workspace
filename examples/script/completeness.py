@@ -19,7 +19,7 @@ def compute_metric() -> None:
         config = yaml.safe_load(f)
 
         # Execute the job with the loaded configuration, output are directlu saved to disk
-        exec_qml_job(config["pipeline_config"])
+        exec_qml_job(config["config"])
 
         # A more granular API will be provided in future releases to access intermediate results
 
