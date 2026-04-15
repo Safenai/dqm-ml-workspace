@@ -7,7 +7,7 @@ config:
   dataloaders:
     source_dataset:
       type: "csv"
-      path: tests/fixtures/data/challenge_welding.csv
+      path: tests/integration/fixtures/data/challenge_welding.csv
 
 
 

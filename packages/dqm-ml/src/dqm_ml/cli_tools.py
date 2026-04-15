@@ -1,8 +1,17 @@
+"""CLI utilities for DQM-ML v2.
+
+This module provides utilities for colored console output and custom
+logging formatters.
+"""
+
 import logging
-from typing import override
+
+from typing_extensions import override
 
 
 class Bcolors:
+    """ANSI color codes for terminal output formatting."""
+
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
     OKCYAN = "\033[96m"

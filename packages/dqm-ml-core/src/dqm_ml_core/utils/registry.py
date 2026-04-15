@@ -1,3 +1,10 @@
+"""Plugin registry for dynamically loading DQM components.
+
+This module contains the PluginLoadedRegistry class and load_registered_plugins
+function for discovering and loading metric processors, data loaders,
+and output writers via Python entry points.
+"""
+
 from importlib.metadata import EntryPoints, entry_points
 import logging
 import sys
@@ -10,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 # TODO once a base class for all registry created, dict shall have dict[str, base_class]
 def load_registered_plugins(plugin_group: str, base_class: Any, base_name: str = "default") -> dict[str, Any]:
-    """
-    Discover and load plugins registered via Python entry points.
+    """Discover and load plugins registered via Python entry points.
 
     Args:
         plugin_group: The entry point group name (e.g., 'dqm_ml.metrics').
@@ -26,8 +32,8 @@ def load_registered_plugins(plugin_group: str, base_class: Any, base_name: str =
         plugin_entry_points: EntryPoints = entry_points(group=plugin_group)
     except TypeError:
         # Old version for older python version
-
         logger.warning(f"Old python version not supported: {sys.version_info}")
+        return {}
 
     registry = {}
     for v in plugin_entry_points:
@@ -60,7 +66,11 @@ class PluginLoadedRegistry:
 
     @classmethod
     def get_metrics_registry(cls) -> dict[str, type[DatametricProcessor]]:
-        """Return the registry of available metric processors."""
+        """Return the registry of available metric processors.
+
+        Returns:
+            A dictionary mapping metric processor names to their classes.
+        """
         if not cls._metrics_registry:
             cls._metrics_registry = load_registered_plugins("dqm_ml.metrics", DatametricProcessor)
 
@@ -68,14 +78,22 @@ class PluginLoadedRegistry:
 
     @classmethod
     def get_dataloaders_registry(cls) -> dict[str, Any]:
-        """Return the registry of available data loaders."""
+        """Return the registry of available data loaders.
+
+        Returns:
+            A dictionary mapping data loader names to their classes.
+        """
         if not cls._dataloaders_registry:
             cls._dataloaders_registry = load_registered_plugins("dqm_ml.dataloaders", None)  # TODO add base class
         return cls._dataloaders_registry
 
     @classmethod
     def get_outputwriter_registry(cls) -> dict[str, Any]:
-        """Return the registry of available output writers."""
+        """Return the registry of available output writers.
+
+        Returns:
+            A dictionary mapping output writer names to their classes.
+        """
         if not cls._outputwriter_registry:
             cls._outputwriter_registry = load_registered_plugins("dqm_ml.outputwriter", None)  # TODO add base class
 

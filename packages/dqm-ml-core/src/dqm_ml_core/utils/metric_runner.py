@@ -1,3 +1,9 @@
+"""Metric runner utility for executing metrics on DataFrames.
+
+This module contains the MetricRunner class that provides a high-level
+API for running metric processors directly on Pandas DataFrames.
+"""
+
 import logging
 from typing import Any
 

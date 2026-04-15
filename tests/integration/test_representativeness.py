@@ -1,3 +1,9 @@
+"""Integration tests for the representativeness metric processor.
+
+This module contains tests that verify the representativeness metric processor
+correctly evaluates distribution representativeness using various statistical tests.
+"""
+
 from pathlib import Path
 import shlex
 from timeit import default_timer as timer
@@ -25,7 +31,15 @@ def test_representativeness(
     test_name: str,
     job_representativeness: Any,
 ) -> None:
-    command = f"-p tests/fixtures/config/generated/{test_name}.yaml"
+    """Test representativeness metric for various distributions.
+
+    Args:
+        tests_config: Test configuration with expected scores and tolerances.
+        output_path: Path to write test outputs.
+        test_name: Name of the test configuration to run.
+        job_representativeness: Fixture that generates the test job configuration.
+    """
+    command = f"-p tests/integration/fixtures/config/generated/{test_name}.yaml"
 
     start = timer()
     execute(shlex.split(command))

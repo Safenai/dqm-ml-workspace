@@ -1,24 +1,26 @@
+"""Unit tests for the MetricRunner utility.
+
+This module contains unit tests that verify the MetricRunner
+correctly orchestrates metric computation on DataFrames.
+"""
+
 from unittest.mock import MagicMock
 
 import pandas as pd
 import pyarrow as pa
-import pytest
 
 from dqm_ml_core.api.data_processor import DatametricProcessor
 from dqm_ml_core.utils.metric_runner import MetricRunner
 
 
-@pytest.fixture
-def sample_df():
-    return pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-
-
 def test_metric_runner_init():
+    """Test that MetricRunner initializes correctly."""
     runner = MetricRunner(config={})
     assert isinstance(runner, MetricRunner)
 
 
 def test_metric_runner_run_empty_df():
+    """Test that MetricRunner returns empty dict for empty DataFrame."""
     runner = MetricRunner()
     df = pd.DataFrame(columns=["a", "b"])
     metrics = []
@@ -26,7 +28,8 @@ def test_metric_runner_run_empty_df():
     assert result == {}
 
 
-def test_metric_runner_run_with_mock_metric(sample_df):
+def test_metric_runner_run_with_mock_metric(sample_dataframe):
+    """Test that MetricRunner correctly runs metrics on DataFrame."""
     runner = MetricRunner()
 
     mock_metric = MagicMock(spec=DatametricProcessor)
@@ -34,7 +37,7 @@ def test_metric_runner_run_with_mock_metric(sample_df):
     mock_metric.compute_batch_metric.return_value = {"metric1": pa.array([10])}
     mock_metric.compute.return_value = {"final_metric1": 0.95}
 
-    result = runner.run(sample_df, [mock_metric])
+    result = runner.run(sample_dataframe, [mock_metric])
 
     assert result == {"final_metric1": 0.95}
     mock_metric.compute_features.assert_called_once()
@@ -42,11 +45,8 @@ def test_metric_runner_run_with_mock_metric(sample_df):
     mock_metric.compute.assert_called_once()
 
 
-def test_metric_runner_overwrite_behavior(sample_df):
-    """
-    Test that if multiple metrics share keys, the later one overwrites.
-    This documents the current behavior.
-    """
+def test_metric_runner_overwrite_behavior(sample_dataframe):
+    """Test that later metrics overwrite earlier ones when sharing keys."""
     runner = MetricRunner()
 
     metric1 = MagicMock(spec=DatametricProcessor)
@@ -59,7 +59,7 @@ def test_metric_runner_overwrite_behavior(sample_df):
     metric2.compute_batch_metric.return_value = {"shared": pa.array([2])}
     metric2.compute.return_value = {"final": 1}
 
-    result = runner.run(sample_df, [metric1, metric2])
+    result = runner.run(sample_dataframe, [metric1, metric2])
 
     # Verify overwriting happened in the internal metrics_array
     last_call_args = metric2.compute.call_args[1]["batch_metrics"]

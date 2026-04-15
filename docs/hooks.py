@@ -1,13 +1,17 @@
 from pathlib import Path
 import shutil
 
+DOCS_INDEX = "docs/index.md"
+
 
 def update_readme_relative_links():
-    index = Path("docs/index.md")
+    index = Path(DOCS_INDEX)
     with index.open() as f:
         md = f.read()
+        # Replace various forms of docs/ paths
         updated_md = md.replace("./docs/", "./")
-        updated_md = updated_md.replace("./docs/", "./")
+        updated_md = updated_md.replace("(docs/", "(")
+        updated_md = updated_md.replace('src="docs/static/', 'src="./static/')
         updated_md = updated_md.replace(
             "(packages/",
             "(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/",
@@ -25,7 +29,28 @@ def copy_example():
 
 
 def copy_readme():
-    shutil.copy("README.md", "docs/index.md")
+    shutil.copy("README.md", DOCS_INDEX)
+
+
+def copy_package_readmes():
+    """Copy package READMEs to docs/packages/ for documentation."""
+    packages_dir = Path("packages")
+    docs_packages_dir = Path("docs/packages")
+    docs_packages_dir.mkdir(exist_ok=True)
+
+    packages_to_copy = [
+        "dqm-ml-core",
+        "dqm-ml-job",
+        "dqm-ml-images",
+        "dqm-ml-pytorch",
+        "dqm-ml",
+    ]
+
+    for pkg in packages_to_copy:
+        src = packages_dir / pkg / "README.md"
+        if src.exists():
+            dst = docs_packages_dir / f"{pkg}.md"
+            shutil.copy(src, dst)
 
 
 def rename_coverage_index():
@@ -37,8 +62,24 @@ def rename_coverage_index():
         )
 
 
+def add_repository_link():
+    """Add repository link before Available on PyPI section."""
+    index = Path(DOCS_INDEX)
+    with index.open() as f:
+        md = f.read()
+
+    repository_link = "- **[Repository](https://github.com/Safenai/dqm-ml-workspace)**"
+
+    if "## Available on PyPI" in md and repository_link not in md:
+        updated_md = md.replace("## Available on PyPI", f"{repository_link}\n\n## Available on PyPI")
+        with index.open("w") as f:
+            f.write(updated_md)
+
+
 def pre_build(*args, **kwargs):
     copy_example()
     copy_readme()
+    add_repository_link()
+    copy_package_readmes()
     rename_coverage_index()
     update_readme_relative_links()

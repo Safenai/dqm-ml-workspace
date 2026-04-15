@@ -1,12 +1,22 @@
+"""Visual feature extraction processor for image quality assessment.
+
+This module contains the VisualFeaturesProcessor class that extracts
+visual quality features from images including luminosity, contrast,
+blur, and entropy.
+"""
+
 import io
 import logging
 from pathlib import Path
-from typing import Any, override
+from typing import Any
 
 import numpy as np
 from PIL import Image
 import pyarrow as pa
 from scipy import signal
+
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
 
@@ -97,7 +107,15 @@ class VisualFeaturesProcessor(DatametricProcessor):
         batch: pa.RecordBatch,
         prev_features: dict[str, pa.Array] | None = None,
     ) -> dict[str, pa.Array]:
-        """Compute per-sample image features."""
+        """Compute per-sample image features.
+
+        Args:
+            batch: Input batch of data containing image column.
+            prev_features: Previously computed features (not used in this processor).
+
+        Returns:
+            Dictionary mapping feature names to their computed values.
+        """
         if not self.input_columns:
             logger.warning(f"[{self.name}] no input_columns configured")
             return {}
@@ -137,21 +155,36 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """No-op aggregation: metrics are image-level only.."""
+        """No-op aggregation: metrics are image-level only.
+
+        Returns:
+            Empty dictionary as this processor computes features only.
+        """
         return {}
 
     @override
     def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, pa.Array]:
-        """No dataset-level aggregation required for this processor."""
+        """No dataset-level aggregation required for this processor.
+
+        Returns:
+            Empty dictionary as features are computed at batch level.
+        """
         return {}
 
     def reset(self) -> None:
-        pass
+        """Reset processor state for new processing run."""
 
     # TODO : Check if it can be vectorized, parallelized
 
     def _compute_luminosity_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute luminosity (mean gray level) for each image."""
+        """Compute luminosity (mean gray level) for each image.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+
+        Returns:
+            PyArrow array of luminosity values.
+        """
         values = []
         for gray in gray_images:
             if gray is not None:
@@ -164,7 +197,14 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return pa.array(values, type=pa.float32())
 
     def _compute_contrast_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute contrast (RMS contrast = std of gray) for each image."""
+        """Compute contrast (RMS contrast = std of gray) for each image.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+
+        Returns:
+            PyArrow array of contrast values.
+        """
         values = []
         for gray in gray_images:
             if gray is not None:
@@ -175,7 +215,14 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return pa.array(values, type=pa.float32())
 
     def _compute_blur_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute blur (variance of Laplacian) for each image."""
+        """Compute blur (variance of Laplacian) for each image.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+
+        Returns:
+            PyArrow array of blur values.
+        """
         values = []
         for gray in gray_images:
             if gray is not None:
@@ -186,7 +233,14 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return pa.array(values, type=pa.float32())
 
     def _compute_entropy_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute entropy (Shannon entropy) for each image."""
+        """Compute entropy (Shannon entropy) for each image.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+
+        Returns:
+            PyArrow array of entropy values.
+        """
         values = []
         for gray in gray_images:
             if gray is not None:
@@ -202,6 +256,15 @@ class VisualFeaturesProcessor(DatametricProcessor):
         """Convert various input types to a 2D grayscale numpy array.
 
         If `self.normalize` is True, returns float32 in [0,1]. Otherwise returns uint8 [0,255].
+
+        Args:
+            x: Input data (PIL Image, bytes, string path, or numpy array).
+
+        Returns:
+            2D numpy array in grayscale.
+
+        Raises:
+            ValueError: If input type is unsupported or path does not exist.
         """
         img: Image.Image | None = None
 
@@ -248,13 +311,28 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
     @staticmethod
     def _to_float01(arr: np.ndarray) -> np.ndarray:
+        """Normalize array to [0, 1] range using min-max scaling.
+
+        Args:
+            arr: Input numpy array.
+
+        Returns:
+            Normalized array with float32 values in [0, 1].
+        """
         arr = arr.astype(np.float32)
         vmin, vmax = float(arr.min()), float(arr.max())
         arr = (arr - vmin) / (vmax - vmin) if vmax > vmin else np.zeros_like(arr, dtype=np.float32)
         return arr
 
     def _variance_of_laplacian(self, gray: np.ndarray) -> float:
-        """Variance of Laplacian as a blur metric."""
+        """Variance of Laplacian as a blur metric.
+
+        Args:
+            gray: Grayscale image array.
+
+        Returns:
+            Variance of Laplacian (higher values indicate more edges/sharpness).
+        """
         g = gray.astype(np.float32)
         if self.laplacian_kernel == "5x5":
             k = np.array(
@@ -275,7 +353,14 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return float(np.var(lap))
 
     def _entropy(self, gray: np.ndarray) -> float:
-        """Shannon entropy of the gray histogram (natural log)."""
+        """Shannon entropy of the gray histogram (natural log).
+
+        Args:
+            gray: Grayscale image array.
+
+        Returns:
+            Shannon entropy value. Returns NaN if histogram sum is zero.
+        """
         g = gray
         if self.normalize:
             # histogram on [0,1]

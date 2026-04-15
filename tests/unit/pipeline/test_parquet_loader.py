@@ -1,3 +1,9 @@
+"""Unit tests for the Parquet data loader.
+
+This module contains unit tests that verify the ParquetDataLoader
+and ParquetDataSelection classes work correctly.
+"""
+
 from unittest.mock import MagicMock, patch
 
 import pyarrow as pa
@@ -6,18 +12,14 @@ import pytest
 from dqm_ml_job.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
 
 
-@pytest.fixture
-def mock_parquet_dataset():
-    with patch("pyarrow.parquet.ParquetDataset") as mock:
-        yield mock
-
-
 def test_parquet_dataloader_init_no_path():
+    """Test that ParquetDataLoader raises error when path is not provided."""
     with pytest.raises(ValueError, match="must contain 'path'"):
         ParquetDataLoader("test", {})
 
 
 def test_parquet_dataloader_get_selections_no_split():
+    """Test that get_selections returns a single selection when split_by is not configured."""
     config = {"path": "dummy.parquet"}
     loader = ParquetDataLoader("test", config)
     selections = loader.get_selections()
@@ -29,6 +31,7 @@ def test_parquet_dataloader_get_selections_no_split():
 
 @patch("pyarrow.parquet.read_table")
 def test_parquet_dataloader_get_selections_auto_split(mock_read_table):
+    """Test that get_selections creates multiple selections when split_by is configured."""
     # Mock reading table to get unique values
     mock_table = MagicMock()
     mock_table.column.return_value = pa.array(["val1", "val2", "val1"])
@@ -45,6 +48,7 @@ def test_parquet_dataloader_get_selections_auto_split(mock_read_table):
 
 
 def test_parquet_data_selection_bootstrap(mock_parquet_dataset):
+    """Test that ParquetDataSelection.bootstrap initializes the dataset correctly."""
     mock_ds_instance = mock_parquet_dataset.return_value
     mock_fragment = MagicMock()
     mock_fragment.count_rows.return_value = 100
@@ -60,6 +64,7 @@ def test_parquet_data_selection_bootstrap(mock_parquet_dataset):
 
 
 def test_parquet_data_selection_iter(mock_parquet_dataset):
+    """Test that ParquetDataSelection iteration yields correct batches."""
     mock_ds_instance = mock_parquet_dataset.return_value
     mock_ds_instance.files = ["file1.parquet"]
 
@@ -78,6 +83,7 @@ def test_parquet_data_selection_iter(mock_parquet_dataset):
 
 
 def test_parquet_data_selection_get_nb_batches(mock_parquet_dataset):
+    """Test that get_nb_batches returns correct number of batches."""
     mock_ds_instance = mock_parquet_dataset.return_value
     mock_fragment = MagicMock()
     mock_fragment.count_rows.return_value = 250

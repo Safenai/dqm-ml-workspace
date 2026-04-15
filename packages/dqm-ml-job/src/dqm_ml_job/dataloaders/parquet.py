@@ -1,8 +1,17 @@
+"""Parquet data loader for reading Parquet files.
+
+This module contains the ParquetDataLoader and ParquetDataSelection classes
+for loading and iterating over Parquet file data.
+"""
+
 import logging
-from typing import Any, override
+from typing import Any
 
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
+
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+from typing_extensions import override
 
 from dqm_ml_job.dataloaders.proto import DataSelection
 
@@ -10,8 +19,17 @@ logger = logging.getLogger(__name__)
 
 
 class ParquetDataSelection(DataSelection):
-    """
-    A specific selection of data from a Parquet dataset.
+    """A specific selection of data from a Parquet dataset.
+
+    This class represents a filtered subset of a Parquet dataset
+    and provides an iterator over PyArrow RecordBatches.
+
+    Attributes:
+        name: Name identifier for this selection.
+        path: Path to the Parquet file or directory.
+        batch_size: Number of rows per batch.
+        threads: Number of threads for parallel reading.
+        filters_dict: Optional dictionary of column filters to apply.
     """
 
     def __init__(
@@ -22,6 +40,15 @@ class ParquetDataSelection(DataSelection):
         threads: int = 4,
         filters_dict: dict[str, Any] | None = None,
     ):
+        """Initialize a Parquet data selection.
+
+        Args:
+            name: Name identifier for this selection.
+            path: Path to the Parquet file or directory.
+            batch_size: Number of rows per batch (default: 100000).
+            threads: Number of threads for parallel reading (default: 4).
+            filters_dict: Optional dictionary of column filters to apply.
+        """
         self.name = name
         self.path = path
         self.batch_size = batch_size
@@ -79,13 +106,34 @@ class ParquetDataSelection(DataSelection):
 
 
 class ParquetDataLoader:
-    """
-    Data loader for Parquet files that generates one or more DataSelections.
+    """Data loader for Parquet files that generates one or more DataSelections.
+
+    This loader can read from a single Parquet file or a directory of Parquet
+    files, optionally splitting the data by a column value to create multiple
+    selections.
+
+    Attributes:
+        type: The loader type identifier ("parquet").
     """
 
     type: str = "parquet"
 
     def __init__(self, name: str, config: dict[str, Any] | None = None):
+        """Initialize the Parquet data loader.
+
+        Args:
+            name: Unique name for this loader instance.
+            config: Configuration dictionary containing:
+                - path: Path to Parquet file or directory (required)
+                - batch_size: Rows per batch (default: 100000)
+                - threads: Number of threads (default: 4)
+                - split_by: Column name to split selections by
+                - split_values: Specific values to split on
+                - filter: Dictionary of column filters
+
+        Raises:
+            ValueError: If required config keys are missing.
+        """
         if not config or "path" not in config:
             raise ValueError(f"Configuration for dataloader '{name}' must contain 'path'")
 
@@ -99,8 +147,12 @@ class ParquetDataLoader:
         self.filters_dict = config.get("filter", None)
 
     def get_selections(self) -> list[DataSelection]:
-        """
-        Create one or more ParquetDataSelection instances based on configuration.
+        """Create one or more ParquetDataSelection instances based on configuration.
+
+        Returns:
+            A list of DataSelection instances. If split_by is configured,
+            returns one selection per unique value. Otherwise, returns a
+            single selection for the entire dataset.
         """
         if not self.split_by:
             # Single selection

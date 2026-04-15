@@ -22,8 +22,9 @@ assets
 
 # Test images
 tests/config_generated
-tests/fixtures/config/generated
+tests/integration/fixtures/config/generated
 tests/outputs
+**/generated/*
 
 # Dynamic versioning
 **/_version_.py
@@ -33,6 +34,8 @@ output
 *.parquet
 # Readme is copied during doc pre build
 docs/index.md
+docs/AGENTS.md
+docs/packages/
 .github/workflows/tests_act.yml
 
 

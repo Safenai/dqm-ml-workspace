@@ -3,11 +3,11 @@ from nox_uv import session
 
 options.error_on_external_run = True
 options.default_venv_backend = "uv"
-options.sessions = ["lint", "test", "type_check"]
+options.sessions = ["lint", "spell", "test", "type_check"]
 
 
 @session(
-    python=["3.12", "3.13"],
+    python=["3.10", "3.11", "3.12", "3.13"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
@@ -35,7 +35,7 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-core/src",
         "--cov=packages/dqm-ml-pytorch/src",
         "--cov=packages/dqm-ml-images/src",
-        "--cov=packages/dqm-ml-v2/src",
+        "--cov=packages/dqm-ml/src",
         "--cov-report=html:docs/reports/htmlcov",
         "--cov-report=term",
         "--cov-fail-under=1",
@@ -58,6 +58,7 @@ def test_dev(s: Session) -> None:
         *s.posargs,
     )
 
+
 # For some sessions, set venv_backend="none" to simply execute scripts within the existing outer
 # uv-generated virtual environment, rather than have nox create a new one for each session. This
 # makes commonly repeated sessions execute faster.
@@ -76,7 +77,6 @@ def test_dev(s: Session) -> None:
                 "I",
                 # Also remove unused imports.
                 "--select",
-
                 "F401",
                 "--extend-fixable",
                 "F401",
@@ -91,16 +91,12 @@ def fmt(s: Session, command: list[str]) -> None:
     s.run(*command)
 
 
-@session(venv_backend="none")
-@parametrize(
-    "command",
-    [
-        param(["ruff", "check", "packages"], id="lint_check"),
-        param(["ruff", "format", "--check", "packages"], id="format_check"),
-    ],
-)
-def lint(s: Session, command: list[str]) -> None:
-    s.run(*command)
+@session(uv_groups=["lint"])
+def lint(s: Session) -> None:
+    s.run("ruff", "check", "packages")
+    s.run("ruff", "format", "--check", "packages")
+    s.run("ruff", "check", "tests")
+    s.run("ruff", "format", "--check", "tests")
 
 
 @session(venv_backend="none")
@@ -140,20 +136,28 @@ def lint_fix(s: Session) -> None:
     s.run(
         "ruff",
         "check",
-        "packages/dqm-ml-v2",
+        "packages/dqm-ml",
+        "--extend-fixable",
+        "F401",
+        "--fix",
+    )
+    s.run(
+        "ruff",
+        "check",
+        "tests",
         "--extend-fixable",
         "F401",
         "--fix",
     )
 
 
-@session(venv_backend="none")
+@session(uv_groups=["type_check"])
 def type_check(s: Session) -> None:
-    s.run("mypy", "packages/dqm-ml-job", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-core", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-images", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-pytorch", "noxfile.py")
-    s.run("mypy", "packages/dqm-ml-v2", "noxfile.py")
+    s.run("mypy", "packages/dqm-ml-job")
+    s.run("mypy", "packages/dqm-ml-core")
+    s.run("mypy", "packages/dqm-ml-images")
+    s.run("mypy", "packages/dqm-ml-pytorch")
+    s.run("mypy", "packages/dqm-ml")
 
 
 # Environment variable needed for mkdocstrings-python to locate source files.
@@ -210,3 +214,8 @@ def docs_github_pages(s: Session) -> None:
 @session(uv_groups=["licenses"], uv_no_install_project=True)
 def licenses(s: Session) -> None:
     s.run("pip-licenses", *s.posargs)
+
+
+@session(uv_groups=["spell"])
+def spell(s: Session) -> None:
+    s.run("cspell", "lint", ".", *s.posargs)

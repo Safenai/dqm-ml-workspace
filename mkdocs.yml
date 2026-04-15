@@ -1,10 +1,11 @@
 # Set strict to true to turn warnings into errors to catch warnings within CI.
 strict: false
+use_directory_urls: false
 validation:
-  omitted_files: warn
+  omitted_files: ignore
   absolute_links: warn
-  unrecognized_links: warn
-  anchors: warn
+  unrecognized_links: ignore
+  anchors: ignore
 theme:
   name: material
   # By default, fonts are pulled from Google on the Internet. To support offline usage, this is
@@ -31,19 +32,18 @@ theme:
     # GitHub specific.
     repo: fontawesome/brands/github
   favicon: static/math-integral-box.png
+  mermaid:
+    version: 9.4.0
   features:
     - content.code.annotate
     - content.code.copy
     - content.tabs.link
     - content.tooltips
     - navigation.indexes
-    #- navigation.expand
     - navigation.footer
-    # conflict with navigation.tracking
     - navigation.instant
     - navigation.instant.progress
     - navigation.top
-    #- navigation.tracking
     - search.highlight
     - search.share
     - search.suggest
@@ -53,14 +53,15 @@ theme:
     - navigation.tabs.sticky
     - navigation.path
     - navigation.prune
+
 markdown_extensions:
   - abbr
   - admonition
+  - github-callouts
   - footnotes
   - pymdownx.details
   - pymdownx.keys
   - pymdownx.highlight
-  - pymdownx.superfences
   - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
@@ -68,9 +69,12 @@ markdown_extensions:
         kwds:
           case: lower
   - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
 extra_css:
   - static/stylesheets/extra.css
-  - static/stylesheets/pytest.css
+
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -79,11 +83,11 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_pre_build: "docs.hooks:pre_build"
-  - mkdocs-jupyter:
-      theme: dark
   - search
   - offline:
       enabled: !ENV [MKDOCS_MATERIAL_OFFLINE, false]
+  - mermaid2:
+      version: "9.4.0"
   - mkdocstrings:
       handlers:
         python:
@@ -99,11 +103,14 @@ plugins:
         "packages/dqm-ml-job/src/dqm_ml_job/",
         "packages/dqm-ml-pytorch/src/dqm_ml_pytorch/",
       ]
+  # mkdocs-jupyter must come after api-autonav to handle generated files correctly
+  - mkdocs-jupyter
   # This plugin is used to validate URLs (including anchors).
   - htmlproofer:
       # This is not enabled by default because this requires network I/O, so it is inherently not
       # exactly reproducible. For larger projects, this can also slow local build times.
       validate_external_urls: !ENV [HTMLPROOFER_VALIDATE_EXTERNAL_URLS, false]
+      enabled: !ENV [MKDOCS_HTMLPROOFER_ENABLED, false]
       raise_error: false
 watch:
   # Watch directories to reload on changes to docstrings for mkdocstrings plugin.
@@ -121,12 +128,16 @@ edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
   - Getting Started:
+    - Quick Start: quickstart.md
+    - Why a dqm-ml V2: dqm-ml-v2.md
     - Overview: dqm-ml-overview.md
-    - Why a dqm-ml V2: dqm-ml-v2.md    
-    - Installation: index.html#installation
   - User Guide:
-    - cli usage: configuration.md
-    - direct call: TBD1.md
+    - CLI Reference: cli.md
+    - Configuration: configuration.md
+    - YAML Basics: yaml_basics.md
+    - Data Loaders: dataloaders.md
+    - Metrics Computation: metrics_computation.md
+    - Direct Call: TBD1.md
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
@@ -137,13 +148,18 @@ nav:
     - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md
-  - Test reports:
-    - Pytest report: reports/pytest/pytest_report.html
-    - Coverage Report: reports/htmlcov/coverage_report.html
-    - Performance Report: TBD2.md
   - Developer Guide:
+    - What to consider: developer.md
     - Contributing: contributing.md
     - Roadmap: ROADMAP.md
-
-  - API Reference: reference/
+    - Packages:
+      - Core: packages/dqm-ml-core.md
+      - Job: packages/dqm-ml-job.md
+      - Images: packages/dqm-ml-images.md
+      - PyTorch: packages/dqm-ml-pytorch.md
+      - CLI: packages/dqm-ml.md
+    - Test Reports:
+      - Results: reports/pytest/pytest_report.html
+      - Coverage: reports/htmlcov/coverage_report.html
+      - Performance Report: TBD2.md
 

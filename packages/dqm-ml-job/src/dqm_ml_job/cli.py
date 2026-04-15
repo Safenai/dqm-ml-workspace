@@ -1,3 +1,9 @@
+"""Command-line interface for DQM job execution.
+
+This module provides CLI functions for parsing arguments and running
+data quality assessment jobs from YAML configuration files.
+"""
+
 import argparse
 import logging
 from pathlib import Path

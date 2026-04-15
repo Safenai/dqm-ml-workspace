@@ -1,4 +1,4 @@
-# DQM ML repository
+# DQM-ML: Data Quality Metrics for Machine Learning
 
 ## Workspace common Badge and CI / CD informations
 
@@ -25,86 +25,130 @@
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [mypy-badge]: https://www.mypy-lang.org/static/mypy_badge.svg
 
-## Package last version available on pypi
 
-* [![PyPI dqm-ml-core version][pypi-core-badge]](https://badge.fury.io/py/dqm-ml-core) :  `packages/dqm-ml-core`: Core API and standard metrics (Completeness, Representativeness).
-* [![PyPI dqm-ml-job version][pypi-pipeline-badge]](https://badge.fury.io/py/dqm-ml-job) : `packages/dqm-ml-job`: Orchestration, streaming data loaders, and output writers.
-* [![PyPI dqm-ml-images version][pypi-images-badge]](https://badge.fury.io/py/dqm-ml-images) :`packages/dqm-ml-images`: Visual feature extraction metrics.
-* [![PyPI dqm-ml-pytorch version][pypi-pytorch-badge]](https://badge.fury.io/py/dqm-ml-pytorch) : `packages/dqm-ml-pytorch`: Advanced metrics requiring PyTorch (Domain Gap).
-* (not yet delivered as a package)`packages/dqm-ml-v2`: Main wrapper and CLI entry point.
-* `packages/dqm-ml`: **Legacy** version (V1) delivered from original repository, excluded from the active workspace.
 
-[pypi-core-badge]: https://badge.fury.io/py/dqm-ml-core.svg
-[pypi-pipeline-badge]: https://badge.fury.io/py/dqm-ml-job.svg
-[pypi-images-badge]: https://badge.fury.io/py/dqm-ml-images.svg
-[pypi-pytorch-badge]: https://badge.fury.io/py/dqm-ml-pytorch.svg
+## Origins - who create first the DQM-ML
 
 The library was originally developed in the program:
 
 <div align="center">
     <img src="docs/static/images/Logo_ConfianceAI.png" width="20%" alt="ConfianceAI Logo" />
-    <h1 style="font-size: large; font-weight: bold;">dqm-ml v2</h1>
 </div>
 
-> [!IMPORTANT]  
+
+> [!IMPORTANT]
 > This repository groups all packages derived from [dqm-ml](https://github.com/IRT-SystemX/dqm-ml/blob/main/README.md) to initiate what shall become dqm-ml v2.0.0.
-> All what has been implemented rely on
-> (Definitions from [Confiance.ai program](https://www.confiance.ai/))
-> Reference publication [HAL link](https://hal.science/hal-04719346v1)
-> For more technical and scientific details, please refer to this [deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf?download=1)
+> All what has been implemented rely on 
+> (Definitions from [Confiance.ai program](https://www.confiance.ai/)) a research program, which focused on trustworthy AI for industry.
+> Asset developped during the program were transfered to [European Trustworthy AI Association](https://trustworthy-ai-association.eu) and 
+
+>This work was carried out as part of activities conducted and partially funded by the [European Trustworthy AI Association](https://trustworthy-ai-association.eu), which aims to shape trustworthy AI and empower industry through state-of-the-art, open-source methodologies and tools. 
+ 
+For more technical and scientific details, refer to:
+
+- **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
+- **[ETAIA Asset](https://catalog.trustworthy-ai-association.eu/records/968fj-fk177)**
+- **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
+- **[Why creating DQM-ML-V2](./docs/dqm-ml-v2.md)** — Evolution need in dqm-ml
 
 
-> [!WARNING]
-> TODO : Need to update link to the ETAIA place
-> TODO : Need to access the open source deliverable (not confidential one)
+## Available on PyPI
+
+Install individual packages based on your needs:
+
+| Package | Description | PyPI |
+|---------|-------------|------|
+| **dqm-ml-core** | Core API & standard metrics (Completeness, Representativeness) | [![][pypi-core-badge]](https://pypi.org/project/dqm-ml-core/) |
+| **dqm-ml-job** | Orchestration, streaming data loaders, and output writers | [![][pypi-pipeline-badge]](https://pypi.org/project/dqm-ml-job/) |
+| **dqm-ml-images** | Visual feature extraction from images | [![][pypi-images-badge]](https://pypi.org/project/dqm-ml-images/) |
+| **dqm-ml-pytorch** | PyTorch-based metrics (Domain Gap) | [![][pypi-pytorch-badge]](https://pypi.org/project/dqm-ml-pytorch/) |
+
+> **Note:** The `dqm-ml` package is the CLI wrapper.
+
+[pypi-core-badge]: https://img.shields.io/pypi/v/dqm-ml-core.svg
+[pypi-pipeline-badge]: https://img.shields.io/pypi/v/dqm-ml-job.svg
+[pypi-images-badge]: https://img.shields.io/pypi/v/dqm-ml-images.svg
+[pypi-pytorch-badge]: https://img.shields.io/pypi/v/dqm-ml-pytorch.svg
+
 
 ## Documentations
 
+* **[Website version](https://safenai.github.io/dqm-ml-workspace/)**
+
+* **[Quick Start](./docs/quickstart.md)**: Get started in 5 minutes.
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
+* **[Project Overview](./docs/dqm-ml-overview.md)** — Package structure and development conventions
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
 * **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
 * **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
 * **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
 
-## Wich metrics are availables
+## What is DQM-ML?
+
+DQM-ML (Data Quality Metrics for Machine Learning) is an open-source Python library that helps you assess and quantify the quality of your datasets. Whether you're building ML models, training neural networks, or preparing data for analysis, DQM-ML provides a suite of metrics to measure data completeness, representativeness, and distribution gaps.
+
+Think of it as a **health check for your data** — DQM-ML checks your dataset's vital signs before you feed it to your models.
+
+## Why Data Quality Matters
+
+We've all heard the saying "garbage in, garbage out." But how do you *measure* if your data is any good? That's exactly what DQM-ML helps you answer.
+
+Poor data quality can lead to:
+
+- **Biased models** that don't generalize well
+- **Unexpected failures** in production
+- **Wasted resources** training on bad data
+- **Inconsistent results** across different datasets
+
+DQM-ML gives you concrete numbers to work with, so you can make informed decisions about your data before investing in training.
+
+## Key Features
+
+- **Multiple Quality Metrics** — Measure completeness, representativeness, domain gaps, and visual quality
+- **Streaming Architecture** — Process datasets larger than available memory without loading everything at once
+- **Modular Design** — Install only the components you need
+- **Easy to Use** — Simple CLI for quick checks, powerful Python API for integration
+- **Extensible** — Add your own metrics or data loaders with the plugin system
+
+## Which metrics are available
 
 Metric computed on **data selection** rely on several approches are developped as described in the figure below. and associated publications
 
 <img src="docs/static/library_view.png" width="1024"/>
 
-In the current version, the available (or to be available) metrics are:
+In the current version, the available metrics are:
 
 * Representativeness:
   * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
   * Kolmogorov Smirnov test for Uniform and Normal Distributions
   * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
 * Diversity:
-  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml v1)
-  * Gini-Simpson and Simposon indices (only in dqm-ml v1)
+  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
+  * Gini-Simpson and Simposon indices (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
 * Completeness:
   * Ratio of filled information
 * Domain Gap:
-  * MMD (only in dqm-ml v1)
-  * CMD (only in dqm-ml v1)
+  * MMD 
+  * CMD (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
   * Wasserstein
   * H-Divergence
   * FID
   * Kullback-Leiblur MultiVariate Normal Distribution
 
-## Installation
+**Missing metrics will be integrate during the process to convert 2.0.0-rc into 2.0.0**
 
-Install the DQM-ML V2 framework with all available metrics and helpers using pip:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+# Installation
+
+Install the DQM-ML framework with all available metrics and helpers using pip:
 
 ```bash
-pip install "dqm-ml-v2[all]" 
+pip install "dqm-ml[all]" 
 ```
 
-Install the DQM-ML V2 framework by passing only needed optional dependency:
-> :warning: **NOT YET AVAILABLE**, ONLY ON v2.0.0 but all functionality are available with detail install bellow
+Install the DQM-ML framework by passing only needed optional dependency:
 
 ```bash
-pip install "dqm-ml-v2[notebooks, pytorch, job, images ]" 
+pip install "dqm-ml[notebooks, pytorch, job, images]" 
 ```
 
 Manually install all packages:
@@ -156,7 +200,7 @@ this example can be found in `examples/script/completeness.py'` and executed wit
 
 ## Direct usage of metrics from your python code on data
 
-* [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
+* [jupyter notebook](examples/multiple_metrics_tests_v2.ipynb)
 
 ## Workspace Structure
 
@@ -173,5 +217,18 @@ DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai 
   number={1},
   pages={24--31},
   year={2024}
+}
+```
+
+DQM-ML V2 is is references as an ETAIA Asset  
+``` ref
+@software{etaia_2026_asset,
+  title   = {dqm-ml},
+  author  = {{Safenai}},
+  year    = {2026},
+  version = {v2.0.0-rc},
+  url     = {https://github.com/Safenai/dqm-ml-workspace},
+ howpublished = { https://catalog.trustworthy-ai-association.eu/records/968fj-fk177}
+  note    = {This work was carried out as part of activities conducted and partially funded by the European Trustworthy AI Association, which aims to shape trustworthy AI and empower industry through state-of-the-art, open-source methodologies and tools.
 }
 ```

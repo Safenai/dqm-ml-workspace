@@ -1,3 +1,9 @@
+"""Unit tests for the DQM job CLI.
+
+This module contains unit tests that verify the dqm-ml-job CLI
+correctly parses arguments and executes jobs.
+"""
+
 from pathlib import Path
 import shlex
 import subprocess
@@ -14,6 +20,7 @@ test_cases = [
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output: str) -> None:
+    """Test that the CLI execute function runs without errors."""
     # Create output dir if it doesn't exist
     path = Path("tests/outputs/data")
     Path.mkdir(path, exist_ok=True, parents=True)
@@ -25,6 +32,7 @@ def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output:
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
 def test_app(command: str, expected_output: str) -> None:
+    """Test that the CLI can be invoked as a subprocess."""
     full_command = ["python", "hello.py"] + shlex.split(command)
     result = subprocess.run(full_command, capture_output=True, text=True)
     output = result.stdout.rstrip()
@@ -40,6 +48,7 @@ def test_app(command: str, expected_output: str) -> None:
     ],
 )
 def test_parse_args(prompt: str, process_config: str) -> None:
+    """Test that parse_args correctly extracts configuration file paths."""
     args = parse_args(shlex.split(prompt))
 
     # or split them up, either works

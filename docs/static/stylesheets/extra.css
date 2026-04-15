@@ -8,7 +8,87 @@
     text-align: initial;
 }
 
-.md-grid {
-    max-width: initial;
+.md-typeset__table {
+   min-width: 100%;
 }
 
+.md-typeset table:not([class]) {
+    display: table;
+}
+
+/* Jupyter Notebook Theme Switching */
+[data-md-color-scheme="default"] .jupyter-notebook,
+[data-md-color-scheme="default"] .jp-Notebook {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+}
+
+[data-md-color-scheme="default"] .jupyter-notebook .CodeMirror,
+[data-md-color-scheme="default"] .jp-CodeMirror {
+    background: #f8f8f8 !important;
+}
+
+[data-md-color-scheme="default"] .jupyter-notebook .output_area,
+[data-md-color-scheme="default"] .jp-OutputArea {
+    background: #ffffff !important;
+}
+
+[data-md-color-scheme="slate"] .jupyter-notebook,
+[data-md-color-scheme="slate"] .jp-Notebook {
+    background: #1e1e1e !important;
+    color: #d4d4d4 !important;
+}
+
+[data-md-color-scheme="slate"] .jupyter-notebook .CodeMirror,
+[data-md-color-scheme="slate"] .jp-CodeMirror {
+    background: #2d2d2d !important;
+}
+
+[data-md-color-scheme="slate"] .jupyter-notebook .output_area,
+[data-md-color-scheme="slate"] .jp-OutputArea {
+    background: #1e1e1e !important;
+}
+
+/* Input/Output cells */
+[data-md-color-scheme="default"] .jupyter-notebook .cell,
+[data-md-color-scheme="default"] .jp-Cell {
+    border-color: #e0e0e0 !important;
+}
+
+[data-md-color-scheme="slate"] .jupyter-notebook .cell,
+[data-md-color-scheme="slate"] .jp-Cell {
+    border-color: #404040 !important;
+}
+
+/* Prompt area */
+[data-md-color-scheme="default"] .jupyter-notebook .prompt,
+[data-md-color-scheme="default"] .jp-Prompt {
+    color: #6c6c6c !important;
+}
+
+[data-md-color-scheme="slate"] .jupyter-notebook .prompt,
+[data-md-color-scheme="slate"] .jp-Prompt {
+    color: #8e8e8e !important;
+}
+
+/* Markdown cells */
+[data-md-color-scheme="slate"] .jp-MarkdownCell {
+    color: #d4d4d4 !important;
+}
+
+/* Code cells */
+[data-md-color-scheme="slate"] .jp-CodeCell {
+    background: #1e1e1e !important;
+}
+
+/* Cell content */
+[data-md-color-scheme="slate"] .jp-Cell-inputWrapper,
+[data-md-color-scheme="slate"] .jp-Cell-outputWrapper {
+    background: #1e1e1e !important;
+}
+
+/* Headers and text */
+[data-md-color-scheme="slate"] .jp-RenderedText,
+[data-md-color-scheme="slate"] .jp-RenderedHTMLCommon {
+    color: #d4d4d4 !important;
+}

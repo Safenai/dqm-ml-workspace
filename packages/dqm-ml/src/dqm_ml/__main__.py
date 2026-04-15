@@ -1,7 +1,16 @@
+"""Main CLI entry point for DQM-ML v2.
+
+This module provides the command-line interface for running DQM-ML
+commands including version display, listing available plugins, and
+processing data quality assessment jobs.
+"""
+
 import argparse
 from collections.abc import Iterable
 import logging
-from typing import Any, override
+from typing import Any
+
+from typing_extensions import override
 
 from dqm_ml.cli_tools import CustomFormatter
 from dqm_ml.dependency import get_available_command
@@ -10,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class _HelpAction(argparse._HelpAction):
+    """Custom help action to support command-specific help."""
+
     @override
     def __call__(
         self,
@@ -32,7 +43,7 @@ class _HelpAction(argparse._HelpAction):
 
 def parse_args(arg_list: list[str] | None, command_list: Iterable[str]) -> Any:
     parser = argparse.ArgumentParser(
-        prog="dqm-ml-v2",
+        prog="dqm-ml",
         description="DQM-ML Job client",
         epilog="for more informations see README",
         add_help=False,
