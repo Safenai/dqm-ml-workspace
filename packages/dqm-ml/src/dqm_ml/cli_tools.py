@@ -5,7 +5,7 @@ logging formatters.
 """
 
 import logging
-from typing import override
+from typing_extensions import override
 
 
 class Bcolors:

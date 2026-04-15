@@ -7,7 +7,7 @@ options.sessions = ["lint", "spell", "test", "type_check"]
 
 
 @session(
-    python=["3.12", "3.13"],
+    python=["3.10", "3.11", "3.12", "3.13"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:

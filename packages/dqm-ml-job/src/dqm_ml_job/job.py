@@ -224,16 +224,10 @@ class DatasetJob:
                     delta_metrics_table["selection_target"] = pa.array([combinaison[1]])
                 else:
                     for m_name, value in delta_metrics.items():
-                        delta_metrics_table[m_name] = pa.concat_arrays(
-                            [delta_metrics_table[m_name], self._to_pa_array(value, m_name)]
-                        )  # noqa: E501
+                        delta_metrics_table[m_name] = pa.concat_arrays([delta_metrics_table[m_name], self._to_pa_array(value, m_name)])  # noqa: E501
 
-                    delta_metrics_table["selection_source"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_source"], pa.array([combinaison[0]])]
-                    )  # noqa: E501
-                    delta_metrics_table["selection_target"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_target"], pa.array([combinaison[1]])]
-                    )  # noqa: E501
+                    delta_metrics_table["selection_source"] = pa.concat_arrays([delta_metrics_table["selection_source"], pa.array([combinaison[0]])])  # noqa: E501
+                    delta_metrics_table["selection_target"] = pa.concat_arrays([delta_metrics_table["selection_target"], pa.array([combinaison[1]])])  # noqa: E501
                     logger.debug(f"Writing delta metrics for dataloader {'_'.join(combinaison)}")
 
         return delta_metrics_table

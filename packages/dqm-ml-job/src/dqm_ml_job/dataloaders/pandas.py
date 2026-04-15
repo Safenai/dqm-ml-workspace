@@ -5,7 +5,9 @@ for loading and iterating over CSV file data using Pandas.
 """
 
 import logging
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
+# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 
 import pandas as pd
 import pyarrow as pa
