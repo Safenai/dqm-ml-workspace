@@ -9,6 +9,7 @@ import argparse
 from collections.abc import Iterable
 import logging
 from typing import Any
+
 from typing_extensions import override
 
 from dqm_ml.cli_tools import CustomFormatter

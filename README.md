@@ -198,7 +198,7 @@ this example can be found in `examples/script/completeness.py'` and executed wit
 
 ## Direct usage of metrics from your python code on data
 
-* [jupyter notebook](packages/dqm-ml/examples/multiple_metrics_tests_v2.ipynb)
+* [jupyter notebook](examples/multiple_metrics_tests_v2.ipynb)
 
 ## Workspace Structure
 

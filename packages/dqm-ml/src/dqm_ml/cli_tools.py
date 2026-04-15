@@ -5,6 +5,7 @@ logging formatters.
 """
 
 import logging
+
 from typing_extensions import override
 
 
