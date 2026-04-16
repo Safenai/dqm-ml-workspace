@@ -1317,6 +1317,12 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "dqm-ml-images" },
+    { name = "dqm-ml-job" },
+    { name = "jupyter" },
+    { name = "plotly" },
+]
 images = [
     { name = "dqm-ml-images" },
 ]
@@ -1333,6 +1339,7 @@ pytorch = [
 
 [package.metadata]
 requires-dist = [
+    { name = "dqm-ml", extras = ["images", "job", "notebooks", "pytorch"], marker = "extra == 'all'", editable = "packages/dqm-ml" },
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
     { name = "dqm-ml-images", marker = "extra == 'images'", editable = "packages/dqm-ml-images" },
     { name = "dqm-ml-images", marker = "extra == 'pytorch'", editable = "packages/dqm-ml-images" },
@@ -1340,7 +1347,7 @@ requires-dist = [
     { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
     { name = "plotly", marker = "extra == 'notebooks'", specifier = ">=5.0.0" },
 ]
-provides-extras = ["notebooks", "job", "pytorch", "images"]
+provides-extras = ["notebooks", "job", "pytorch", "images", "all"]
 
 [[package]]
 name = "dqm-ml-core"
