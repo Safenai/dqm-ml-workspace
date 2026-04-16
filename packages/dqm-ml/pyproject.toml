@@ -31,13 +31,13 @@ notebooks = [
     "plotly>=5.0.0",
 ]
 
-job = [ "dqm-ml-job>=1.1.4"]
-pytorch = [ "dqm-ml-images>=1.1.4"]
-images = [ "dqm-ml-images>=1.1.4"]
+job = [ "dqm-ml-job>=2.0.0rc0"]
+pytorch = [ "dqm-ml-images>=2.0.0rc0"]
+images = [ "dqm-ml-images>=2.0.0rc0"]
 
-# all = [
-#     "dqm-ml[notebooks, job, pytorch, images]",
-# ]
+all = [
+     "dqm-ml[notebooks, job, pytorch, images]",
+ ]
 
 
 
