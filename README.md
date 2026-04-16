@@ -145,13 +145,13 @@ In the current version, the available metrics are:
 Install the DQM-ML framework with all available metrics and helpers using pip:
 
 ```bash
-pip install "dqm-ml[all]>=2.0.0rc1" 
+pip install --pre "dqm-ml[all]" 
 ```
 
 Install the DQM-ML framework by passing only needed optional dependency:
 
 ```bash
-pip install "dqm-ml[notebooks, pytorch, job, images]>=2.0.0rc1" 
+pip install --pre "dqm-ml[notebooks, pytorch, job, images]" 
 ```
 
 Manually install all packages:
