@@ -52,8 +52,13 @@ def coco_data(test_path: str) -> list[Path]:
     target_path = Path(gen_path) / "target_1000.parquet"
 
     if Path.exists(source_path) and Path.exists(target_path):
-        print("Parquet found, no need to recreate")
-        return [source_path, target_path]
+        source_table = pq.read_table(source_path)
+        if source_table.num_rows > 0:
+            sample_path = source_table.column("image_path")[0].as_py()
+            if Path(sample_path).exists():
+                print("Parquet found, images available, no need to recreate")
+                return [source_path, target_path]
+        print("Parquet found but images missing, re-downloading")
 
     foz = _get_fiftyone()
     foz.download_zoo_dataset(

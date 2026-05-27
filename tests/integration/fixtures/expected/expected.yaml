@@ -397,7 +397,7 @@ domain_gap:
 
         expected_scores:
             metric: "wasserstein_1d"
-            value: 0.45
+            value: 0.606
 
     wasserstein_1d:
         params:
@@ -409,7 +409,7 @@ domain_gap:
 
         expected_scores:
             metric: "wasserstein_1d"
-            value: 0.024
+            value: 0.0295
 
     fid:
         params:

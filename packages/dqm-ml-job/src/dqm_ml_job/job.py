@@ -26,7 +26,8 @@ class DatasetJob:
     The job handles:
     1. Plugin discovery and component initialization.
     2. Data selection discovery via DataLoaders.
-    3. Streaming execution: Iterating over selections and batches to compute features and metrics.
+    3. Streaming execution: Iterating over selections and batches to
+       compute features and metrics.
     4. Result persistence via OutputWriters.
     5. Comparison metrics (deltas) between discovered datasets.
     """
@@ -75,24 +76,84 @@ class DatasetJob:
                     self.needed_input_columns.insert(0, col)
 
         logger.info(
-            f"DQM job pipeline initiazed will process {len(self.dataloaders)} dataloaders, "  # noqa: E501
+            f"DQM job pipeline initialized will process "
+            f"{len(self.dataloaders)} dataloaders, "
             f"{len(self.metrics)} metrics processors, "
-            f"outputting features to '{self.features_output.name if self.features_output else 'None'}' "
+            f"outputting features to "
+            f"'{self.features_output.name if self.features_output else 'None'}' "
         )
+
+    @staticmethod
+    def _build_dependency_graph(procs: list[DatametricProcessor]) -> list[set[int]]:
+        """Build a dependency graph between metric processors.
+
+        For each processor, collect the indices of processors that it depends on
+        (i.e. producers of the columns it needs).
+
+        Args:
+            procs: List of metric processors.
+
+        Returns:
+            List of sets where ``dep_on[i]`` contains indices of processors
+            that processor ``i`` depends on.
+        """
+        generated_by: dict[str, set[int]] = {}
+        for i, p in enumerate(procs):
+            for col in p.generated_features():
+                generated_by.setdefault(col, set()).add(i)
+            if hasattr(p, "generated_columns"):
+                for col in p.generated_columns():
+                    generated_by.setdefault(col, set()).add(i)
+
+        dep_on: list[set[int]] = [set() for _ in procs]
+        for i, p in enumerate(procs):
+            for col in p.needed_columns():
+                for gen_idx in generated_by.get(col, ()):
+                    if gen_idx != i:
+                        dep_on[i].add(gen_idx)
+        return dep_on
+
+    @staticmethod
+    def _topological_sort(procs: list[DatametricProcessor], dep_on: list[set[int]]) -> list[DatametricProcessor]:
+        """Return processors in topological order using Kahn's algorithm.
+
+        Args:
+            procs: List of metric processors.
+            dep_on: Dependency graph built by ``_build_dependency_graph``.
+
+        Returns:
+            Processors ordered so that producers come before consumers.
+        """
+        ordered: list[DatametricProcessor] = []
+        remaining = set(range(len(procs)))
+        while remaining:
+            ready = {i for i in remaining if not (dep_on[i] & remaining)}
+            if not ready:
+                ready = {min(remaining)}
+            for i in sorted(ready):
+                ordered.append(procs[i])
+                remaining.remove(i)
+        return ordered
 
     def get_ordered_metrics(self) -> list[DatametricProcessor]:
         """
-        Return the list of metrics processors in the order they should be executed.
+        Return the list of metrics processors in dependency order.
 
-        Currently returns processors in the order they were defined in the config.
+        Processors that generate columns (via ``generated_features()`` or
+        ``generated_columns()``) are placed before processors that depend on
+        those columns (via ``needed_columns()``).  This ensures, for example,
+        that an ``image_embedding`` processor that produces the ``embedding``
+        column runs before a ``domain_gap`` processor that consumes it,
+        regardless of the order in which they appear in the YAML config.
         """
-        # TODO: Implement proper ordering based on dependencies
-        return list(self.metrics.values())
+        procs = list(self.metrics.values())
+        if len(procs) <= 1:
+            return procs
+        dep_on = self._build_dependency_graph(procs)
+        return self._topological_sort(procs, dep_on)
 
     def describe(self, selections: list[DataSelection]) -> None:
-        """
-        Log a summary of the execution plan, including discovered selections and metrics.
-        """
+        """Log a summary of the execution plan, including selections and metrics."""
         logger.info(f"Executing dqm-ml-job on {len(selections)} selections, using {len(self.metrics)} metrics ")
         for selection in selections:
             logger.info(f"  Selection: {selection.name} -> {selection}")
@@ -103,7 +164,7 @@ class DatasetJob:
             logger.info(f"    Generated features: {metric.generated_features()}")
             logger.info(f"    Generated metrics: {metric.generated_metrics()}")
 
-    def run(self) -> tuple[dict[Any, dict[str, Any]], dict[str, Any] | None]:
+    def run(self) -> tuple[dict[Any, dict[str, Any]], pa.Table | None]:
         """
         Execute the job on all discovered data selections.
 
@@ -114,7 +175,7 @@ class DatasetJob:
         Returns:
             A tuple containing:
                 - Mapping of selection names to their final metric dictionaries.
-                - pyarrow Table (or dict of arrays) containing all computed deltas.
+                - pyarrow Table containing all computed deltas.
         """
         # TODO: Check with needed input order of metric computation
         metrics_processors = self.get_ordered_metrics()
@@ -163,6 +224,10 @@ class DatasetJob:
         # If we have to compute delta metrics
         delta_metrics_table = self._compute_delta_metrics(metrics_processors, dataselection_metrics_list)
 
+        # Flush any accumulated features (single-output mode)
+        if self.features_output and hasattr(self.features_output, "flush"):
+            self.features_output.flush()
+
         return dataselection_metrics_list, delta_metrics_table
 
     @staticmethod
@@ -193,63 +258,56 @@ class DatasetJob:
 
     def _compute_delta_metrics(
         self, metrics_processors: list[DatametricProcessor], dataselection_metrics_list: dict[str, dict[str, Any]]
-    ) -> dict[str, Any] | None:
+    ) -> pa.Table | None:
         """Compute comparison metrics between every unique pair of data selections.
+
+        Builds a single table with one row per (pair, metric) combination.
+        Different metric processors may produce different columns; missing
+        values are padded with nulls via ``pa.concat_tables``.
 
         Args:
             metrics_processors: List of processors capable of computing deltas.
             dataselection_metrics_list: Map of selection names to their metrics.
 
         Returns:
-            A pyarrow-compatible dictionary representing the delta table.
+            A pyarrow Table with one row per (pair, metric) combination.
         """
 
-        selection_combinaisons = itertools.combinations(dataselection_metrics_list, 2)
+        selection_combinations = itertools.combinations(dataselection_metrics_list, 2)
 
-        delta_metrics_table = None
-        for combinaison in selection_combinaisons:
-            src_metrics = dataselection_metrics_list[combinaison[0]]
-            target_metrics = dataselection_metrics_list[combinaison[1]]
+        tables: list[pa.Table] = []
+        for combination in selection_combinations:
+            src_metrics = dataselection_metrics_list[combination[0]]
+            target_metrics = dataselection_metrics_list[combination[1]]
 
             for metric in metrics_processors:
                 delta_metrics = metric.compute_delta(src_metrics, target_metrics)
 
-                # TODO : check format of classical metrics / delta metrics for combinaison of format
                 if len(delta_metrics) == 0:
                     continue
 
-                if delta_metrics_table is None:
-                    delta_metrics_table = {key: self._to_pa_array(value, key) for key, value in delta_metrics.items()}
-                    delta_metrics_table["selection_source"] = pa.array([combinaison[0]])
-                    delta_metrics_table["selection_target"] = pa.array([combinaison[1]])
-                else:
-                    for m_name, value in delta_metrics.items():
-                        delta_metrics_table[m_name] = pa.concat_arrays(
-                            [delta_metrics_table[m_name], self._to_pa_array(value, m_name)]
-                        )  # noqa: E501
+                row = {key: self._to_pa_array(value, key) for key, value in delta_metrics.items()}
+                row["selection_source"] = pa.array([combination[0]])
+                row["selection_target"] = pa.array([combination[1]])
+                tables.append(pa.table(row))
 
-                    delta_metrics_table["selection_source"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_source"], pa.array([combinaison[0]])]
-                    )  # noqa: E501
-                    delta_metrics_table["selection_target"] = pa.concat_arrays(
-                        [delta_metrics_table["selection_target"], pa.array([combinaison[1]])]
-                    )  # noqa: E501
-                    logger.debug(f"Writing delta metrics for dataloader {'_'.join(combinaison)}")
+        if not tables:
+            return None
 
-        return delta_metrics_table
+        return pa.concat_tables(tables, promote_options="default")
 
     def _compute_batches_metrics(
         self, selection_name: str, selection: DataSelection, metrics_processors: list[DatametricProcessor]
     ) -> dict[str, Any]:
-        """Process all batches in a selection to compute intermediate statistics and features.
+        """Process all batches to compute intermediate statistics and features.
 
         Memory Management:
-        - Batch-level statistics (`batch_metrics`) are accumulated in lists and
-          concatenated once the selection is complete.
-        - Per-sample features are also accumulated in memory before being passed
-          to the OutputWriter.
-        - NOTE: For extremely large datasets, this accumulation can lead to high
-          memory usage. Future versions will implement disk-flushing (chunking).
+        - Batch-level statistics (`batch_metrics`) are accumulated in lists
+          and concatenated once the selection is complete.
+        - Per-sample features are also accumulated in memory before being
+          passed to the OutputWriter.
+        - NOTE: For large datasets, accumulation can lead to high memory
+          usage. Future versions will implement disk-flushing (chunking).
 
         Args:
             selection_name: Name of the current data selection.
@@ -327,6 +385,7 @@ class DatasetJob:
                 for k, v_list in features_accumulator.items():
                     features_chunk[k] = pa.concat_arrays(v_list)
 
+                self._inject_dataloader_column(selection_name, features_chunk)
                 self.features_output.write_table(selection_name, features_chunk, part_index)
 
                 # Reset features accumulator
@@ -346,6 +405,29 @@ class DatasetJob:
 
         # Write remaining features to disk
         if self.features_output and features_array:
+            self._inject_dataloader_column(selection_name, features_array)
             self.features_output.write_table(selection_name, features_array, part_index)
 
         return batches_metrics_array
+
+    def _inject_dataloader_column(self, selection_name: str, features: dict[str, Any]) -> None:
+        """Inject the dataloader column into a features dict when configured.
+
+        Adds the selection name as a column so the output parquet contains a
+        ``dataloader`` column identifying which dataset each row originates from.
+
+        Args:
+            selection_name: Name of the current data selection (dataloader name).
+            features: Mutable dict of column_name -> pa.Array to inject into.
+        """
+        if not self.features_output:
+            return
+        if not getattr(self.features_output, "add_dataloader_column", False):
+            return
+
+        col = self.features_output.dataloader_column_name
+        if not features:
+            return
+
+        sample = next(iter(features.values()))
+        features[col] = pa.array([selection_name] * len(sample))

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,8 @@ logger = logging.getLogger(__name__)
 
 class ImageEmbeddingProcessor(DatametricProcessor):
     """
-    Computes high-dimensional latent vectors (embeddings) for images using deep learning models.
+    Computes high-dimensional latent vectors (embeddings) for images
+    using deep learning models.
 
     This processor uses PyTorch and Torchvision to:
     1. Load images from bytes or file paths.
@@ -38,7 +40,8 @@ class ImageEmbeddingProcessor(DatametricProcessor):
     3. Run batch inference using a pre-trained model (e.g., ResNet, ViT).
     4. Extract features from a specific layer (e.g., 'avgpool').
 
-    The resulting embeddings are stored as a `FixedSizeListArray` in the features.
+    The resulting embeddings are stored as a `FixedSizeListArray`
+    in the features.
     """
 
     def __init__(
@@ -79,9 +82,9 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         """
         cfg = self.config or {}
 
-        dcfg = cfg.get("DATA", {})
-        self.image_column: str = dcfg.get("image_column", "image_bytes")
-        self.mode: str = dcfg.get("mode", "bytes")  # "bytes" or "path"
+        data_cfg = cfg.get("DATA", {})
+        self.image_column: str = data_cfg.get("image_column", "image_bytes")
+        self.mode: str = data_cfg.get("mode", "bytes")  # "bytes" or "path"
         if self.mode not in {"bytes", "path"}:
             raise ValueError(f"[{self.name}] DATA.mode must be 'bytes' or 'path'")
 
@@ -89,19 +92,35 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         self.dataset_root_path = str(cfg.get("dataset_root_path", "undefined"))
         logger.info(f"[ImageEmbeddingProcessor] dataset_root_path = '{self.dataset_root_path}'")
 
-        icfg = cfg.get("INFER", {})
-        self.size: tuple[int, int] = (
-            int(icfg.get("width", 224)),
-            int(icfg.get("height", 224)),
-        )
-        mean = icfg.get("norm_mean", [0.485, 0.456, 0.406])
-        std = icfg.get("norm_std", [0.229, 0.224, 0.225])
-        self.batch_size: int = int(icfg.get("batch_size", 32))
+        # S3 filesystem support
+        self.s3_fs = None
+        s3_config = cfg.get("s3_filesystem")
+        if s3_config:
+            from dqm_ml_job.utils import get_s3_filesystem
 
-        mcfg = cfg.get("MODEL", {})
-        self.arch: str = mcfg.get("arch", "resnet18")
-        self.nodes = mcfg.get("n_layer_feature", "avgpool")
-        self.device: str = mcfg.get("device", "cpu")
+            if s3_config is True:
+                self.s3_fs = get_s3_filesystem()
+            elif isinstance(s3_config, dict):
+                self.s3_fs = get_s3_filesystem(
+                    access_key=s3_config.get("access_key"),
+                    secret_key=s3_config.get("secret_key"),
+                    endpoint=s3_config.get("endpoint_override"),
+                    region=s3_config.get("region"),
+                )
+
+        infer_cfg = cfg.get("INFER", {})
+        self.size: tuple[int, int] = (
+            int(infer_cfg.get("width", 224)),
+            int(infer_cfg.get("height", 224)),
+        )
+        mean = infer_cfg.get("norm_mean", [0.485, 0.456, 0.406])
+        std = infer_cfg.get("norm_std", [0.229, 0.224, 0.225])
+        self.batch_size: int = int(infer_cfg.get("batch_size", 32))
+
+        model_cfg = cfg.get("MODEL", {})
+        self.arch: str = model_cfg.get("arch", "resnet18")
+        self.target_layer = model_cfg.get("n_layer_feature", "avgpool")
+        self.device: str = model_cfg.get("device", "cpu")
 
         # Build once
         self.transform = transforms.Compose(
@@ -112,13 +131,18 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             ]
         )
         self.model = self._load_model(self.arch, self.device)
-        self.fx = self._make_extractor(self.model, self.nodes)
+        self.feature_extractor = self._make_extractor(self.model, self.target_layer)
         self._embed_dim: int | None = None
 
         self._checked = True
 
     @override
     def needed_columns(self) -> list[str]:
+        """Return the list of columns required for image embedding extraction.
+
+        Returns:
+            List containing the image column name.
+        """
         if not getattr(self, "_checked", False):
             self.check_config()
         return [self.image_column]
@@ -154,50 +178,64 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             return {}
 
         # 1 load images
-        vals = batch.column(self.image_column).to_pylist()
-        imgs: list[torch.Tensor | None] = []
-        for v in vals:
-            if v is None:
-                imgs.append(None)
+        image_values = batch.column(self.image_column).to_pylist()
+        image_tensors: list[torch.Tensor | None] = []
+        for image_data in image_values:
+            if image_data is None:
+                image_tensors.append(None)
                 continue
             try:
                 if self.mode == "bytes":
-                    img = Image.open(io.BytesIO(v)).convert("RGB")
+                    img = Image.open(io.BytesIO(image_data)).convert("RGB")
                 else:
-                    img_path = Path(self.dataset_root_path) / v if self.dataset_root_path != "undefined" else Path(v)
-                    img = Image.open(img_path).convert("RGB")
-                imgs.append(self.transform(img))
+                    # Handle path mode with local or S3
+                    if self.dataset_root_path != "undefined" and self.s3_fs:
+                        # S3 key = bucket/prefix/relative_path
+                        s3_path = f"{self.dataset_root_path}/{image_data}"
+                        bucket_name = os.getenv("S3_BUCKET_NAME", "")
+                        s3_key = f"{bucket_name}/{s3_path}"
+                        with self.s3_fs.open_input_stream(s3_key) as f:
+                            img = Image.open(io.BytesIO(f.read())).convert("RGB")
+                            img = img.copy()  # Load into memory before closing file
+                    else:
+                        img_path = (
+                            Path(self.dataset_root_path) / image_data
+                            if self.dataset_root_path != "undefined"
+                            else Path(image_data)
+                        )
+                        img = Image.open(img_path).convert("RGB")
+                image_tensors.append(self.transform(img))
             except Exception as e:
                 logger.warning(f"[ImageEmbeddingProcessor] failed to load image: {e}")
-                imgs.append(None)
+                image_tensors.append(None)
 
         # inference in windows, preserve order
         embs: list[np.ndarray | None] = []
-        self.fx.eval()
+        self.feature_extractor.eval()
         with torch.no_grad():
-            i = 0
-            while i < len(imgs):
-                window = imgs[i : i + self.batch_size]
-                valid = [t for t in window if t is not None]
+            for batch_start in range(0, len(image_tensors), self.batch_size):
+                batch_slice = image_tensors[batch_start : batch_start + self.batch_size]
+                valid = [t for t in batch_slice if t is not None]
                 if valid:
-                    bt = torch.stack(valid).to(self.device)
-                    out = self.fx(bt)
+                    batch_tensor = torch.stack(valid).to(self.device)
+                    # create_feature_extractor returns dict when multiple nodes requested, else a single tensor
+                    out = self.feature_extractor(batch_tensor)
                     if isinstance(out, dict):
-                        flat_feats = [v.flatten(1) for v in out.values()]
+                        flat_feats = [layer_output.flatten(1) for layer_output in out.values()]
                         feats = torch.cat(flat_feats, dim=1)  # type : ignore TODO : check type error
                     else:
                         feats = out.flatten(1) if out.dim() > 2 else out
-                    arr = feats.detach().cpu().numpy().astype("float32")
-                    p = 0
-                    for t in window:
-                        if t is None:
+                    batch_embeddings_np = feats.detach().cpu().numpy().astype("float32")
+                    # Re-align None images with their original positions in the batch window
+                    pos = 0
+                    for item_or_none in batch_slice:
+                        if item_or_none is None:
                             embs.append(None)
                         else:
-                            embs.append(arr[p])
-                            p += 1
+                            embs.append(batch_embeddings_np[pos])
+                            pos += 1
                 else:
-                    embs.extend([None] * len(window))
-                i += self.batch_size
+                    embs.extend([None] * len(batch_slice))
 
         # 3. Infer embedding dim
         if self._embed_dim is None:
@@ -207,26 +245,38 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                     break
             if self._embed_dim is None:
                 return {}
-        d = self._embed_dim
+        embed_dim = self._embed_dim
 
         # 4. Build FixedSizeListArray
         flat: list[float] = []
         for emb in embs:
             if emb is None:
-                flat.extend([0.0] * d)
+                flat.extend([0.0] * embed_dim)
             else:
-                v = emb.ravel()
-                if v.size != d:
-                    v = v[:d] if v.size > d else np.pad(v, (0, d - v.size))
-                flat.extend(v.tolist())
+                flat_emb = emb.ravel()
+                # Handle rare dimension mismatches by truncating or zero-padding
+                if flat_emb.size != embed_dim:
+                    if flat_emb.size > embed_dim:
+                        flat_emb = flat_emb[:embed_dim]
+                    else:
+                        flat_emb = np.pad(flat_emb, (0, embed_dim - flat_emb.size))
+                flat.extend(flat_emb.tolist())
 
-        child = pa.array(np.asarray(flat, dtype=np.float32))
-        return {"embedding": pa.FixedSizeListArray.from_arrays(child, d)}
+        flat_array = pa.array(np.asarray(flat, dtype=np.float32))
+        return {"embedding": pa.FixedSizeListArray.from_arrays(flat_array, embed_dim)}
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """
-        Return an empty dictionary as embeddings are stored as features, we do not compute metrics.
+        """No-op metric computation for image embedding processor.
+
+        Embeddings are stored as features; no batch-level aggregation
+        is needed.
+
+        Args:
+            features: Dictionary of feature arrays from the batch.
+
+        Returns:
+            Empty dictionary.
         """
         return {}
 
@@ -264,25 +314,27 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             The loaded PyTorch model.
         """
         try:
-            m = torchvision.models.get_model(arch, weights="DEFAULT")
+            model = torchvision.models.get_model(arch, weights="DEFAULT")
         except Exception:
-            m = getattr(torchvision.models, arch)(pretrained=True)
-        return m.to(device)
+            # Fallback for older torchvision that lacks get_model()
+            model = getattr(torchvision.models, arch)(pretrained=True)
+        return model.to(device)
 
-    def _make_extractor(self, model: torch.nn.Module, nodes: Any) -> Any:
+    def _make_extractor(self, model: torch.nn.Module, target_layer: Any) -> Any:
         """Create a feature extractor from a model.
 
         Args:
             model: The PyTorch model to extract features from.
-            nodes: Layer name (str), index (int), or list of names to extract.
+            target_layer: Layer name (str), index (int), or list of names to extract.
 
         Returns:
             A feature extractor that returns the requested layer outputs.
         """
         names = list(dict(model.named_modules()).keys())
-        if isinstance(nodes, list):
-            return create_feature_extractor(model, return_nodes={n: n for n in nodes})
-        if isinstance(nodes, int):
-            idx = nodes if nodes >= 0 else len(names) + nodes
-            nodes = names[idx]
-        return create_feature_extractor(model, return_nodes={nodes: "features"})
+        if isinstance(target_layer, list):
+            return create_feature_extractor(model, return_nodes={n: n for n in target_layer})
+        if isinstance(target_layer, int):
+            idx = target_layer if target_layer >= 0 else len(names) + target_layer
+            layer_name = names[idx]
+            return create_feature_extractor(model, return_nodes={layer_name: "features"})
+        return create_feature_extractor(model, return_nodes={target_layer: "features"})

@@ -1,4 +1,4 @@
-dqm-ml-core>=2.0.0rc0
+dqm-ml-core
 torch>=2.0.0
 torchvision>=0.15.0
 

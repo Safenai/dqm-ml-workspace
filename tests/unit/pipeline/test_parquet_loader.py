@@ -60,7 +60,7 @@ def test_parquet_data_selection_bootstrap(mock_parquet_dataset):
     assert selection.samples_count == 100
     assert selection.filter_expr is not None
     # Verify filter_expr was used in ParquetDataset
-    mock_parquet_dataset.assert_called_with("dummy.parquet", filters=selection.filter_expr)
+    mock_parquet_dataset.assert_called_with("dummy.parquet", filters=selection.filter_expr, filesystem=None)
 
 
 def test_parquet_data_selection_iter(mock_parquet_dataset):

@@ -11,11 +11,7 @@ from tests.fixtures.cli_fixtures import (  # noqa: F401
     fixtures_dir,
     split_by_config_path,
 )
-from tests.fixtures.test_fixtures import (  # noqa: F401
-    mock_parquet_dataset,
-    sample_dataframe,
-    temp_output_path,
-)
+from tests.fixtures.test_fixtures import mock_parquet_dataset, sample_dataframe, temp_output_path  # noqa: F401
 from tests.integration.fixtures.config import tests_config  # noqa: F401
 from tests.integration.fixtures.data import (  # noqa: F401
     coco_data,

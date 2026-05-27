@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.0.0-rc2 (2026-05-27) - S3 support, pipeline refactoring, code quality
+
+This release adds S3 filesystem support, refactors the metric pipeline with dependency ordering, and improves code quality.
+
+### S3 Filesystem Support
+
+* Shared S3 utility (`dqm_ml_job.utils.s3.get_s3_filesystem`) with env-var and dict-based configuration.
+* S3 support in Parquet data loading, output writing, image embedding, and visual features processors.
+* `region` parameter for providers like OVH S3.
+* Image loading improvements: S3-first fallback, Parquet-to-Pillow `BytesIO` fix.
+
+### Pipeline Refactoring
+
+* Topological sort for processor ordering (generators before consumers).
+* Delta metrics rewritten with PyArrow `concat_tables` instead of manual dict merging.
+* Accumulate-then-flush mode for single-path output patterns.
+* Dataloader column injection in feature outputs.
+
+### Code Quality & Bug Fixes
+
+* Renamed cryptic variables (`self.fx` → `self.feature_extractor`, `vec` → `sum_fixed_to_vector`, etc.).
+* Fixed h1/h2 variable-shadowing bug in Wasserstein loop (was using only first histogram dimension).
+* Fixed RepresentativenessProcessor double-count bug (`exp_probs * total_count` squaring total).
+* Added missing docstrings; corrected error message grammar; translated French comments.
+
+### Packaging & Versioning
+
+* Removed pinned version requirements for workspace-level setuptools-scm.
+* Fixed package discovery in `pyproject.toml`.
+* Configured PyTorch UV index for CPU torch downloads.
+
 ## 2.0.0-rc (2026-04-10) - Release Candidate for V2
 
 This release is the V2.0.0 release candidate, featuring major refactoring, security fixes, and documentation improvements.

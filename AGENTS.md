@@ -51,9 +51,14 @@ Run linting with:
 uv run nox -s lint
 ```
 
-Fixable error:
+Show fixable error:
 ```bash
 uv run nox -s lint_fix
+```
+
+Edit fixable errors:
+```bash
+uv run nox -s fmt
 ```
 
 ### Spell Checking
@@ -328,6 +333,12 @@ curl -s "https://sonarcloud.io/api/issues/search?componentKeys=Safenai_dqm-ml-wo
 ```
 
 If `.total` > 0, there are issues to fix before merging.
+
+## Pipeline Timing Information
+
+Pipeline execution typically takes approximately 25 minutes to complete:
+- **code_quality stage**: ~5 minutes (linting, spell checking, type checking)
+- **test stage**: ~20 minutes (running the full test suite)
 
 ## Request Guidelines
 

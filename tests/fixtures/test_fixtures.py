@@ -3,9 +3,9 @@
 This module provides fixtures used in unit and integration tests.
 """
 
-import shutil
 from collections.abc import Generator
 from pathlib import Path
+import shutil
 from unittest.mock import patch
 
 import pandas as pd

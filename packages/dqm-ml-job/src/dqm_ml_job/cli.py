@@ -31,14 +31,25 @@ def parse_args(arg_list: list[str] | None) -> Any:
         The parsed Namespace object.
     """
     parser = argparse.ArgumentParser(
-        prog="dqm-ml", description="DQM-ML Job client", epilog="for more informations see README"
+        prog="dqm-ml",
+        description="DQM-ML Job client",
+        epilog="for more informations see README",
     )
 
     parser.add_argument(
-        "-p", "--process-config", type=str, nargs="+", required=True, help="configuration files to execute"
+        "-p",
+        "--process-config",
+        type=str,
+        nargs="+",
+        required=True,
+        help="configuration files to execute",
     )
 
-    parser.add_argument("--save-config", type=str, help="Path to save the resolved configuration")
+    parser.add_argument(
+        "--save-config",
+        type=str,
+        help="Path to save the resolved configuration",
+    )
 
     # TODO add parameters to pass directly files / directory as inputs for loaders
     args = parser.parse_args(arg_list)
@@ -158,12 +169,17 @@ def run(config: dict[str, Any]) -> None:
         elif key == "features":
             features_output = writer
         else:
-            raise ValueError(f"Unsupported output key '{key}'. Only 'features' and 'metrics' are allowed.")
+            raise ValueError(
+                f"Unsupported output key '{key}'. Only 'features', delta_metrics' and 'metrics' are allowed."
+            )
 
     progress_bar = config.get("progress_bar", True)
 
     job = DatasetJob(
-        dataloaders=dataloaders, metrics=metrics, features_output=features_output, progress_bar=progress_bar
+        dataloaders=dataloaders,
+        metrics=metrics,
+        features_output=features_output,
+        progress_bar=progress_bar,
     )
 
     dataselection_metrics_list, delta_metrics_table = job.run()
@@ -171,10 +187,15 @@ def run(config: dict[str, Any]) -> None:
     # If we have computed metrics to store
     if metrics_output:
         metrics_output.write_metrics_dict(dataselection_metrics_list)
+        if hasattr(metrics_output, "flush"):
+            metrics_output.flush()
 
     # If we have to compute delta metrics
     if delta_output and delta_metrics_table:
-        delta_output.write_table("delta", delta_metrics_table)
+        delta_data = {col: delta_metrics_table.column(col) for col in delta_metrics_table.column_names}
+        delta_output.write_table("delta", delta_data)
+        if hasattr(delta_output, "flush"):
+            delta_output.flush()
 
 
 if __name__ == "__main__":

@@ -23,8 +23,9 @@ class CompletenessProcessor(DatametricProcessor):
     """
     Data completeness processor that evaluates the completeness of tabular data.
 
-    This processor calculates completeness scores (ratio of non-null to total values)
-    for specified columns and provides overall dataset completeness metrics.
+    This processor calculates completeness scores (ratio of non-null to
+    total values) for specified columns and provides overall dataset
+    completeness metrics.
 
     The processor operates at multiple levels:
     - Batch level: Aggregated counts for streaming processing
@@ -36,24 +37,24 @@ class CompletenessProcessor(DatametricProcessor):
         Initialize the completeness processor.
 
         Args:
-            name: Name of the processor
+            name: Name of the processor.
             config: Configuration dictionary containing:
-                - input_columns: List of columns to analyze for completeness
-                - output_metrics: Dictionary mapping metric names to output column names
-                - include_per_column: Whether to include per-column completeness scores
-                - include_overall: Whether to include overall completeness score
+                - input_columns: List of columns to analyze.
+                - output_metrics: Mapping of metric names to column names.
+                - include_per_column: Include per-column completeness scores.
+                - include_overall: Include overall completeness score.
         """
         super().__init__(name, config)
 
-        cfg = self.config or {}
+        config = self.config or {}
 
-        # Configuration for what metrics to compute - pour chaque colonne et pour l'ensemble des colonnes
-        self.include_per_column: bool = bool(cfg.get("include_per_column", True))
-        self.include_overall: bool = bool(cfg.get("include_overall", True))
-        self.include_metadata: bool = bool(cfg.get("include_metadata", False))
+        # Which completeness levels to compute: per-column, overall, and metadata
+        self.include_per_column: bool = bool(config.get("include_per_column", True))
+        self.include_overall: bool = bool(config.get("include_overall", True))
+        self.include_metadata: bool = bool(config.get("include_metadata", False))
 
         # Output column mappings
-        self.output_metrics = cfg.get("output_metrics", {})
+        self.output_metrics = config.get("output_metrics", {})
 
         # Validation
         if not self.include_per_column and not self.include_overall:

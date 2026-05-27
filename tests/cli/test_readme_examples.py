@@ -3,8 +3,8 @@
 Tests that the examples referenced in README.md are valid and working.
 """
 
-import subprocess
 from pathlib import Path
+import subprocess
 
 import pytest
 

@@ -3,11 +3,11 @@ name = "dqm-workspace"
 dynamic = ["version"]
 requires-python = ">=3.10"
 dependencies = [
-    "dqm-ml>=2.0.0rc0",
-    "dqm-ml-core>=2.0.0rc0",
-    "dqm-ml-images>=2.0.0rc0",
-    "dqm-ml-job>=2.0.0rc0",
-    "dqm-ml-pytorch>=2.0.0rc0",
+    "dqm-ml",
+    "dqm-ml-core",
+    "dqm-ml-images",
+    "dqm-ml-job",
+    "dqm-ml-pytorch",
     "pre-commit>=4.5.0",
     "pycocotools>=2.0.10",
     "ruamel-yaml>=0.19.1",
@@ -23,6 +23,11 @@ Repository = "https://github.com/Safenai/dqm-ml-workspace"
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/dqm_ml_workspace/_version_.py"
 
 # UV Configuration workspace
 # - dependency groups, repository packages to includes, etc.
@@ -102,8 +107,17 @@ licenses = [
 ignore_missing_imports = true
 strict = true
 enable_error_code = ["deprecated", "exhaustive-match", "explicit-override"]
+exclude = 'build'
 # If certain strict config options are too pedantic for a project,
 # disable them selectively here by setting to false.
+
+[[tool.mypy.overrides]]
+module = "dqm_ml_job.dataloaders.parquet"
+disable_error_code = ["no-untyped-call", "attr-defined", "name-defined"]
+
+[[tool.mypy.overrides]]
+module = "dqm_ml_job.outputwriter.parquet"
+disable_error_code = ["no-untyped-call"]
 
 [tool.ruff]
 line-length = 120
@@ -155,7 +169,7 @@ addopts = [
     "--strict-config",
     "--strict-markers",
     "--html=pytest_report.html",
-    # Force sugar on gitlab runner
+    # Force sugar on runner
     "--force-sugar",
     # Set global timeout for each test
     "--timeout=300",
@@ -195,6 +209,3 @@ exclude_also = [
 
 [tool.cspell]
 files = ["**/*"]
-
-[tool.setuptools_scm]
-version_file = "src/dqm_ml_workspace/_version_.py"

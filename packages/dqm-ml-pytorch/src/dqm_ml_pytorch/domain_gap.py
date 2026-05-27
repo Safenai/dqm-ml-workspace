@@ -23,22 +23,23 @@ logger = logging.getLogger(__name__)
 
 class DomainGapProcessor(DatametricProcessor):
     """
-    Computes statistical distances between source and target dataselections using image embeddings.
+    Computes statistical distances between source and target
+    dataselections using image embeddings.
 
     This processor works in two stages:
-    1. Dataset Summary: Aggregates high-dimensional embeddings into compact statistics
-       (mean, variance, outer products, histograms).
-    2. Delta Computation: Uses these summaries to calculate distance metrics between
-       a source and a target dataset.
+    1. Dataset Summary: Aggregates high-dimensional embeddings into
+       compact statistics (mean, variance, outer products, histograms).
+    2. Delta Computation: Uses these summaries to calculate distance
+       metrics between a source and a target dataset.
 
     Supported Delta Metrics:
-      - `klmvn_diag`: Kullback-Leibler Divergence assuming a multivariate Normal
+      - `klmvn_diag`: KL divergence assuming a multivariate Normal
         distribution with a diagonal covariance matrix.
       - `mmd_linear`: Maximum Mean Discrepancy with a linear kernel.
-      - `fid`: Frechet Inception Distance. Measures distance between two Gaussians
-        fitted to feature representations (requires full covariance calculation).
-      - `wasserstein_1d`: Average 1D Wasserstein distance across embedding dimensions,
-        approximated via histograms.
+      - `fid`: Frechet Inception Distance. Measures distance between
+        two Gaussians fitted to feature representations.
+      - `wasserstein_1d`: Average 1D Wasserstein distance across
+        embedding dimensions, approximated via histograms.
     """
 
     def __init__(
@@ -75,12 +76,12 @@ class DomainGapProcessor(DatametricProcessor):
         - DELTA: The target metric to compute (klmvn_diag, mmd_linear, fid, wasserstein_1d)
         """
         cfg = self.config or {}
-        icfg = cfg.get("INPUT", {})
-        self.embedding_col: str = icfg.get("embedding_col", "embedding")
+        input_cfg = cfg.get("INPUT", {})
+        self.embedding_col: str = input_cfg.get("embedding_col", "embedding")
 
-        dcfg = cfg.get("DELTA", {})
-        self.delta_metric: str = str(dcfg.get("metric", "klmvn_diag")).lower()
-        scfg = cfg.get("SUMMARY", {})
+        delta_cfg = cfg.get("DELTA", {})
+        self.delta_metric: str = str(delta_cfg.get("metric", "klmvn_diag")).lower()
+        summary_cfg = cfg.get("SUMMARY", {})
 
         if self.delta_metric == "fid":
             auto_sum_outer = True
@@ -88,23 +89,28 @@ class DomainGapProcessor(DatametricProcessor):
         elif self.delta_metric == "wasserstein_1d":
             auto_sum_outer = False
             auto_hist_1d = True
-        else:  # klmvn_diag, mmd_linear
+        else:  # klmvn_diag, mmd_linear: need neither outer product nor histograms
             auto_sum_outer = False
             auto_hist_1d = False
 
-        self.collect_sum_outer: bool = bool(scfg.get("collect_sum_outer", auto_sum_outer))
-        self.collect_hist_1d: bool = bool(scfg.get("collect_hist_1d", auto_hist_1d))
+        self.collect_sum_outer: bool = bool(summary_cfg.get("collect_sum_outer", auto_sum_outer))
+        self.collect_hist_1d: bool = bool(summary_cfg.get("collect_hist_1d", auto_hist_1d))
 
         # Wasserstein-1D parameters
-        self.hist_dims: int = int(scfg.get("hist_dims", 64))
-        self.hist_bins: int = int(scfg.get("hist_bins", 32))
-        rng = scfg.get("hist_range", [-3.0, 3.0])
+        self.hist_dims: int = int(summary_cfg.get("hist_dims", 64))
+        self.hist_bins: int = int(summary_cfg.get("hist_bins", 32))
+        rng = summary_cfg.get("hist_range", [-3.0, 3.0])
         self.hist_range: tuple[float, float] = (float(rng[0]), float(rng[1]))
 
         self._checked = True
 
     @override
     def needed_columns(self) -> list[str]:
+        """Return the list of columns required for domain gap computation.
+
+        Returns:
+            List containing the embedding column name.
+        """
         if not getattr(self, "_checked", False):
             self.check_config()
         return [self.embedding_col]
@@ -136,32 +142,35 @@ class DomainGapProcessor(DatametricProcessor):
         if emb is None or not isinstance(emb, pa.FixedSizeListArray):
             return {}
 
-        n = len(emb)
-        # d = emb.list_size
-        d = len(emb[0])
-        child = emb.values  # flat
-        arr = np.asarray(child.to_numpy()).reshape(n, d)
+        num_samples = len(emb)
+        embed_dim = len(emb[0])
+        flat_values = emb.values  # flat
+        emb_matrix = np.asarray(flat_values.to_numpy()).reshape(num_samples, embed_dim)
 
         out: dict[str, pa.Array] = {}
-        out["count"] = pa.array([n], type=pa.int64())
-        out["sum"] = pa.FixedSizeListArray.from_arrays(pa.array(arr.sum(axis=0).astype(np.float64)), d)
-        out["sum_sq"] = pa.FixedSizeListArray.from_arrays(pa.array((arr * arr).sum(axis=0).astype(np.float64)), d)
+        out["count"] = pa.array([num_samples], type=pa.int64())
+        sum_vec = emb_matrix.sum(axis=0).astype(np.float64)
+        out["sum"] = pa.FixedSizeListArray.from_arrays(pa.array(sum_vec), embed_dim)
+        sum_sq_vec = (emb_matrix * emb_matrix).sum(axis=0).astype(np.float64)
+        out["sum_sq"] = pa.FixedSizeListArray.from_arrays(pa.array(sum_sq_vec), embed_dim)
 
         # optional: sum_outer for FID
         if self.collect_sum_outer:
-            s = (arr.T @ arr).reshape(-1).astype(np.float64)
-            out["sum_outer"] = pa.FixedSizeListArray.from_arrays(pa.array(s), d * d)
+            # sum of outer products = X^T X (uncentered Gram matrix), needed for FID covariance
+            sum_outer_product = (emb_matrix.T @ emb_matrix).reshape(-1).astype(np.float64)
+            outer_dim = embed_dim * embed_dim
+            out["sum_outer"] = pa.FixedSizeListArray.from_arrays(pa.array(sum_outer_product), outer_dim)
 
         # optional: histograms for Wasserstein-1D
         if self.collect_hist_1d:
-            use_dims = min(d, self.hist_dims)
+            use_dims = min(embed_dim, self.hist_dims)
             low, high = self.hist_range
             hist_list: list[np.ndarray] = []
             for j in range(use_dims):
-                h, _ = np.histogram(arr[:, j], bins=self.hist_bins, range=(low, high))
-                hist_list.append(h.astype(np.int64))
-            h = np.stack(hist_list, axis=0).reshape(-1)
-            out["hist_counts"] = pa.FixedSizeListArray.from_arrays(pa.array(h), self.hist_bins * use_dims)
+                hist_1d, _ = np.histogram(emb_matrix[:, j], bins=self.hist_bins, range=(low, high))
+                hist_list.append(hist_1d.astype(np.int64))
+            hist_all = np.stack(hist_list, axis=0).reshape(-1)
+            out["hist_counts"] = pa.FixedSizeListArray.from_arrays(pa.array(hist_all), self.hist_bins * use_dims)
 
         return out
 
@@ -170,7 +179,8 @@ class DomainGapProcessor(DatametricProcessor):
         """Aggregate batch-level summary statistics into global dataselection statistics.
 
         Args:
-            batch_metrics: Dictionary containing batch-level statistics (count, sum, sum_sq, etc.).
+            batch_metrics: Dictionary containing batch-level statistics (
+                count, sum, sum_sq, etc.).
 
         Returns:
             Dictionary containing aggregated dataset-level statistics.
@@ -179,13 +189,14 @@ class DomainGapProcessor(DatametricProcessor):
             return {}
 
         def _sum_scalar(a: pa.Array) -> int:
+            """Sum all values in a scalar pyarrow Array."""
             return int(np.asarray(a.to_numpy()).sum())
 
-        def _sum_fixed(v: pa.FixedSizeListArray) -> tuple[np.ndarray, int]:
-            vals = np.asarray(v.values.to_numpy(), dtype=np.float64)
-            d = len(v[0])
-            # d = v.list_size
-            return vals.reshape(-1, d).sum(axis=0), d
+        def _sum_fixed(fixed_list_array: pa.FixedSizeListArray) -> tuple[np.ndarray, int]:
+            """Sum all FixedSizeList entries into a single numpy vector."""
+            vals = np.asarray(fixed_list_array.values.to_numpy(), dtype=np.float64)
+            list_size = len(fixed_list_array[0])
+            return vals.reshape(-1, list_size).sum(axis=0), list_size
 
         out: dict[str, pa.Array] = {}
 
@@ -197,18 +208,19 @@ class DomainGapProcessor(DatametricProcessor):
 
         # sum / sum_sq
         if "sum" in batch_metrics:
-            s, d = _sum_fixed(batch_metrics["sum"])
-            out["sum"] = pa.FixedSizeListArray.from_arrays(pa.array(s), d)
+            sum_vec, list_size = _sum_fixed(batch_metrics["sum"])
+            out["sum"] = pa.FixedSizeListArray.from_arrays(pa.array(sum_vec), list_size)
         if "sum_sq" in batch_metrics:
-            s2, d2 = _sum_fixed(batch_metrics["sum_sq"])
-            out["sum_sq"] = pa.FixedSizeListArray.from_arrays(pa.array(s2), d2)
+            sum_sq_vec, list_size2 = _sum_fixed(batch_metrics["sum_sq"])
+            out["sum_sq"] = pa.FixedSizeListArray.from_arrays(pa.array(sum_sq_vec), list_size2)
 
         # optional sum_outer
         if "sum_outer" in batch_metrics:
             so_vals = np.asarray(batch_metrics["sum_outer"].values.to_numpy(), dtype=np.float64)
-            dd = len(batch_metrics["sum_outer"][0])
-            # dd = batch_metrics["sum_outer"].list_size
-            out["sum_outer"] = pa.FixedSizeListArray.from_arrays(pa.array(so_vals.reshape(-1, dd).sum(axis=0)), dd)
+            outer_dim = len(batch_metrics["sum_outer"][0])
+            out["sum_outer"] = pa.FixedSizeListArray.from_arrays(
+                pa.array(so_vals.reshape(-1, outer_dim).sum(axis=0)), outer_dim
+            )
 
         # optional hist_counts
         if "hist_counts" in batch_metrics:
@@ -223,12 +235,11 @@ class DomainGapProcessor(DatametricProcessor):
 
     @override
     def compute_delta(self, source: dict[str, pa.Array], target: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """
-        Calculate the domain gap metric between source and target dataselection statistics.
+        """Calculate the domain gap metric between source and target statistics.
 
         Args:
-            source: Dataselection statistics from the source dataset (computed via `compute`).
-            target: Dataselection statistics from the target dataset (computed via `compute`).
+            source: Dataselection statistics from the source dataset.
+            target: Dataselection statistics from the target dataset.
 
         Returns:
             Dictionary containing the calculated metric value.
@@ -238,18 +249,17 @@ class DomainGapProcessor(DatametricProcessor):
         # TODO : check config and available metrics outside of computation
         # TODO : add a return code error in th API
 
-        def vec(
-            a: pa.FixedSizeListArray,
+        def sum_fixed_to_vector(
+            fixed_list_array: pa.FixedSizeListArray,
         ) -> Any:  # TODO : check type error np.ndarray
-            """Aggregate a FixedSizeListArray into a single numpy vector by summing all lists."""
-            len_a = len(a[0])
-            # len_a = a.list_size
-            array = np.asarray(a.values.to_numpy(), dtype=np.float64).reshape(-1, len_a).sum(axis=0)
-            return array  # type : ignore[no-any-return]
+            """Sum all FixedSizeList entries into a single numpy vector."""
+            len_a = len(fixed_list_array[0])
+            sum_vector = np.asarray(fixed_list_array.values.to_numpy(), dtype=np.float64).reshape(-1, len_a).sum(axis=0)
+            return sum_vector  # type : ignore[no-any-return]
 
-        def scalar(a: pa.Array) -> float:
+        def sum_to_scalar(arr: pa.Array) -> float:
             """Sum all elements in a pyarrow Array and return as a float."""
-            return float(np.asarray(a.to_numpy()).sum())
+            return float(np.asarray(arr.to_numpy()).sum())
 
         metric = self.delta_metric
 
@@ -259,55 +269,61 @@ class DomainGapProcessor(DatametricProcessor):
                 need |= {"sum_sq"}
             if metric == "fid":
                 need |= {"sum_outer"}
-            for side, name in ((source, "source"), (target, "target")):
-                if not need.issubset(side.keys()):
+            for dataset_stats, name in ((source, "source"), (target, "target")):
+                if not need.issubset(dataset_stats.keys()):
                     return {
                         "metric": pa.array([metric]),
                         "note": pa.array([f"missing keys in {name}: {sorted(need)}"]),
                     }
 
-            n1, n2 = scalar(source["count"]), scalar(target["count"])
-            if n1 <= 0 or n2 <= 0:
+            n_src, n_tgt = sum_to_scalar(source["count"]), sum_to_scalar(target["count"])
+            if n_src <= 0 or n_tgt <= 0:
                 return {
                     "metric": pa.array([metric]),
                     "note": pa.array(["empty summaries"]),
                 }
 
-            mu1 = vec(source["sum"]) / n1
-            mu2 = vec(target["sum"]) / n2
+            mean_src = sum_fixed_to_vector(source["sum"]) / n_src
+            mean_tgt = sum_fixed_to_vector(target["sum"]) / n_tgt
 
             if metric == "mmd_linear":
-                diff = mu1 - mu2
+                diff = mean_src - mean_tgt
                 val = float(np.dot(diff, diff))
                 return {"mmd_linear": pa.array([val], type=pa.float64())}
 
-            v1 = np.maximum(vec(source["sum_sq"]) / n1 - mu1 * mu1, 1e-9)
-            v2 = np.maximum(vec(target["sum_sq"]) / n2 - mu2 * mu2, 1e-9)
+            # variance = E[X^2] - E[X]^2; clip to 1e-9 to avoid division by zero
+            var_src = np.maximum(sum_fixed_to_vector(source["sum_sq"]) / n_src - mean_src * mean_src, 1e-9)
+            var_tgt = np.maximum(sum_fixed_to_vector(target["sum_sq"]) / n_tgt - mean_tgt * mean_tgt, 1e-9)
 
             if metric == "klmvn_diag":
-                term_var = np.sum(v1 / v2 - 1.0 - np.log(v1 / v2))
-                term_mean = np.sum((mu2 - mu1) ** 2 / v2)
+                # KL divergence between two diagonal Gaussians:
+                # sum(var_ratio - 1 - log(var_ratio) + mean_diff^2 / var_tgt) / 2
+                term_var = np.sum(var_src / var_tgt - 1.0 - np.log(var_src / var_tgt))
+                term_mean = np.sum((mean_tgt - mean_src) ** 2 / var_tgt)
                 val = 0.5 * (term_var + term_mean)
                 return {"klmvn_diag": pa.array([float(val)], type=pa.float64())}
 
             if metric == "fid":
-                so1 = vec(source["sum_outer"])
-                so2 = vec(target["sum_outer"])
-                d = int(np.sqrt(so1.size))
-                s1 = (so1.reshape(d, d) / n1) - np.outer(mu1, mu1)
-                s2 = (so2.reshape(d, d) / n2) - np.outer(mu2, mu2)
+                sum_outer_src = sum_fixed_to_vector(source["sum_outer"])
+                sum_outer_tgt = sum_fixed_to_vector(target["sum_outer"])
+                # Recover embedding dimension: sum_outer is d*d long
+                embed_dim = int(np.sqrt(sum_outer_src.size))
+                cov_src = (sum_outer_src.reshape(embed_dim, embed_dim) / n_src) - np.outer(mean_src, mean_src)
+                cov_tgt = (sum_outer_tgt.reshape(embed_dim, embed_dim) / n_tgt) - np.outer(mean_tgt, mean_tgt)
                 from scipy.linalg import sqrtm
 
-                diff = mu1 - mu2
+                diff = mean_src - mean_tgt
                 # The `disp` argument is deprecated and will be
                 # removed in SciPy 1.18.0. The previously returned error estimate
                 # can be computed as ``norm(X @ X - A, 'fro')**2 / norm(A, 'fro')``
                 # covmean, _ = sqrtm(s1.dot(s2), disp=False)
-                covmean = sqrtm(s1.dot(s2))
+                covmean = sqrtm(cov_src.dot(cov_tgt))
 
                 if np.iscomplexobj(covmean):
                     covmean = covmean.real
-                fid = diff.dot(diff) + np.trace(s1) + np.trace(s2) - 2 * np.trace(covmean)
+                # FID = ||mu1 - mu2||^2 + Tr(S1 + S2 - 2 * sqrt(S1 * S2))
+                # (Heusel et al. NeurIPS 2017)
+                fid = diff.dot(diff) + np.trace(cov_src) + np.trace(cov_tgt) - 2 * np.trace(covmean)
                 return {"fid": pa.array([float(abs(fid))], type=pa.float64())}
 
         if metric == "wasserstein_1d":
@@ -316,12 +332,12 @@ class DomainGapProcessor(DatametricProcessor):
                     "metric": pa.array([metric]),
                     "note": pa.array(["missing hist_counts"]),
                 }
-            h1 = np.asarray(source["hist_counts"].values.to_numpy(), dtype=np.int64)
-            h2 = np.asarray(target["hist_counts"].values.to_numpy(), dtype=np.int64)
+            h_src = np.asarray(source["hist_counts"].values.to_numpy(), dtype=np.int64)
+            h_tgt = np.asarray(target["hist_counts"].values.to_numpy(), dtype=np.int64)
             # derive dims from summary config
             use_dims = self.hist_dims
             bins = self.hist_bins
-            if h1.size != h2.size or h1.size != bins * use_dims:
+            if h_src.size != h_tgt.size or h_src.size != bins * use_dims:
                 return {
                     "metric": pa.array([metric]),
                     "note": pa.array(["hist_counts length mismatch"]),
@@ -329,16 +345,22 @@ class DomainGapProcessor(DatametricProcessor):
             width = (self.hist_range[1] - self.hist_range[0]) / bins
             total = 0.0
             used = 0
+            # NOTE: previous code reassigned h_src/h_tgt inside the loop:
+            #   h_src = h_src[j*bins:(j+1)*bins]
+            # After j=0, h_src was only `bins`-long, so j>=1 sliced empty arrays —
+            # only the first dimension's histogram was used.
+            # Fix: slice into local vars from the original arrays so all dimensions contribute.
             for j in range(use_dims):
-                h1 = h1[j * bins : (j + 1) * bins].astype(np.float64)
-                h2 = h2[j * bins : (j + 1) * bins].astype(np.float64)
-                if h1.sum() == 0 and h2.sum() == 0:
+                h_src_slice = h_src[j * bins : (j + 1) * bins].astype(np.float64)
+                h_tgt_slice = h_tgt[j * bins : (j + 1) * bins].astype(np.float64)
+                if h_src_slice.sum() == 0 and h_tgt_slice.sum() == 0:
                     continue
-                p = h1 / max(1.0, h1.sum())
-                q = h2 / max(1.0, h2.sum())
-                cdf_p = np.cumsum(p)
-                cdf_q = np.cumsum(q)
-                total += float(np.sum(np.abs(cdf_p - cdf_q)) * width)
+                prob_src = h_src_slice / max(1.0, h_src_slice.sum())
+                prob_tgt = h_tgt_slice / max(1.0, h_tgt_slice.sum())
+                cdf_src = np.cumsum(prob_src)
+                cdf_tgt = np.cumsum(prob_tgt)
+                # 1D Wasserstein = integral of |CDF_src - CDF_tgt| approximated as sum(|diff|) * bin_width
+                total += float(np.sum(np.abs(cdf_src - cdf_tgt)) * width)
                 used += 1
             val = total / max(1, used)
             return {"wasserstein_1d": pa.array([val], type=pa.float64())}

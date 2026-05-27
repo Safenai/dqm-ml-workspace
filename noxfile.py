@@ -73,6 +73,7 @@ def test_dev(s: Session) -> None:
                 "ruff",
                 "check",
                 "packages",
+                "tests",
                 "--select",
                 "I",
                 # Also remove unused imports.
@@ -84,7 +85,15 @@ def test_dev(s: Session) -> None:
             ],
             id="sort_imports",
         ),
-        param(["ruff", "format", "packages"], id="format"),
+        param(
+            [
+                "ruff",
+                "format",
+                "packages",
+                "tests",
+            ],
+            id="format",
+        ),
     ],
 )
 def fmt(s: Session, command: list[str]) -> None:

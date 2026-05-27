@@ -40,10 +40,20 @@ def optional_dependencies(error: str = "ignore") -> Generator[None, None, None]:
 
 
 def display_version(arg_list: list[str] | None = None) -> None:
+    """Print the DQM-ML core version to stdout.
+
+    Args:
+        arg_list: Unused, provided for CLI compatibility.
+    """
     print(f"DQM-ML version : {core_version}")
 
 
 def display_list_of(arg_list: list[str] | None = None) -> None:
+    """Print all registered plugins (metrics, dataloaders, output writers).
+
+    Args:
+        arg_list: Unused, provided for CLI compatibility.
+    """
     # TODO : we display all but we can filter / use extra parameters
     print("Available data metrics_registry")
     for key, value in PluginLoadedRegistry.get_metrics_registry().items():
@@ -59,6 +69,11 @@ def display_list_of(arg_list: list[str] | None = None) -> None:
 
 
 def get_available_command() -> dict[str, Any]:
+    """Build a dictionary of available CLI commands.
+
+    Returns:
+        Dict mapping command names to their handler functions.
+    """
     command_list = {"version": display_version, "list": display_list_of}
     optional_dep_mode = "warn"
 
