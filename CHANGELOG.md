@@ -1,8 +1,17 @@
 # Changelog
 
-## 2.0.0-rc2 (2026-05-27) - S3 support, pipeline refactoring, code quality
+## 2.0.0-rc2 (2026-06-03) - S3 support, pipeline refactoring, new algorithms, code quality
 
-This release adds S3 filesystem support, refactors the metric pipeline with dependency ordering, and improves code quality.
+This release adds S3 filesystem support, refactors the metric pipeline with dependency ordering, introduces diversity metrics and 4 new domain gap algorithms, and improves code quality.
+
+### Issue ticket number and link
+
+* fix: [#18](https://github.com/Safenai/dqm-ml-workspace/issues/18) - Integrate lexical and visual diversity metrics to v2
+* fix: [#17](https://github.com/Safenai/dqm-ml-workspace/issues/17) - Integrate categorical data diversity metric to v2
+* fix: [#16](https://github.com/Safenai/dqm-ml-workspace/issues/16) - Integrate Domain Gap metric MMD to v2
+* fix: [#15](https://github.com/Safenai/dqm-ml-workspace/issues/15) - Integrate Domain Gap metric PAD to v2
+* fix: [#14](https://github.com/Safenai/dqm-ml-workspace/issues/14) - Integrate Domain Gap metric CMD to v2
+* fix: [#4](https://github.com/Safenai/dqm-ml-workspace/issues/4) - Computed values differ between V1.1.2 and new implementation proposed for domain gap
 
 ### S3 Filesystem Support
 
@@ -18,12 +27,37 @@ This release adds S3 filesystem support, refactors the metric pipeline with depe
 * Accumulate-then-flush mode for single-path output patterns.
 * Dataloader column injection in feature outputs.
 
+### Diversity Metrics (new)
+
+* New `DiversityProcessor` with streaming batch-level computation.
+* Four indices: Simpson, Gini-Simpson, Shannon, and Richness.
+* Integration test fixtures and synthetic data generators.
+
+### Domain Gap Algorithms (new)
+
+* 4 new delta metrics: **MMD-RBF**, **MMD-Poly**, **PAD**, **CMD** with multi-layer support.
+* Image embedding refactoring and visual_features simplification for domain gap pipeline.
+* Updated representativeness processor for compatibility.
+* New domain gap benchmark suite and expanded integration fixtures.
+* Updated configuration templates and documentation.
+
+### .agents/ Refactoring
+
+* Replaced 364-line inline `AGENTS.md` with a shim pointing to `.agents/AGENTS.md`.
+* 7 standalone agent files: architecture, code style, git workflow, testing, project docs, and agent guidelines.
+
 ### Code Quality & Bug Fixes
 
 * Renamed cryptic variables (`self.fx` → `self.feature_extractor`, `vec` → `sum_fixed_to_vector`, etc.).
 * Fixed h1/h2 variable-shadowing bug in Wasserstein loop (was using only first histogram dimension).
 * Fixed RepresentativenessProcessor double-count bug (`exp_probs * total_count` squaring total).
+* Reduced cognitive complexity below 15 in 5 modules by extracting focused helper methods (diversity, visual_features, domain_gap, image_embedding, job).
+* Replaced legacy `np.random.*` calls with seeded `default_rng()` Generator API for reproducible results.
+* Fixed type/security issues: missing `gamma="auto"` in SVC, `logger.error` → `logger.exception`, hardcoded `/tmp` → `tempfile.gettempdir()`.
+* Fixed `dataset_root_path` being set to string `"None"` instead of Python `None`.
+* Consolidated duplicate string literals into module constants; fixed shellcheck `[` → `[[`.
 * Added missing docstrings; corrected error message grammar; translated French comments.
+* Removed unused Dockerfile and container CI workflow.
 
 ### Packaging & Versioning
 
@@ -37,19 +71,19 @@ This release is the V2.0.0 release candidate, featuring major refactoring, secur
 
 ### Issue ticket number and link
 
-* fix: #61 - Python 3.10/3.11 compatibility
-* fix: #60 - Fix parquet dataloader with image_path column
-* fix: #59 - Data selection tests for CLI
-* fix: #41 - Security warnings addressed
-* fix: #31 - Test package dependencies upgraded
-* fix: #29 - dqm-ml-pipeline renamed to dqm-ml-job
-* fix: #28 - Tests moved to workspace root
-* fix: #27 - Multi data selection configuration
-* fix: #26 - Domain gap computation for multiple selections
-* fix: #25 - Multiple data selection in same job
-* fix: #24 - Progress messages during post-processing
-* fix: #22 - Output folder auto-creation
-* fix: #11 - MkDocs documentation generation
+* fix: [#61](https://github.com/Safenai/dqm-ml-workspace/issues/61) - Python 3.10/3.11 compatibility
+* fix: [#60](https://github.com/Safenai/dqm-ml-workspace/issues/60) - Fix parquet dataloader with image_path column
+* fix: [#59](https://github.com/Safenai/dqm-ml-workspace/issues/59) - Data selection tests for CLI
+* fix: [#41](https://github.com/Safenai/dqm-ml-workspace/issues/41) - Security warnings addressed
+* fix: [#31](https://github.com/Safenai/dqm-ml-workspace/issues/31) - Test package dependencies upgraded
+* fix: [#29](https://github.com/Safenai/dqm-ml-workspace/issues/29) - dqm-ml-pipeline renamed to dqm-ml-job
+* fix: [#28](https://github.com/Safenai/dqm-ml-workspace/issues/28) - Tests moved to workspace root
+* fix: [#27](https://github.com/Safenai/dqm-ml-workspace/issues/27) - Multi data selection configuration
+* fix: [#26](https://github.com/Safenai/dqm-ml-workspace/issues/26) - Domain gap computation for multiple selections
+* fix: [#25](https://github.com/Safenai/dqm-ml-workspace/issues/25) - Multiple data selection in same job
+* fix: [#24](https://github.com/Safenai/dqm-ml-workspace/issues/24) - Progress messages during post-processing
+* fix: [#22](https://github.com/Safenai/dqm-ml-workspace/issues/22) - Output folder auto-creation
+* fix: [#11](https://github.com/Safenai/dqm-ml-workspace/issues/11) - MkDocs documentation generation
 
 ### Breaking Changes
 
@@ -150,9 +184,9 @@ This release is dedicated to rename dqm-ml-pipeline as sqm-ml-job, correct secur
 
 ### Issue ticket number and link
 
-* fix: #42
-* fix: #31
-* fix: #31
+* fix: [#42](https://github.com/Safenai/dqm-ml-workspace/issues/42)
+* fix: [#31](https://github.com/Safenai/dqm-ml-workspace/issues/31)
+* fix: [#31](https://github.com/Safenai/dqm-ml-workspace/issues/31)
 
 ### Other details on several changes
 
