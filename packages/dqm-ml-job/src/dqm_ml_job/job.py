@@ -102,6 +102,25 @@ class DatasetJob:
         return self._topological_sort(procs, dep_on)
 
     @staticmethod
+    def _register_generated_columns(procs: list[DatametricProcessor]) -> dict[str, set[int]]:
+        """Build a mapping from column names to the processor indices that generate them.
+
+        Args:
+            procs: List of metric processors.
+
+        Returns:
+            Dict mapping column names to sets of processor indices.
+        """
+        generated_by: dict[str, set[int]] = {}
+        for i, p in enumerate(procs):
+            for col in p.generated_features():
+                generated_by.setdefault(col, set()).add(i)
+            if hasattr(p, "generated_columns"):
+                for col in p.generated_columns():
+                    generated_by.setdefault(col, set()).add(i)
+        return generated_by
+
+    @staticmethod
     def _build_dependency_graph(procs: list[DatametricProcessor]) -> list[set[int]]:
         """Build a dependency graph from a list of processors.
 
@@ -112,14 +131,7 @@ class DatasetJob:
             List of sets where dep_on[i] contains indices of processors
             that processor i depends on.
         """
-        generated_by: dict[str, set[int]] = {}
-        for i, p in enumerate(procs):
-            for col in p.generated_features():
-                generated_by.setdefault(col, set()).add(i)
-            if hasattr(p, "generated_columns"):
-                for col in p.generated_columns():
-                    generated_by.setdefault(col, set()).add(i)
-
+        generated_by = DatasetJob._register_generated_columns(procs)
         dep_on: list[set[int]] = [set() for _ in procs]
         for i, p in enumerate(procs):
             for col in p.needed_columns():
@@ -162,6 +174,47 @@ class DatasetJob:
             logger.info(f"    Generated features: {metric.generated_features()}")
             logger.info(f"    Generated metrics: {metric.generated_metrics()}")
 
+    def _discover_selections(self) -> list[DataSelection]:
+        """Discover all data selections from all configured dataloaders.
+
+        Returns:
+            List of DataSelection instances.
+        """
+        all_selections: list[DataSelection] = []
+        for loader in self.dataloaders.values():
+            all_selections.extend(loader.get_selections())
+        return all_selections
+
+    def _compute_selection_metrics(
+        self,
+        selection_name: str,
+        batches_metrics_array: dict[str, Any],
+        metrics_processors: list[DatametricProcessor],
+    ) -> dict[str, Any]:
+        """Compute dataset-level metrics for a single selection.
+
+        Args:
+            selection_name: Name of the selection.
+            batches_metrics_array: Accumulated batch metrics.
+            metrics_processors: List of processors.
+
+        Returns:
+            Dictionary of computed dataset metrics.
+        """
+        dataset_metrics: dict[str, Any] = {}
+        metrics_iter = (
+            tqdm(metrics_processors, desc="metrics", position=1, leave=False)
+            if self.progress_bar
+            else metrics_processors
+        )
+        for metric in metrics_iter:
+            if logging.getLogger().level == logging.DEBUG:
+                logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {selection_name}")
+            dataset_metrics.update(metric.compute(batch_metrics=batches_metrics_array))
+            if logging.getLogger().level == logging.DEBUG:
+                logger.debug(f"Available metrics  {list(dataset_metrics.keys())}")
+        return dataset_metrics
+
     def run(self) -> tuple[dict[Any, dict[str, Any]], pa.Table | None]:
         """
         Execute the job on all discovered data selections.
@@ -175,54 +228,26 @@ class DatasetJob:
                 - Mapping of selection names to their final metric dictionaries.
                 - pyarrow Table containing all computed deltas.
         """
-        # TODO: Check with needed input order of metric computation
         metrics_processors = self.get_ordered_metrics()
+        all_selections = self._discover_selections()
 
-        columns_list = self.needed_input_columns
-
-        # Discover all selections
-        all_selections: list[DataSelection] = []
-        for loader in self.dataloaders.values():
-            all_selections.extend(loader.get_selections())
-
-        dataselection_metrics_list = {}
-
-        job_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections  # noqa: E501
-
-        # TODO : add as a specific command line argument
         self.describe(all_selections)
+
+        dataselection_metrics_list: dict[Any, dict[str, Any]] = {}
+        job_iter = tqdm(all_selections, desc="selection", position=0) if self.progress_bar else all_selections
 
         for selection in job_iter:
             selection_name = selection.name
             logger.info(f"Processing selection '{selection_name}'")
 
-            selection.bootstrap(columns_list)
-
-            # Compute features and metrics for all batches
+            selection.bootstrap(self.needed_input_columns)
             batches_metrics_array = self._compute_batches_metrics(selection_name, selection, metrics_processors)
 
-            # Compute dataset-level metrics
-            dataset_metrics: dict[str, Any] = {}
-
-            metrics_iter = (
-                tqdm(metrics_processors, desc="metrics", position=1, leave=False)
-                if self.progress_bar
-                else metrics_processors
-            )
-
-            for metric in metrics_iter:
-                if logging.getLogger().level == logging.DEBUG:
-                    logger.debug(f"Metric computation {metric.__class__.__name__} for dataselection {selection_name}")
-                dataset_metrics.update(metric.compute(batch_metrics=batches_metrics_array))
-                if logging.getLogger().level == logging.DEBUG:
-                    logger.debug(f"Available metrics  {list(dataset_metrics.keys())}")
-
+            dataset_metrics = self._compute_selection_metrics(selection_name, batches_metrics_array, metrics_processors)
             dataselection_metrics_list[selection_name] = dataset_metrics
 
-        # If we have to compute delta metrics
         delta_metrics_table = self._compute_delta_metrics(metrics_processors, dataselection_metrics_list)
 
-        # Flush any accumulated features (single-output mode)
         if self.features_output and hasattr(self.features_output, "flush"):
             self.features_output.flush()
 
@@ -294,6 +319,144 @@ class DatasetJob:
 
         return pa.concat_tables(tables, promote_options="default")
 
+    @staticmethod
+    def _process_batch(
+        batch: Any, metrics_processors: list[DatametricProcessor]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Compute features and batch-level metrics for a single batch.
+
+        Args:
+            batch: Input data batch.
+            metrics_processors: List of processors to apply.
+
+        Returns:
+            Tuple of (batch_features, batch_metrics).
+        """
+        batch_features: dict[str, Any] = {}
+        batch_metrics: dict[str, Any] = {}
+        for metric in metrics_processors:
+            batch_features.update(metric.compute_features(batch, prev_features=batch_features))
+            batch_metrics.update(metric.compute_batch_metric(batch_features))
+            if logging.getLogger().level == logging.DEBUG:
+                m_keys, m_features = list(batch_metrics.keys()), list(batch_features.keys())
+                logger.debug(f"{metric.name} - Available batch_metrics  {m_keys} - features {m_features}")
+        return batch_features, batch_metrics
+
+    def _accumulate_source_features(
+        self,
+        batch: Any,
+        features_accumulator: dict[str, list[Any]],
+        feature_array_size: int,
+    ) -> int:
+        """Accumulate source dataset columns into the features accumulator.
+
+        Args:
+            batch: Input data batch.
+            features_accumulator: Dict accumulating feature lists.
+            feature_array_size: Current memory usage estimate.
+
+        Returns:
+            Updated feature_array_size.
+        """
+        if self.features_output is None:
+            return feature_array_size
+
+        for i, col_name in enumerate(batch.column_names):
+            if col_name not in self.features_output.columns:
+                continue
+            col_data = batch.column(i)
+            if col_name not in features_accumulator:
+                features_accumulator[col_name] = []
+            features_accumulator[col_name].append(col_data)
+            feature_array_size += col_data.get_total_buffer_size()
+        return feature_array_size
+
+    def _accumulate_generated_features(
+        self,
+        batch_features: dict[str, Any],
+        batch_metrics: dict[str, Any],
+        features_accumulator: dict[str, list[Any]],
+        feature_array_size: int,
+    ) -> int:
+        """Accumulate generated features into the features accumulator.
+
+        Args:
+            batch_features: Features generated by processors.
+            batch_metrics: Metrics generated by processors.
+            features_accumulator: Dict accumulating feature lists.
+            feature_array_size: Current memory usage estimate.
+
+        Returns:
+            Updated feature_array_size.
+        """
+        if self.features_output is None:
+            return feature_array_size
+
+        for k, v in batch_features.items():
+            if k not in self.features_output.columns or k in batch_metrics:
+                continue
+            if k not in features_accumulator:
+                features_accumulator[k] = []
+            features_accumulator[k].append(v)
+            feature_array_size += v.get_total_buffer_size()
+        return feature_array_size
+
+    def _maybe_flush_features(
+        self,
+        selection_name: str,
+        features_accumulator: dict[str, list[Any]],
+        feature_array_size: int,
+        part_index: int,
+        memory_threshold: int,
+    ) -> int:
+        """Flush features to disk if memory threshold is exceeded.
+
+        Args:
+            selection_name: Name of the current data selection.
+            features_accumulator: Dict accumulating feature lists (mutated in place on flush).
+            feature_array_size: Current memory usage estimate.
+            part_index: Current chunk index.
+            memory_threshold: Memory threshold in bytes.
+
+        Returns:
+            Updated part_index (incremented if flush occurred).
+        """
+        if feature_array_size <= memory_threshold or not self.features_output:
+            return part_index
+
+        logger.info(f"Memory threshold reached ({feature_array_size / 1024**2:.1f}MB). Flushing chunk {part_index}")
+        features_chunk: dict[str, Any] = {}
+        for k, v_list in features_accumulator.items():
+            features_chunk[k] = pa.concat_arrays(v_list)
+
+        self._inject_dataloader_column(selection_name, features_chunk)
+        self.features_output.write_table(selection_name, features_chunk, part_index)
+        features_accumulator.clear()
+        return part_index + 1
+
+    def _write_remaining_features(
+        self,
+        selection_name: str,
+        features_accumulator: dict[str, list[Any]],
+        part_index: int,
+    ) -> None:
+        """Concatenate and write remaining features that were never flushed.
+
+        Args:
+            selection_name: Name of the current data selection.
+            features_accumulator: Dict accumulating feature lists.
+            part_index: Current chunk index.
+        """
+        if not self.features_output or not features_accumulator:
+            return
+
+        features_array: dict[str, Any] = {}
+        for k, v_list in features_accumulator.items():
+            features_array[k] = pa.concat_arrays(v_list)
+
+        self._inject_dataloader_column(selection_name, features_array)
+        self.features_output.write_table(selection_name, features_array, part_index)
+
     def _compute_batches_metrics(
         self, selection_name: str, selection: DataSelection, metrics_processors: list[DatametricProcessor]
     ) -> dict[str, Any]:
@@ -315,14 +478,11 @@ class DatasetJob:
         Returns:
             Dictionary of concatenated intermediate statistics arrays.
         """
-        # Use lists for O(1) appending, then concat once at the end.
         batch_metrics_accumulator: dict[str, list[Any]] = {}
         features_accumulator: dict[str, list[Any]] = {}
-
-        # Track memory size for potential chunking
         feature_array_size = 0
         part_index = 0
-        memory_threshold = 512 * 1024 * 1024  # 512MB threshold for flushing features
+        memory_threshold = 512 * 1024 * 1024
 
         dataloader_iter = (
             tqdm(selection, desc="batches", position=1, leave=False, total=selection.get_nb_batches())
@@ -331,81 +491,29 @@ class DatasetJob:
         )
 
         for batch in dataloader_iter:
-            batch_features: dict[str, Any] = {}
-            batch_metrics: dict[str, Any] = {}
+            batch_features, batch_metrics = self._process_batch(batch, metrics_processors)
 
-            # Compute features and batch-level metrics
-            for metric in metrics_processors:
-                batch_features.update(metric.compute_features(batch, prev_features=batch_features))
-                batch_metrics.update(metric.compute_batch_metric(batch_features))
-                if logging.getLogger().level == logging.DEBUG:
-                    m_keys, m_features = list(batch_metrics.keys()), list(batch_features.keys())
-                    logger.debug(f"{metric.name} - Available batch_metrics  {m_keys} - features {m_features}")
-
-            #  Accumulate batch metrics
             for k, v in batch_metrics.items():
                 if k not in batch_metrics_accumulator:
                     batch_metrics_accumulator[k] = []
                 batch_metrics_accumulator[k].append(v)
 
-            # Accumulate features from source dataset
-            for i, col_name in enumerate(batch.column_names):
-                if self.features_output is None:
-                    continue
-                if col_name not in self.features_output.columns:
-                    continue
-
-                col_data = batch.column(i)
-                if col_name not in features_accumulator:
-                    features_accumulator[col_name] = []
-                features_accumulator[col_name].append(col_data)
-                feature_array_size += col_data.get_total_buffer_size()
-
-            # Accumulate generated features
-            for k, v in batch_features.items():
-                if self.features_output is None:
-                    continue
-                # Avoid duplication if feature is also a metric or not required
-                if k not in self.features_output.columns or k in batch_metrics:
-                    continue
-
-                if k not in features_accumulator:
-                    features_accumulator[k] = []
-                features_accumulator[k].append(v)
-                feature_array_size += v.get_total_buffer_size()
-
-            # Flush features to disk if memory threshold reached
-            if feature_array_size > memory_threshold and self.features_output:
-                logger.info(
-                    f"Memory threshold reached ({feature_array_size / 1024**2:.1f}MB). Flushing chunk {part_index}"
-                )
-                features_chunk: dict[str, Any] = {}
-                for k, v_list in features_accumulator.items():
-                    features_chunk[k] = pa.concat_arrays(v_list)
-
-                self._inject_dataloader_column(selection_name, features_chunk)
-                self.features_output.write_table(selection_name, features_chunk, part_index)
-
-                # Reset features accumulator
-                features_accumulator = {}
+            feature_array_size = self._accumulate_source_features(batch, features_accumulator, feature_array_size)
+            feature_array_size = self._accumulate_generated_features(
+                batch_features, batch_metrics, features_accumulator, feature_array_size
+            )
+            part_index = self._maybe_flush_features(
+                selection_name, features_accumulator, feature_array_size, part_index, memory_threshold
+            )
+            if part_index > 0:
                 feature_array_size = 0
-                part_index += 1
 
-        # Concatenate all accumulated arrays
+        # Finalize
         batches_metrics_array: dict[str, Any] = {}
         for k, v_list in batch_metrics_accumulator.items():
             batches_metrics_array[k] = pa.concat_arrays(v_list)
 
-        features_array: dict[str, Any] = {}
-        if features_accumulator:
-            for k, v_list in features_accumulator.items():
-                features_array[k] = pa.concat_arrays(v_list)
-
-        # Write remaining features to disk
-        if self.features_output and features_array:
-            self._inject_dataloader_column(selection_name, features_array)
-            self.features_output.write_table(selection_name, features_array, part_index)
-
+        self._write_remaining_features(selection_name, features_accumulator, part_index)
         return batches_metrics_array
 
     def _inject_dataloader_column(self, selection_name: str, features: dict[str, Any]) -> None:

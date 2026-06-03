@@ -238,6 +238,11 @@ def licenses(s: Session) -> None:
     s.run("pip-licenses", *s.posargs)
 
 
+@session(uv_groups=["complexity"])
+def complexity(s: Session) -> None:
+    s.run("complexipy", "packages", "--max-complexity-allowed", "15")
+
+
 @session(uv_groups=["spell"])
 def spell(s: Session) -> None:
     s.run("cspell", "lint", ".", *s.posargs)

@@ -100,6 +100,10 @@ licenses = [
     "pip-licenses-cli",
 ]
 
+complexity = [
+    "complexipy>=5.5.0",
+]
+
 ####################################################################################
 # Dev tools configurations
 

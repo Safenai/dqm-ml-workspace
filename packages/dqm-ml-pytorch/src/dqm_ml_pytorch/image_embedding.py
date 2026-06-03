@@ -170,6 +170,47 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             return [f"emb_{layer.replace('.', '_')}" for layer in self.target_layers]
         return ["embedding"]
 
+    def _load_image_tensors(self, image_values: list[Any]) -> list[torch.Tensor | None]:
+        """Load and transform images from a list of raw image values.
+
+        Supports three modes:
+        - ``bytes``: Image stored as raw bytes.
+        - ``path`` with S3 filesystem: Image stored as a relative path on S3.
+        - ``path`` with local filesystem: Image stored as a local file path.
+
+        Args:
+            image_values: List of raw image column values.
+
+        Returns:
+            List of preprocessed image tensors (or None for failed loads).
+        """
+        image_tensors: list[torch.Tensor | None] = []
+        for image_data in image_values:
+            if image_data is None:
+                image_tensors.append(None)
+                continue
+            try:
+                if self.mode == "bytes":
+                    img = Image.open(io.BytesIO(image_data)).convert("RGB")
+                elif self.dataset_root_path is not None and self.s3_fs:
+                    s3_path = f"{self.dataset_root_path}/{image_data}"
+                    bucket_name = os.getenv("S3_BUCKET_NAME", "")
+                    with self.s3_fs.open_input_stream(f"{bucket_name}/{s3_path}") as f:
+                        img = Image.open(io.BytesIO(f.read())).convert("RGB")
+                        img = img.copy()
+                else:
+                    img_path = (
+                        Path(self.dataset_root_path) / image_data
+                        if self.dataset_root_path is not None
+                        else Path(image_data)
+                    )
+                    img = Image.open(img_path).convert("RGB")
+                image_tensors.append(self.transform(img))
+            except Exception as e:
+                logger.warning(f"[ImageEmbeddingProcessor] failed to load image: {e}")
+                image_tensors.append(None)
+        return image_tensors
+
     @override
     def compute_features(self, batch: pa.RecordBatch, prev_features: pa.Array = None) -> dict[str, pa.Array]:
         """
@@ -192,39 +233,9 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             logger.warning(f"[ImageEmbeddingProcessor] missing column '{self.image_column}'")
             return {}
 
-        # 1 load images
         image_values = batch.column(self.image_column).to_pylist()
-        image_tensors: list[torch.Tensor | None] = []
-        for image_data in image_values:
-            if image_data is None:
-                image_tensors.append(None)
-                continue
-            try:
-                if self.mode == "bytes":
-                    img = Image.open(io.BytesIO(image_data)).convert("RGB")
-                else:
-                    # Handle path mode with local or S3
-                    if self.dataset_root_path is not None and self.s3_fs:
-                        # S3 key = bucket/prefix/relative_path
-                        s3_path = f"{self.dataset_root_path}/{image_data}"
-                        bucket_name = os.getenv("S3_BUCKET_NAME", "")
-                        s3_key = f"{bucket_name}/{s3_path}"
-                        with self.s3_fs.open_input_stream(s3_key) as f:
-                            img = Image.open(io.BytesIO(f.read())).convert("RGB")
-                            img = img.copy()  # Load into memory before closing file
-                    else:
-                        img_path = (
-                            Path(self.dataset_root_path) / image_data
-                            if self.dataset_root_path is not None
-                            else Path(image_data)
-                        )
-                        img = Image.open(img_path).convert("RGB")
-                image_tensors.append(self.transform(img))
-            except Exception as e:
-                logger.warning(f"[ImageEmbeddingProcessor] failed to load image: {e}")
-                image_tensors.append(None)
+        image_tensors = self._load_image_tensors(image_values)
 
-        # inference in windows, preserve order
         self.feature_extractor.eval()
         with torch.no_grad():
             if self.multi_layer:
@@ -348,6 +359,86 @@ class ImageEmbeddingProcessor(DatametricProcessor):
 
         return self._build_multi_layer_results(layer_cols, channel_cols, per_layer_embs, per_layer_channels)
 
+    def _build_batch_np_dict(
+        self,
+        out_dict: dict[str, torch.Tensor],
+        valid_len: int,
+    ) -> dict[str, np.ndarray]:
+        """Build per-layer numpy arrays from a batch of forward pass outputs.
+
+        Args:
+            out_dict: Output dict from the feature extractor.
+            valid_len: Number of valid (non-None) samples in the batch.
+
+        Returns:
+            Dict mapping layer/column names to numpy arrays.
+        """
+        batch_np_dict: dict[str, np.ndarray] = {}
+        for layer_name in self.target_layers:
+            col = f"emb_{layer_name.replace('.', '_')}"
+            feats = out_dict[layer_name]
+            flat_feats = feats.flatten(1) if feats.dim() > 2 else feats
+            batch_np_dict[col] = flat_feats.detach().cpu().numpy().astype("float32")
+            batch_np_dict[f"{col}_channels"] = np.full(valid_len, feats.shape[1], dtype=np.int32)
+        return batch_np_dict
+
+    @staticmethod
+    def _append_none_row(
+        layer_cols: list[str],
+        channel_cols: list[str],
+        per_layer_embs: dict[str, list[np.ndarray | None]],
+        per_layer_channels: dict[str, list[int | None]],
+    ) -> None:
+        """Append None entries for all layer/channel columns."""
+        for col in layer_cols:
+            per_layer_embs[col].append(None)
+        for col in channel_cols:
+            per_layer_channels[col].append(None)
+
+    @staticmethod
+    def _append_valid_row(
+        pos: int,
+        layer_cols: list[str],
+        channel_cols: list[str],
+        batch_np_dict: dict[str, np.ndarray],
+        per_layer_embs: dict[str, list[np.ndarray | None]],
+        per_layer_channels: dict[str, list[int | None]],
+    ) -> None:
+        """Append embeddings for a valid (non-None) item at the given position."""
+        for col in layer_cols:
+            per_layer_embs[col].append(batch_np_dict[col][pos])
+        for col in channel_cols:
+            per_layer_channels[col].append(int(batch_np_dict[col][pos]))
+
+    @staticmethod
+    def _append_batch_results(
+        batch_slice: list[torch.Tensor | None],
+        layer_cols: list[str],
+        channel_cols: list[str],
+        batch_np_dict: dict[str, np.ndarray],
+        per_layer_embs: dict[str, list[np.ndarray | None]],
+        per_layer_channels: dict[str, list[int | None]],
+    ) -> None:
+        """Append per-layer results for a batch to the per-layer collections.
+
+        Args:
+            batch_slice: Subset of image tensors.
+            layer_cols: Layer column names.
+            channel_cols: Channel column names.
+            batch_np_dict: Numpy arrays per column.
+            per_layer_embs: Per-layer embedding lists to append to.
+            per_layer_channels: Per-layer channel lists to append to.
+        """
+        pos = 0
+        for item_or_none in batch_slice:
+            if item_or_none is None:
+                ImageEmbeddingProcessor._append_none_row(layer_cols, channel_cols, per_layer_embs, per_layer_channels)
+            else:
+                ImageEmbeddingProcessor._append_valid_row(
+                    pos, layer_cols, channel_cols, batch_np_dict, per_layer_embs, per_layer_channels
+                )
+                pos += 1
+
     def _process_batch_multi(
         self,
         batch_slice: list[torch.Tensor | None],
@@ -375,28 +466,10 @@ class ImageEmbeddingProcessor(DatametricProcessor):
 
         batch_tensor = torch.stack(valid).to(self.device)
         out_dict = self.feature_extractor(batch_tensor)
-
-        batch_np_dict: dict[str, np.ndarray] = {}
-        for layer_name in self.target_layers:
-            col = f"emb_{layer_name.replace('.', '_')}"
-            feats = out_dict[layer_name]
-            flat_feats = feats.flatten(1) if feats.dim() > 2 else feats
-            batch_np_dict[col] = flat_feats.detach().cpu().numpy().astype("float32")
-            batch_np_dict[f"{col}_channels"] = np.full(len(valid), feats.shape[1], dtype=np.int32)
-
-        pos = 0
-        for item_or_none in batch_slice:
-            if item_or_none is None:
-                for col in layer_cols:
-                    per_layer_embs[col].append(None)
-                for col in channel_cols:
-                    per_layer_channels[col].append(None)
-            else:
-                for col in layer_cols:
-                    per_layer_embs[col].append(batch_np_dict[col][pos])
-                for col in channel_cols:
-                    per_layer_channels[col].append(int(batch_np_dict[col][pos]))
-                pos += 1
+        batch_np_dict = self._build_batch_np_dict(out_dict, len(valid))
+        ImageEmbeddingProcessor._append_batch_results(
+            batch_slice, layer_cols, channel_cols, batch_np_dict, per_layer_embs, per_layer_channels
+        )
 
     def _build_multi_layer_results(
         self,

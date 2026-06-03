@@ -144,6 +144,65 @@ class CompletenessProcessor(DatametricProcessor):
 
         return batch_metrics
 
+    @staticmethod
+    def _extract_columns_from_metrics(batch_metrics: dict[str, pa.Array]) -> list[str]:
+        """Extract column names from batch metrics keys ending in _total_count.
+
+        Args:
+            batch_metrics: Dictionary of batch-level metrics.
+
+        Returns:
+            List of column names.
+        """
+        columns = []
+        for key in batch_metrics:
+            if key.endswith("_total_count"):
+                columns.append(key.replace("_total_count", ""))
+        return columns
+
+    @staticmethod
+    def _compute_column_completeness(col: str, batch_metrics: dict[str, pa.Array]) -> float | None:
+        """Compute completeness score for a single column.
+
+        Args:
+            col: Column name.
+            batch_metrics: Dictionary of batch-level metrics.
+
+        Returns:
+            Completeness score (0.0-1.0) or None if metrics are missing.
+        """
+        total_key = f"{col}_total_count"
+        complete_key = f"{col}_complete_count"
+        if total_key not in batch_metrics or complete_key not in batch_metrics:
+            return None
+
+        col_total = int(np.sum(batch_metrics[total_key].to_numpy()))
+        col_complete = int(np.sum(batch_metrics[complete_key].to_numpy()))
+        return col_complete / col_total if col_total > 0 else 0.0
+
+    def _write_output_metrics(
+        self,
+        results: dict[str, Any],
+        per_column_completeness: dict[str, float],
+    ) -> None:
+        """Write per-column and overall completeness metrics to results.
+
+        Args:
+            results: Output dict to populate.
+            per_column_completeness: Dict of column -> completeness score.
+        """
+        if self.include_per_column:
+            for col, score in per_column_completeness.items():
+                output_key = self.output_metrics.get(f"completeness_{col}", f"completeness_{col}")
+                results[output_key] = score
+
+        if self.include_overall:
+            overall = (
+                sum(per_column_completeness.values()) / len(per_column_completeness) if per_column_completeness else 0.0
+            )
+            output_key = self.output_metrics.get("overall_completeness", "completeness_overall")
+            results[output_key] = overall
+
     @override
     def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, Any]:
         """
@@ -161,72 +220,35 @@ class CompletenessProcessor(DatametricProcessor):
         if not batch_metrics:
             return {"_metadata": {"error": "No batch metrics provided"}}
 
-        results: dict[str, Any] = {}
-
-        # Determine columns from batch metrics
-        columns_analyzed = []
-        for key in batch_metrics:
-            if key.endswith("_total_count"):
-                col = key.replace("_total_count", "")
-                columns_analyzed.append(col)
-
+        columns_analyzed = self._extract_columns_from_metrics(batch_metrics)
         if not columns_analyzed:
             logger.warning(f"[{self.name}] No columns found in batch metrics")
             return {"_metadata": {"error": "No columns found in batch metrics"}}
 
-        per_column_completeness = {}
+        per_column_completeness: dict[str, float] = {}
         total_samples = 0
-        total_complete = 0
 
-        # Calculate completeness for each column
         for col in columns_analyzed:
-            total_key = f"{col}_total_count"
-            complete_key = f"{col}_complete_count"
-
-            if total_key not in batch_metrics or complete_key not in batch_metrics:
+            score = self._compute_column_completeness(col, batch_metrics)
+            if score is None:
                 logger.warning(f"[{self.name}] Missing batch metrics for column '{col}'")
                 continue
+            per_column_completeness[col] = score
+            total_key = f"{col}_total_count"
+            total_samples += int(np.sum(batch_metrics[total_key].to_numpy()))
 
-            # agg counts across all batches
-            col_total = int(np.sum(batch_metrics[total_key].to_numpy()))
-            col_complete = int(np.sum(batch_metrics[complete_key].to_numpy()))
-
-            # Calculate completeness score for this column
-            completeness_score = col_complete / col_total if col_total > 0 else 0.0
-
-            per_column_completeness[col] = completeness_score
-
-            # Add to overall totals
-            total_samples += col_total
-            total_complete += col_complete
-
-        # Generate output metrics based on configuration
-        if self.include_per_column:
-            for col, score in per_column_completeness.items():
-                output_key = self.output_metrics.get(f"completeness_{col}", f"completeness_{col}")
-                results[output_key] = score
-
-        if self.include_overall:
-            # Calculate overall completeness as average of column completeness scores
-            if per_column_completeness:
-                overall_completeness = sum(per_column_completeness.values()) / len(per_column_completeness)
-            else:
-                overall_completeness = 0.0
-
-            output_key = self.output_metrics.get("overall_completeness", "completeness_overall")
-            results[output_key] = overall_completeness
-
-        # Add metadata
-        metadata = {
-            "columns_analyzed": columns_analyzed,
-            "total_samples_per_column": total_samples // len(columns_analyzed) if columns_analyzed else 0,
-            "per_column_scores": per_column_completeness,
-            "overall_score": sum(per_column_completeness.values()) / len(per_column_completeness)
-            if per_column_completeness
-            else 0.0,
-        }
+        results: dict[str, Any] = {}
+        self._write_output_metrics(results, per_column_completeness)
 
         if self.include_metadata:
+            metadata = {
+                "columns_analyzed": columns_analyzed,
+                "total_samples_per_column": total_samples // len(columns_analyzed) if columns_analyzed else 0,
+                "per_column_scores": per_column_completeness,
+                "overall_score": sum(per_column_completeness.values()) / len(per_column_completeness)
+                if per_column_completeness
+                else 0.0,
+            }
             results["_metadata"] = json.dumps(metadata)
 
         return results

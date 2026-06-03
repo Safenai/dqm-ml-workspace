@@ -137,6 +137,55 @@ class VisualFeaturesProcessor(DatametricProcessor):
             if k not in self.output_features:
                 self.output_features[k] = self.DEFAULT_OUTPUTS[k]
 
+    def _process_single_image(self, idx: int, v: Any) -> np.ndarray | None:
+        """Convert a raw image value to a grayscale numpy array, applying clipping.
+
+        Args:
+            idx: Position index for error logging.
+            v: Raw image value (bytes, path, PIL Image, or ndarray).
+
+        Returns:
+            Grayscale numpy array or None if processing fails.
+        """
+        try:
+            gray = self._to_gray_np(v)
+            if self.clip_percentiles is not None:
+                p_lo, p_hi = self.clip_percentiles
+                lo = np.percentile(gray, p_lo)
+                hi = np.percentile(gray, p_hi)
+                if hi > lo:
+                    gray = np.clip(gray, lo, hi)
+                    if self.normalize:
+                        gray = (gray - lo) / max(1e-12, (hi - lo))
+            return gray
+        except Exception as e:
+            logger.exception(f"[{self.name}] failed to process sample {idx}: {e}")
+            return None
+
+    @staticmethod
+    def _compute_scalar_feature(
+        gray_images: list[np.ndarray | None],
+        func: Any,
+        normalize: bool,
+    ) -> pa.Array:
+        """Compute a per-image scalar feature using a given function.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+            func: Callable that takes a grayscale array and returns a scalar.
+            normalize: Whether pixel values are normalized to [0, 1].
+
+        Returns:
+            PyArrow array of feature values.
+        """
+        values = []
+        for gray in gray_images:
+            if gray is not None:
+                values.append(float(func(gray if normalize else gray / 255.0)))
+            else:
+                values.append(float("nan"))
+        return pa.array(values, type=pa.float32())
+
     @override
     def compute_features(
         self,
@@ -161,33 +210,15 @@ class VisualFeaturesProcessor(DatametricProcessor):
             logger.warning(f"[{self.name}] column '{image_column}' not found in batch")
             return {}
 
-        col = batch.column(image_column)
-        values = col.to_pylist()  #
-        # Use grayscale image
-        gray_images: list[Any] = []
-        for idx, v in enumerate(values):
-            try:
-                gray = self._to_gray_np(v)
-                if self.clip_percentiles is not None:
-                    p_lo, p_hi = self.clip_percentiles
-                    lo = np.percentile(gray, p_lo)
-                    hi = np.percentile(gray, p_hi)
-                    if hi > lo:
-                        gray = np.clip(gray, lo, hi)
-                        if self.normalize:
-                            gray = (gray - lo) / max(1e-12, (hi - lo))
-                gray_images.append(gray)
-            except Exception as e:
-                logger.exception(f"[{self.name}] failed to process sample {idx}: {e}")
-                gray_images.append(None)
+        values = batch.column(image_column).to_pylist()
+        gray_images = [self._process_single_image(idx, v) for idx, v in enumerate(values)]
 
-        # Compute each feature type with dedicated functions
-        features = {}
-        features[self.output_features["luminosity"]] = self._compute_luminosity_feature(gray_images)
-        features[self.output_features["contrast"]] = self._compute_contrast_feature(gray_images)
-        features[self.output_features["blur"]] = self._compute_blur_feature(gray_images)
-        features[self.output_features["entropy"]] = self._compute_entropy_feature(gray_images)
-        return features
+        return {
+            self.output_features["luminosity"]: self._compute_scalar_feature(gray_images, np.mean, self.normalize),
+            self.output_features["contrast"]: self._compute_scalar_feature(gray_images, np.std, self.normalize),
+            self.output_features["blur"]: self._compute_scalar_feature(gray_images, self._variance_of_laplacian, True),
+            self.output_features["entropy"]: self._compute_scalar_feature(gray_images, self._entropy, True),
+        }
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
@@ -209,82 +240,6 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
     def reset(self) -> None:
         """Reset processor state for new processing run."""
-
-    # TODO : Check if it can be vectorized, parallelized
-
-    def _compute_luminosity_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute luminosity (mean gray level) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of luminosity values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                # Original logic: if not self.normalize, it's uint8 [0,255], divide by 255
-                # If self.normalize, it's already [0,1] (min-max)
-                luminosity = float(np.mean(gray if self.normalize else gray / 255.0))
-                values.append(luminosity)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_contrast_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute contrast (RMS contrast = std of gray) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of contrast values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                contrast = float(np.std(gray if self.normalize else gray / 255.0))
-                values.append(contrast)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_blur_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute blur (variance of Laplacian) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of blur values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                blur_val = float(self._variance_of_laplacian(gray))
-                values.append(blur_val)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_entropy_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute entropy (Shannon entropy) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of entropy values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                entropy_val = float(self._entropy(gray))
-                values.append(entropy_val)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
 
     # --- helpers --------------------------------------------------------------
 

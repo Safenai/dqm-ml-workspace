@@ -8,6 +8,7 @@ source and target datasets using image embeddings.
 from __future__ import annotations
 
 import logging
+from math import comb
 import os
 from pathlib import Path
 import tempfile
@@ -820,6 +821,80 @@ class DomainGapProcessor(DatametricProcessor):
         final_loss = total_loss / total_weight
         return {"cmd": pa.array([final_loss], type=pa.float64())}
 
+    def _collect_raw_moments(
+        self,
+        col: str,
+        source: dict[str, pa.Array],
+        target: dict[str, pa.Array],
+        all_j: list[int],
+        n_src: int,
+        n_tgt: int,
+    ) -> tuple[list[np.ndarray], list[np.ndarray]]:
+        """Collect raw moments from power sums for a single layer.
+
+        Args:
+            col: Layer column name.
+            source: Source statistics.
+            target: Target statistics.
+            all_j: List of moment orders.
+            n_src: Number of source samples.
+            n_tgt: Number of target samples.
+
+        Returns:
+            Tuple of (src_raw, tgt_raw) moment lists.
+        """
+        src_raw: list[np.ndarray] = []
+        tgt_raw: list[np.ndarray] = []
+        for j in all_j:
+            src_sum, _ = _sum_fixed(source[f"cmd_{col}_sum_{j}"])
+            tgt_sum, _ = _sum_fixed(target[f"cmd_{col}_sum_{j}"])
+            src_raw.append(src_sum / n_src)
+            tgt_raw.append(tgt_sum / n_tgt)
+        return src_raw, tgt_raw
+
+    def _compute_cmd_loss(
+        self,
+        src_raw: list[np.ndarray],
+        tgt_raw: list[np.ndarray],
+        mu_src: np.ndarray,
+        mu_tgt: np.ndarray,
+    ) -> float:
+        """Convert raw moments to central moments and compute CMD distance.
+
+        Args:
+            src_raw: Source raw moments.
+            tgt_raw: Target raw moments.
+            mu_src: Source mean.
+            mu_tgt: Target mean.
+
+        Returns:
+            Layer CMD loss value.
+        """
+        src_cm: list[np.ndarray] = [mu_src]
+        tgt_cm: list[np.ndarray] = [mu_tgt]
+        for order in range(2, self.cmd_k + 1):
+            cm_src = np.zeros_like(mu_src)
+            cm_tgt = np.zeros_like(mu_tgt)
+            for i in range(order + 1):
+                coeff = float(comb(order, i))
+                if i == 0:
+                    raw_src = np.array(1.0)
+                    raw_tgt = np.array(1.0)
+                else:
+                    raw_src = src_raw[i - 1]
+                    raw_tgt = tgt_raw[i - 1]
+                cm_src += coeff * raw_src * ((-mu_src) ** (order - i))
+                cm_tgt += coeff * raw_tgt * ((-mu_tgt) ** (order - i))
+            src_cm.append(cm_src)
+            tgt_cm.append(cm_tgt)
+        layer_loss = 0.0
+        for t in range(self.cmd_k):
+            diff = src_cm[t] - tgt_cm[t]
+            dist = float(np.sqrt(np.sum(diff**2)))
+            layer_loss += dist
+        layer_loss /= self.cmd_k
+        return layer_loss
+
     def _compute_layer_cmd(
         self,
         col: str,
@@ -838,8 +913,6 @@ class DomainGapProcessor(DatametricProcessor):
         Returns:
             Tuple of (layer_loss, debug_entries) or None if layer is invalid.
         """
-        from math import comb
-
         n_src_key = f"cmd_{col}_n"
         n_tgt_key = f"cmd_{col}_n"
         if n_src_key not in source or n_tgt_key not in target:
@@ -854,16 +927,8 @@ class DomainGapProcessor(DatametricProcessor):
         if not all(f"cmd_{col}_sum_{j}" in source and f"cmd_{col}_sum_{j}" in target for j in all_j):
             return None
 
-        # Raw moments from power sums: E[X^j] = sum(x^j) / n
-        src_raw = []
-        tgt_raw = []
-        for j in all_j:
-            src_sum, _ = _sum_fixed(source[f"cmd_{col}_sum_{j}"])
-            tgt_sum, _ = _sum_fixed(target[f"cmd_{col}_sum_{j}"])
-            src_raw.append(src_sum / n_src)
-            tgt_raw.append(tgt_sum / n_tgt)
+        src_raw, tgt_raw = self._collect_raw_moments(col, source, target, all_j, n_src, n_tgt)
 
-        # Debug: save raw moments per layer
         layer_debug: dict[str, np.ndarray] = {}
         if debug_data is not None:
             layer_key = col
@@ -878,34 +943,7 @@ class DomainGapProcessor(DatametricProcessor):
             layer_debug[f"{layer_key}/n_src"] = np.array([n_src], dtype=np.int64)
             layer_debug[f"{layer_key}/n_tgt"] = np.array([n_tgt], dtype=np.int64)
 
-        # Convert raw moments to central moments
         mu_src = src_raw[0]
         mu_tgt = tgt_raw[0]
-        src_cm = [mu_src]
-        tgt_cm = [mu_tgt]
-
-        for order in range(2, self.cmd_k + 1):
-            cm_src = np.zeros_like(mu_src)
-            cm_tgt = np.zeros_like(mu_tgt)
-            for i in range(order + 1):
-                coeff = float(comb(order, i))
-                if i == 0:
-                    raw_src = np.array(1.0)
-                    raw_tgt = np.array(1.0)
-                else:
-                    raw_src = src_raw[i - 1]
-                    raw_tgt = tgt_raw[i - 1]
-                cm_src += coeff * raw_src * ((-mu_src) ** (order - i))
-                cm_tgt += coeff * raw_tgt * ((-mu_tgt) ** (order - i))
-            src_cm.append(cm_src)
-            tgt_cm.append(cm_tgt)
-
-        # Euclidean distance per moment (matching v1's RMSELoss = sqrt(sum(diff^2)))
-        layer_loss = 0.0
-        for t in range(self.cmd_k):
-            diff = src_cm[t] - tgt_cm[t]
-            dist = float(np.sqrt(np.sum(diff**2)))
-            layer_loss += dist
-
-        layer_loss /= self.cmd_k
+        layer_loss = self._compute_cmd_loss(src_raw, tgt_raw, mu_src, mu_tgt)
         return (layer_loss, layer_debug)
