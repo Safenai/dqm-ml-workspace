@@ -20,7 +20,17 @@ from dqm_ml_job.cli import execute
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "test_name",
-    ["wasserstein_1d", "fid", "klmvn_diag", "mmd_linear", "wasserstein_bytes"],
+    [
+        "wasserstein_1d",
+        "fid",
+        "klmvn_diag",
+        "mmd_linear",
+        "wasserstein_bytes",
+        "mmd_rbf",
+        "mmd_poly",
+        "pad",
+        "cmd",
+    ],
 )
 def test_domain_gap(
     tests_config: Any,
@@ -40,8 +50,6 @@ def test_domain_gap(
         coco_data: Fixture providing COCO dataset for testing.
         job_domain_gap: Fixture that generates the test job configuration.
     """
-    # pad and cmd not implemented
-
     command = f"-p tests/integration/fixtures/config/generated/domain_gap_{test_name}.yaml"
     start = timer()
     execute(shlex.split(command))
@@ -113,11 +121,11 @@ def test_domain_gap_multi_metrics(
             "metrics_processor": {
                 "image_embedding": {
                     "type": "image_embedding",
-                    "DATA": {
+                    "data": {
                         "image_column": "image_path",
                         "mode": "path",
                     },
-                    "model_config": {
+                    "model": {
                         "arch": "resnet18",
                         "n_layer_feature": -2,
                         "device": "cpu",
@@ -132,13 +140,13 @@ def test_domain_gap_multi_metrics(
                 },
                 "domain_gap_fid": {
                     "type": "domain_gap",
-                    "INPUT": {"embedding_col": "embedding"},
-                    "DELTA": {"metric": "fid"},
+                    "input": {"embedding_col": "embedding"},
+                    "delta": {"metric": "fid"},
                 },
                 "domain_gap_wasserstein": {
                     "type": "domain_gap",
-                    "INPUT": {"embedding_col": "embedding"},
-                    "DELTA": {"metric": "wasserstein_1d"},
+                    "input": {"embedding_col": "embedding"},
+                    "delta": {"metric": "wasserstein_1d"},
                 },
             },
             "compute_delta": True,

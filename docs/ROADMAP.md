@@ -19,7 +19,7 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 | Area | Current State | Notes |
 |------|---------------|-------|
 | **Beta packages** | `dqm-ml-job`, `dqm-ml-images` | Config schemas may change based on feedback |
-| **V1 metrics** | Some not yet ported | Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD, Diversity (pending scientific discussion) |
+| **V1 metrics** | Some not yet ported | Relative Diversity, PAD, CMD (pending scientific discussion) |
 | **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
 | ~~Legacy dependency~~ | ~~Submodule still present~~ | ~~Legacy `dqm-ml` for comparison (to be phased out)~~ |
@@ -86,7 +86,7 @@ Looking to contribute? Here's what needs help most:
 
 ### High Priority
 
-- **Porting V1 metrics**: Gini-Simpson, Simpson indices, Relative Diversity, PAD, CMD
+- **Porting V1 metrics**: Relative Diversity, PAD, CMD
 - **Test coverage**: More edge cases and integration tests
 
 ### Medium Priority

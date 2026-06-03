@@ -122,6 +122,25 @@ def coco_data(test_path: str) -> list[Path]:
 
 
 @pytest.fixture(scope="session")
+def coco_data_500(coco_data: list[Path], output_path: Path) -> None:
+    """Create 500-image parquet fixtures from the existing 1000-image parquets.
+
+    Args:
+        coco_data: Fixture providing paths to source_1000.parquet and target_1000.parquet.
+        output_path: Path to test output data directory.
+    """
+    source_500 = output_path / "source_500.parquet"
+    target_500 = output_path / "target_500.parquet"
+
+    if source_500.exists() and target_500.exists():
+        return
+
+    for src, dst in [(coco_data[0], source_500), (coco_data[1], target_500)]:
+        table = pq.read_table(src).slice(0, 500)
+        pq.write_table(table, dst)
+
+
+@pytest.fixture(scope="session")
 def uniform_dist(test_path: str) -> Any:
     """Generate uniform distribution test data.
 
@@ -188,6 +207,39 @@ def not_uniform_dist(test_path: str) -> Any:
         Path(test_path) / OUTPUT_DATA,
         "not_uniform_distribution.parquet",
     )
+
+
+@pytest.fixture(scope="session")
+def diversity_data(test_path: str) -> Any:
+    """Generate synthetic diversity test data.
+
+    Creates parquet file with integer categorical data drawn from
+    uniform discrete distributions at different uniqueness levels
+    for streaming pipeline tests.
+
+    Args:
+        test_path: Path to the tests directory.
+
+    Returns:
+        None.
+    """
+    gen_path = Path(test_path) / OUTPUT_DATA
+    Path.mkdir(gen_path, exist_ok=True, parents=True)
+    path = Path(gen_path) / "diversity.parquet"
+
+    if path.exists():
+        return
+
+    rng = np.random.default_rng(42)
+    n = 200
+    pa_table = pa.table(
+        {
+            "column_2": rng.integers(0, 40, size=n).astype(float),
+            "column_4": rng.integers(0, 20, size=n).astype(float),
+            "column_6": rng.integers(0, 8, size=n).astype(float),
+        }
+    )
+    pq.write_table(pa_table, path)
 
 
 @pytest.fixture(scope="session")

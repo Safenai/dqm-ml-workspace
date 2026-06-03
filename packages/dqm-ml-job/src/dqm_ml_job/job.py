@@ -83,58 +83,6 @@ class DatasetJob:
             f"'{self.features_output.name if self.features_output else 'None'}' "
         )
 
-    @staticmethod
-    def _build_dependency_graph(procs: list[DatametricProcessor]) -> list[set[int]]:
-        """Build a dependency graph between metric processors.
-
-        For each processor, collect the indices of processors that it depends on
-        (i.e. producers of the columns it needs).
-
-        Args:
-            procs: List of metric processors.
-
-        Returns:
-            List of sets where ``dep_on[i]`` contains indices of processors
-            that processor ``i`` depends on.
-        """
-        generated_by: dict[str, set[int]] = {}
-        for i, p in enumerate(procs):
-            for col in p.generated_features():
-                generated_by.setdefault(col, set()).add(i)
-            if hasattr(p, "generated_columns"):
-                for col in p.generated_columns():
-                    generated_by.setdefault(col, set()).add(i)
-
-        dep_on: list[set[int]] = [set() for _ in procs]
-        for i, p in enumerate(procs):
-            for col in p.needed_columns():
-                for gen_idx in generated_by.get(col, ()):
-                    if gen_idx != i:
-                        dep_on[i].add(gen_idx)
-        return dep_on
-
-    @staticmethod
-    def _topological_sort(procs: list[DatametricProcessor], dep_on: list[set[int]]) -> list[DatametricProcessor]:
-        """Return processors in topological order using Kahn's algorithm.
-
-        Args:
-            procs: List of metric processors.
-            dep_on: Dependency graph built by ``_build_dependency_graph``.
-
-        Returns:
-            Processors ordered so that producers come before consumers.
-        """
-        ordered: list[DatametricProcessor] = []
-        remaining = set(range(len(procs)))
-        while remaining:
-            ready = {i for i in remaining if not (dep_on[i] & remaining)}
-            if not ready:
-                ready = {min(remaining)}
-            for i in sorted(ready):
-                ordered.append(procs[i])
-                remaining.remove(i)
-        return ordered
-
     def get_ordered_metrics(self) -> list[DatametricProcessor]:
         """
         Return the list of metrics processors in dependency order.
@@ -149,8 +97,37 @@ class DatasetJob:
         procs = list(self.metrics.values())
         if len(procs) <= 1:
             return procs
-        dep_on = self._build_dependency_graph(procs)
-        return self._topological_sort(procs, dep_on)
+
+        # Build column -> set of processor indices that generate it
+        generated_by: dict[str, set[int]] = {}
+        for i, p in enumerate(procs):
+            for col in p.generated_features():
+                generated_by.setdefault(col, set()).add(i)
+            if hasattr(p, "generated_columns"):
+                for col in p.generated_columns():
+                    generated_by.setdefault(col, set()).add(i)
+
+        # Build dependency graph: edge from producer -> consumer
+        dep_on: list[set[int]] = [set() for _ in procs]
+        for i, p in enumerate(procs):
+            for col in p.needed_columns():
+                for gen_idx in generated_by.get(col, ()):
+                    if gen_idx != i:
+                        dep_on[i].add(gen_idx)
+
+        # Topological sort (Kahn's algorithm)
+        ordered: list[DatametricProcessor] = []
+        remaining = set(range(len(procs)))
+        while remaining:
+            ready = {i for i in remaining if not (dep_on[i] & remaining)}
+            if not ready:
+                # Cycle — break by taking the first remaining processor
+                ready = {min(remaining)}
+            for i in sorted(ready):
+                ordered.append(procs[i])
+                remaining.remove(i)
+
+        return ordered
 
     def describe(self, selections: list[DataSelection]) -> None:
         """Log a summary of the execution plan, including selections and metrics."""

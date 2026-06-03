@@ -10,12 +10,13 @@ Not sure which metric you need? Use this guide:
 |-------------------|-----------------|------------|
 | **Find missing values** | [Completeness](metrics/completeness.md) | Low (CPU only) |
 | **Check if data matches a distribution** | [Representativeness](metrics/representativeness.md) | Low (CPU only) |
+| **Measure category diversity** | [Diversity](metrics/diversity.md) | Low (CPU only) |
 | **Compare train/test distributions** | [Domain Gap](metrics/domain_gap.md) | High (requires PyTorch) |
 | **Check image quality** | [Visual Features](metrics/visual_features.md) | Medium (CPU only) |
 
 ### Complexity Guide
 
-- **Low (CPU only)**: Completeness, Representativeness — runs on any machine
+- **Low (CPU only)**: Completeness, Representativeness, Diversity — runs on any machine
 - **Medium**: Visual Features — requires opencv, but no GPU needed
 - **High (GPU recommended)**: Domain Gap — uses PyTorch, faster with GPU
 
@@ -25,7 +26,8 @@ Each metric is based on established statistical methods:
 
 - **Completeness**: Ratio of non-null values
 - **Representativeness**: χ² (Chi-Square), KS (Kolmogorov-Smirnov), Shannon Entropy, GRTE
-- **Domain Gap**: MMD (Maximum Mean Discrepancy), FID (Fréchet Inception Distance), Wasserstein
+- **Diversity**: Simpson, Gini-Simpson, Shannon Entropy, Richness
+- **Domain Gap**: MMD (Linear, RBF, Poly), FID, Wasserstein, KLMVN, PAD, CMD
 - **Visual Features**: Laplacian variance, histogram entropy
 
 ## Available Metrics by Package
@@ -36,6 +38,7 @@ These are the most commonly used metrics for tabular data quality:
 
 - **[Completeness](metrics/completeness.md)** - Checks for missing/null values in your data
 - **[Representativeness](metrics/representativeness.md)** - Validates that data follows an expected distribution (Normal, Uniform)
+- **[Diversity](metrics/diversity.md)** - Measures category diversity via Simpson, Gini-Simpson, Shannon, and Richness indices
 
 ### Visual Metrics (`dqm-ml-images`)
 

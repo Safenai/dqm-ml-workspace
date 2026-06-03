@@ -25,10 +25,10 @@ config:
   metrics_processor:
     image_embedding:
       type: image_embedding
-      DATA:
+      data:
         image_column: image_path
         mode: path
-      model_config:
+      model:
         arch: resnet18
         n_layer_feature: -2
         device: cpu
@@ -41,9 +41,9 @@ config:
 
     domain_gap:
       type: domain_gap
-      INPUT:
+      input:
         embedding_col: embedding
-      DELTA:
+      delta:
         metric: mmd_linear
 
   compute_delta: true

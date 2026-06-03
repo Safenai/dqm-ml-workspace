@@ -55,6 +55,19 @@ def test_dev(s: Session) -> None:
     s.run(
         "pytest",
         "tests",
+        "--ignore=tests/benchmark",
+        *s.posargs,
+    )
+
+
+@session(
+    python=["3.12"],
+    uv_groups=["test"],
+)
+def benchmark(s: Session) -> None:
+    s.run(
+        "pytest",
+        "tests/benchmark",
         *s.posargs,
     )
 

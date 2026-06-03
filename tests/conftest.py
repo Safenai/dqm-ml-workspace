@@ -15,6 +15,8 @@ from tests.fixtures.test_fixtures import mock_parquet_dataset, sample_dataframe,
 from tests.integration.fixtures.config import tests_config  # noqa: F401
 from tests.integration.fixtures.data import (  # noqa: F401
     coco_data,
+    coco_data_500,
+    diversity_data,
     normal_dist,
     not_normal_dist,
     not_uniform_dist,
@@ -22,6 +24,7 @@ from tests.integration.fixtures.data import (  # noqa: F401
 )
 from tests.integration.fixtures.jobs import (  # noqa: F401
     job_completeness,
+    job_diversity,
     job_domain_gap,
     job_representativeness,
     job_visual_features,

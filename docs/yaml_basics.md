@@ -101,7 +101,7 @@ metrics_processor:
 metrics_processor:
   image_embedding:
     type: image_embedding
-    model_config:
+    model:
       arch: resnet18
       device: cpu
     infer:

@@ -31,8 +31,8 @@ class ParquetOutputWriter:
             config: Configuration dictionary with keys:
                 - path_pattern (str): Output file path format string.
                 - columns (List[str]): Columns to save.
-                - s3_filesystem (bool or dict, optional): Enable S3 filesystem.
-                  If dict, can contain access_key, secret_key, and endpoint_override.
+                - storage (bool or dict, optional): Storage configuration.
+                  If dict with type "s3", can contain access_key, secret_key, and endpoint_override.
 
         Raises:
             ValueError: If required config keys are missing.
@@ -52,16 +52,16 @@ class ParquetOutputWriter:
 
         self._accumulate = "{}" not in self.path_pattern
         self._accumulated_features: dict[str, list[pa.Array]] = {}
-        s3_fs_config = config.get("s3_filesystem")
-        if s3_fs_config:
-            if isinstance(s3_fs_config, bool) and s3_fs_config:
+        storage_cfg = config.get("storage")
+        if storage_cfg:
+            if storage_cfg is True:
                 self.s3_filesystem = get_s3_filesystem()
-            elif isinstance(s3_fs_config, dict):
+            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
                 self.s3_filesystem = get_s3_filesystem(
-                    access_key=s3_fs_config.get("access_key"),
-                    secret_key=s3_fs_config.get("secret_key"),
-                    endpoint=s3_fs_config.get("endpoint_override"),
-                    region=s3_fs_config.get("region"),
+                    access_key=storage_cfg.get("access_key"),
+                    secret_key=storage_cfg.get("secret_key"),
+                    endpoint=storage_cfg.get("endpoint_override"),
+                    region=storage_cfg.get("region"),
                 )
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
@@ -125,7 +125,24 @@ class ParquetOutputWriter:
         else:
             filename = self.path_pattern.format(path_pattern, part)
 
-        self._persist_table(table, filename)
+        # Write to S3 if S3 filesystem is configured, otherwise write to local disk
+        if self.s3_filesystem is not None:
+            # For S3, we need to construct the full S3 path
+            s3_path = self._get_s3_path(filename)
+            try:
+                pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
+                logger.info(f"Wrote output table to S3: {s3_path}")
+            except Exception as e:
+                logger.error(f"Failed to write to S3: {e}")
+                raise
+        else:
+            output_dir = Path(filename).parent
+            if not Path.exists(output_dir):
+                logger.info(f"Creating output directory: {output_dir}")
+                Path.mkdir(output_dir, parents=True, exist_ok=True)
+
+            pq.write_table(table, filename)
+            logger.info(f"Wrote output table to {filename}")
 
     def flush(self) -> None:
         """Write all accumulated features to the output file.
@@ -141,32 +158,19 @@ class ParquetOutputWriter:
         table = pa.table(final)
         filename = self.path_pattern
 
-        self._persist_table(table, filename)
-
-        self._accumulated_features.clear()
-
-    def _persist_table(self, table: pa.Table, filename: str) -> None:
-        """Write a PyArrow table to S3 or local disk.
-
-        Args:
-            table: The PyArrow table to persist.
-            filename: The target file path.
-        """
         if self.s3_filesystem is not None:
             s3_path = self._get_s3_path(filename)
-            try:
-                pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
-                logger.info(f"Wrote output table to S3: {s3_path}")
-            except Exception as e:
-                logger.exception(f"Failed to write to S3: {e}")
-                raise
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
+            logger.info(f"Wrote accumulated output table to S3: {s3_path}")
         else:
             output_dir = Path(filename).parent
             if not Path.exists(output_dir):
                 logger.info(f"Creating output directory: {output_dir}")
                 Path.mkdir(output_dir, parents=True, exist_ok=True)
             pq.write_table(table, filename)
-            logger.info(f"Wrote output table to {filename}")
+            logger.info(f"Wrote accumulated output table to {filename}")
+
+        self._accumulated_features.clear()
 
     def _get_s3_path(self, file_path: str) -> str:
         """Construct an S3 path by combining the bucket name with a file path.

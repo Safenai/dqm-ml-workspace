@@ -1440,6 +1440,8 @@ name = "dqm-ml-pytorch"
 source = { editable = "packages/dqm-ml-pytorch" }
 dependencies = [
     { name = "dqm-ml-core" },
+    { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "torch" },
     { name = "torchvision" },
 ]
@@ -1447,6 +1449,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
+    { name = "scikit-learn", specifier = ">=1.0.0" },
     { name = "torch", specifier = ">=2.0.0" },
     { name = "torchvision", specifier = ">=0.15.0" },
 ]

@@ -149,7 +149,7 @@ class ParquetDataLoader:
                 - split_by: Column name to split selections by
                 - split_values: Specific values to split on
                 - filter: Dictionary of column filters
-                - s3_filesystem: Enable S3 filesystem (bool or dict)
+                - storage: Storage configuration (bool or dict)
 
         Raises:
             ValueError: If required config keys are missing.
@@ -166,23 +166,23 @@ class ParquetDataLoader:
         self.split_values = config.get("split_values")
         self.filters_dict = config.get("filter", None)
 
-        # S3 Filesystem configuration - only for S3 paths, not local paths
+        # Storage filesystem configuration - only for S3 paths, not local paths
         self.filesystem = None
-        s3_fs_config = config.get("s3_filesystem")
-        if s3_fs_config:
-            if isinstance(s3_fs_config, bool) and s3_fs_config:
+        storage_cfg = config.get("storage")
+        if storage_cfg:
+            if storage_cfg is True:
                 self.filesystem = fs.S3FileSystem(
                     access_key=os.getenv("S3_ACCESS_KEY"),
                     secret_key=os.getenv("S3_SECRET_KEY"),
                     endpoint_override=os.getenv("S3_ENDPOINT", ""),
                     region=os.getenv("S3_REGION"),
                 )
-            elif isinstance(s3_fs_config, dict):
+            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
                 self.filesystem = fs.S3FileSystem(
-                    access_key=s3_fs_config.get("access_key"),
-                    secret_key=s3_fs_config.get("secret_key"),
-                    endpoint_override=s3_fs_config.get("endpoint_override"),
-                    region=s3_fs_config.get("region"),
+                    access_key=storage_cfg.get("access_key"),
+                    secret_key=storage_cfg.get("secret_key"),
+                    endpoint_override=storage_cfg.get("endpoint_override"),
+                    region=storage_cfg.get("region"),
                 )
 
     def get_selections(self) -> list[DataSelection]:

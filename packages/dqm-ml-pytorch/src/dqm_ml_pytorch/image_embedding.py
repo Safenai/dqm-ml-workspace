@@ -12,6 +12,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any
+import warnings
 
 import numpy as np
 from PIL import Image
@@ -55,14 +56,14 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         Args:
             name: Unique name of the processor instance.
             config: Configuration dictionary containing:
-                - DATA:
+                - data:
                     - image_column: Column name containing image data (default: "image_bytes").
                     - mode: Source type, "bytes" or "path" (default: "bytes").
-                - INFER:
+                - infer:
                     - width, height: Input resolution for the model (default: 224x224).
                     - batch_size: Number of images per inference pass (default: 32).
                     - norm_mean, norm_std: Preprocessing normalization stats.
-                - MODEL:
+                - model:
                     - arch: Torchvision model name (default: "resnet18").
                     - n_layer_feature: Target layer for feature extraction (default: "avgpool").
                     - device: Execution device, "cpu" or "cuda" (default: "cpu").
@@ -82,33 +83,33 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         """
         cfg = self.config or {}
 
-        data_cfg = cfg.get("DATA", {})
+        data_cfg = cfg.get("data", {})
         self.image_column: str = data_cfg.get("image_column", "image_bytes")
         self.mode: str = data_cfg.get("mode", "bytes")  # "bytes" or "path"
         if self.mode not in {"bytes", "path"}:
-            raise ValueError(f"[{self.name}] DATA.mode must be 'bytes' or 'path'")
+            raise ValueError(f"[{self.name}] data.mode must be 'bytes' or 'path'")
 
         # handle relative paths in parquet to a dataset located at dataset_root_path
-        self.dataset_root_path = str(cfg.get("dataset_root_path", "undefined"))
+        self.dataset_root_path = cfg.get("dataset_root_path", None)
         logger.info(f"[ImageEmbeddingProcessor] dataset_root_path = '{self.dataset_root_path}'")
 
-        # S3 filesystem support
+        # Storage filesystem support
         self.s3_fs = None
-        s3_config = cfg.get("s3_filesystem")
-        if s3_config:
+        storage_cfg = cfg.get("storage")
+        if storage_cfg:
             from dqm_ml_job.utils import get_s3_filesystem
 
-            if s3_config is True:
+            if storage_cfg is True:
                 self.s3_fs = get_s3_filesystem()
-            elif isinstance(s3_config, dict):
+            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
                 self.s3_fs = get_s3_filesystem(
-                    access_key=s3_config.get("access_key"),
-                    secret_key=s3_config.get("secret_key"),
-                    endpoint=s3_config.get("endpoint_override"),
-                    region=s3_config.get("region"),
+                    access_key=storage_cfg.get("access_key"),
+                    secret_key=storage_cfg.get("secret_key"),
+                    endpoint=storage_cfg.get("endpoint_override"),
+                    region=storage_cfg.get("region"),
                 )
 
-        infer_cfg = cfg.get("INFER", {})
+        infer_cfg = cfg.get("infer", {})
         self.size: tuple[int, int] = (
             int(infer_cfg.get("width", 224)),
             int(infer_cfg.get("height", 224)),
@@ -117,10 +118,21 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         std = infer_cfg.get("norm_std", [0.229, 0.224, 0.225])
         self.batch_size: int = int(infer_cfg.get("batch_size", 32))
 
-        model_cfg = cfg.get("MODEL", {})
+        model_cfg = cfg.get("model", {})
         self.arch: str = model_cfg.get("arch", "resnet18")
-        self.target_layer = model_cfg.get("n_layer_feature", "avgpool")
+        n_layer_feature = model_cfg.get("n_layer_feature", "avgpool")
         self.device: str = model_cfg.get("device", "cpu")
+
+        # Multi-layer support for CMD: n_layer_feature can be a list
+        if isinstance(n_layer_feature, list):
+            self.multi_layer = True
+            self.target_layers: list[str] = n_layer_feature
+            self.target_layer: Any = n_layer_feature
+            self._embed_dims: dict[str, int] = {}
+        else:
+            self.multi_layer = False
+            self.target_layer = n_layer_feature
+            self._embed_dim: int | None = None
 
         # Build once
         self.transform = transforms.Compose(
@@ -132,8 +144,6 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         )
         self.model = self._load_model(self.arch, self.device)
         self.feature_extractor = self._make_extractor(self.model, self.target_layer)
-        self._embed_dim: int | None = None
-
         self._checked = True
 
     @override
@@ -150,9 +160,14 @@ class ImageEmbeddingProcessor(DatametricProcessor):
     def generated_columns(self) -> list[str]:
         """Return the list of columns generated by this processor.
 
+        For multi-layer mode, returns one column per layer prefixed with ``emb_``.
+        For single-layer mode, returns ``['embedding']``.
+
         Returns:
-            A list containing 'embedding'.
+            A list of column names.
         """
+        if getattr(self, "multi_layer", False):
+            return [f"emb_{layer.replace('.', '_')}" for layer in self.target_layers]
         return ["embedding"]
 
     @override
@@ -161,7 +176,7 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         Extract image embeddings for all samples in the batch.
 
         1. Images are loaded and transformed.
-        2. Model inference is performed in sub-batches defined by `INFER.batch_size`.
+        2. Model inference is performed in sub-batches defined by `infer.batch_size`.
         3. Results are aggregated into a pyarrow `FixedSizeListArray`.
 
         Args:
@@ -189,7 +204,7 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                     img = Image.open(io.BytesIO(image_data)).convert("RGB")
                 else:
                     # Handle path mode with local or S3
-                    if self.dataset_root_path != "undefined" and self.s3_fs:
+                    if self.dataset_root_path is not None and self.s3_fs:
                         # S3 key = bucket/prefix/relative_path
                         s3_path = f"{self.dataset_root_path}/{image_data}"
                         bucket_name = os.getenv("S3_BUCKET_NAME", "")
@@ -200,7 +215,7 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                     else:
                         img_path = (
                             Path(self.dataset_root_path) / image_data
-                            if self.dataset_root_path != "undefined"
+                            if self.dataset_root_path is not None
                             else Path(image_data)
                         )
                         img = Image.open(img_path).convert("RGB")
@@ -210,23 +225,62 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                 image_tensors.append(None)
 
         # inference in windows, preserve order
-        embs: list[np.ndarray | None] = []
         self.feature_extractor.eval()
+        with torch.no_grad():
+            if self.multi_layer:
+                result = self._compute_features_multi_layer(image_tensors)
+            else:
+                result = self._compute_features_single_layer(image_tensors)
+        return result
+
+    def _build_fixed_array(self, embs: list[np.ndarray | None], embed_dim: int) -> pa.FixedSizeListArray:
+        """Build a FixedSizeListArray from a list of embedding vectors.
+
+        Args:
+            embs: List of embedding arrays or None.
+            embed_dim: Expected dimension of each embedding.
+
+        Returns:
+            A FixedSizeListArray of float32.
+        """
+        flat: list[float] = []
+        for emb in embs:
+            if emb is None:
+                flat.extend([0.0] * embed_dim)
+            else:
+                flat_emb = emb.ravel()
+                if flat_emb.size != embed_dim:
+                    if flat_emb.size > embed_dim:
+                        flat_emb = flat_emb[:embed_dim]
+                    else:
+                        flat_emb = np.pad(flat_emb, (0, embed_dim - flat_emb.size))
+                flat.extend(flat_emb.tolist())
+        flat_array = pa.array(np.asarray(flat, dtype=np.float32))
+        return pa.FixedSizeListArray.from_arrays(flat_array, embed_dim)
+
+    def _compute_features_single_layer(self, image_tensors: list[torch.Tensor | None]) -> dict[str, pa.Array]:
+        """Compute embeddings for a single target layer.
+
+        Args:
+            image_tensors: List of preprocessed image tensors or None.
+
+        Returns:
+            Dictionary with 'embedding' key.
+        """
+        embs: list[np.ndarray | None] = []
         with torch.no_grad():
             for batch_start in range(0, len(image_tensors), self.batch_size):
                 batch_slice = image_tensors[batch_start : batch_start + self.batch_size]
                 valid = [t for t in batch_slice if t is not None]
                 if valid:
                     batch_tensor = torch.stack(valid).to(self.device)
-                    # create_feature_extractor returns dict when multiple nodes requested, else a single tensor
                     out = self.feature_extractor(batch_tensor)
                     if isinstance(out, dict):
                         flat_feats = [layer_output.flatten(1) for layer_output in out.values()]
-                        feats = torch.cat(flat_feats, dim=1)  # type : ignore TODO : check type error
+                        feats = torch.cat(flat_feats, dim=1)
                     else:
                         feats = out.flatten(1) if out.dim() > 2 else out
                     batch_embeddings_np = feats.detach().cpu().numpy().astype("float32")
-                    # Re-align None images with their original positions in the batch window
                     pos = 0
                     for item_or_none in batch_slice:
                         if item_or_none is None:
@@ -237,7 +291,6 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                 else:
                     embs.extend([None] * len(batch_slice))
 
-        # 3. Infer embedding dim
         if self._embed_dim is None:
             for emb in embs:
                 if emb is not None:
@@ -247,23 +300,77 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                 return {}
         embed_dim = self._embed_dim
 
-        # 4. Build FixedSizeListArray
-        flat: list[float] = []
-        for emb in embs:
-            if emb is None:
-                flat.extend([0.0] * embed_dim)
-            else:
-                flat_emb = emb.ravel()
-                # Handle rare dimension mismatches by truncating or zero-padding
-                if flat_emb.size != embed_dim:
-                    if flat_emb.size > embed_dim:
-                        flat_emb = flat_emb[:embed_dim]
-                    else:
-                        flat_emb = np.pad(flat_emb, (0, embed_dim - flat_emb.size))
-                flat.extend(flat_emb.tolist())
+        return {"embedding": self._build_fixed_array(embs, embed_dim)}
 
-        flat_array = pa.array(np.asarray(flat, dtype=np.float32))
-        return {"embedding": pa.FixedSizeListArray.from_arrays(flat_array, embed_dim)}
+    def _compute_features_multi_layer(self, image_tensors: list[torch.Tensor | None]) -> dict[str, pa.Array]:
+        """Compute embeddings for multiple target layers.
+
+        Each layer's output is flattened and stored in a separate column
+        named ``emb_<layer_name>`` (with dots replaced by underscores).
+
+        Args:
+            image_tensors: List of preprocessed image tensors or None.
+
+        Returns:
+            Dictionary mapping layer column names to FixedSizeListArrays.
+        """
+        layer_cols = [f"emb_{layer.replace('.', '_')}" for layer in self.target_layers]
+        channel_cols = [f"{col}_channels" for col in layer_cols]
+        per_layer_embs: dict[str, list[np.ndarray | None]] = {col: [] for col in layer_cols}
+        per_layer_channels: dict[str, list[int | None]] = {col: [] for col in channel_cols}
+
+        with torch.no_grad():
+            for batch_start in range(0, len(image_tensors), self.batch_size):
+                batch_slice = image_tensors[batch_start : batch_start + self.batch_size]
+                valid = [t for t in batch_slice if t is not None]
+                if valid:
+                    batch_tensor = torch.stack(valid).to(self.device)
+                    out_dict = self.feature_extractor(batch_tensor)
+                    # out_dict: {layer_name: tensor} per batch
+                    batch_np_dict: dict[str, np.ndarray] = {}
+                    for layer_name in self.target_layers:
+                        col = f"emb_{layer_name.replace('.', '_')}"
+                        feats = out_dict[layer_name]
+                        flat_feats = feats.flatten(1) if feats.dim() > 2 else feats
+                        batch_np_dict[col] = flat_feats.detach().cpu().numpy().astype("float32")
+                        batch_np_dict[f"{col}_channels"] = np.full(len(valid), feats.shape[1], dtype=np.int32)
+
+                    pos = 0
+                    for item_or_none in batch_slice:
+                        for col in layer_cols:
+                            if item_or_none is None:
+                                per_layer_embs[col].append(None)
+                            else:
+                                per_layer_embs[col].append(batch_np_dict[col][pos])
+                        for col in channel_cols:
+                            per_layer_channels[col].append(
+                                None if item_or_none is None else int(batch_np_dict[col][pos])
+                            )
+                        if item_or_none is not None:
+                            pos += 1
+                else:
+                    for col in layer_cols:
+                        per_layer_embs[col].extend([None] * len(batch_slice))
+                    for col in channel_cols:
+                        per_layer_channels[col].extend([None] * len(batch_slice))
+
+        result: dict[str, pa.Array] = {}
+        for col in layer_cols:
+            embs = per_layer_embs[col]
+            # Infer dimension
+            embed_dim = None
+            for emb in embs:
+                if emb is not None:
+                    embed_dim = int(emb.size)
+                    break
+            if embed_dim is None or embed_dim == 0:
+                continue
+            result[col] = self._build_fixed_array(embs, embed_dim)
+        for col in channel_cols:
+            vals = [v if v is not None else 0 for v in per_layer_channels[col]]
+            if any(v is not None for v in per_layer_channels[col]):
+                result[col] = pa.array(vals, type=pa.int32())
+        return result
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
@@ -332,9 +439,13 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         """
         names = list(dict(model.named_modules()).keys())
         if isinstance(target_layer, list):
-            return create_feature_extractor(model, return_nodes={n: n for n in target_layer})
-        if isinstance(target_layer, int):
+            nodes = {n: n for n in target_layer}
+        elif isinstance(target_layer, int):
             idx = target_layer if target_layer >= 0 else len(names) + target_layer
             layer_name = names[idx]
-            return create_feature_extractor(model, return_nodes={layer_name: "features"})
-        return create_feature_extractor(model, return_nodes={target_layer: "features"})
+            nodes = {layer_name: "features"}
+        else:
+            nodes = {target_layer: "features"}
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            return create_feature_extractor(model, return_nodes=nodes)
