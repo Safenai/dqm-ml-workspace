@@ -139,6 +139,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         if self.epsilon <= 0:
             raise ValueError(f"[{self.name}] 'epsilon' must be positive")
 
+        self._rng = np.random.default_rng()
         self._bin_edges: dict[str, np.ndarray] = {}
         self._initialized: bool = False
 
@@ -236,7 +237,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                     ),
                 )
                 if len(numeric_values) > sample_per_batch:
-                    sample_indices = np.random.choice(len(numeric_values), sample_per_batch, replace=False)
+                    sample_indices = self._rng.choice(len(numeric_values), sample_per_batch, replace=False)
                     sample = numeric_values[sample_indices]
                 else:
                     sample = numeric_values
@@ -347,7 +348,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 logger.debug(f"mean={mean}")
                 logger.debug(f"std={std}")
                 # Generate random values and count frequencies (as in official DQM-ML v1)
-                expected_values = np.random.normal(mean, std, total_count)
+                expected_values = self._rng.normal(mean, std, total_count)
                 exp_counts = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
             else:  # uniform
                 logger.debug("Generate uniform distribution")
@@ -356,7 +357,7 @@ class RepresentativenessProcessor(DatametricProcessor):
                 logger.debug(f"min={min_val}")
                 logger.debug(f"max={max_val}")
                 # Generate random values and count frequencies (as in official DQM-ML v1)
-                expected_values = np.random.uniform(min_val, max_val, total_count)
+                expected_values = self._rng.uniform(min_val, max_val, total_count)
                 exp_counts = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
 
             col_res: dict[str, Any] = {}

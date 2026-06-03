@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
+import tempfile
 from typing import Any
 
 import numpy as np
@@ -18,6 +20,8 @@ import pyarrow as pa
 from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
+
+_MISSING_EMB_MSG = "missing __emb__ — set summary.store_embeddings=true"
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +186,7 @@ def _pad_distance(src_emb: np.ndarray, tgt_emb: np.ndarray, evaluator: str) -> f
     x_svm = np.vstack([src_emb, tgt_emb])
     y = np.hstack([np.zeros(len(src_emb)), np.ones(len(tgt_emb))])
 
-    svm = SVC(C=1, kernel="linear", probability=True, random_state=42, verbose=0)
+    svm = SVC(C=1, kernel="linear", probability=True, random_state=42, verbose=0, gamma="auto")
     svm.fit(x_svm, y)
     pred = svm.predict_proba(x_svm)
 
@@ -718,7 +722,7 @@ class DomainGapProcessor(DatametricProcessor):
         if "__emb__" not in source or "__emb__" not in target:
             return {
                 "metric": pa.array(["mmd_rbf"]),
-                "note": pa.array(["missing __emb__ — set summary.store_embeddings=true"]),
+                "note": pa.array([_MISSING_EMB_MSG]),
             }
         src = _fixed_to_matrix(source["__emb__"])
         tgt = _fixed_to_matrix(target["__emb__"])
@@ -739,7 +743,7 @@ class DomainGapProcessor(DatametricProcessor):
         if "__emb__" not in source or "__emb__" not in target:
             return {
                 "metric": pa.array(["mmd_poly"]),
-                "note": pa.array(["missing __emb__ — set summary.store_embeddings=true"]),
+                "note": pa.array([_MISSING_EMB_MSG]),
             }
         src = _fixed_to_matrix(source["__emb__"])
         tgt = _fixed_to_matrix(target["__emb__"])
@@ -762,7 +766,7 @@ class DomainGapProcessor(DatametricProcessor):
         if "__emb__" not in source or "__emb__" not in target:
             return {
                 "metric": pa.array(["pad"]),
-                "note": pa.array(["missing __emb__ — set summary.store_embeddings=true"]),
+                "note": pa.array([_MISSING_EMB_MSG]),
             }
         src = _fixed_to_matrix(source["__emb__"])
         tgt = _fixed_to_matrix(target["__emb__"])
@@ -787,8 +791,6 @@ class DomainGapProcessor(DatametricProcessor):
         Returns:
             Dictionary with cmd value.
         """
-        from math import comb
-
         total_loss = 0.0
         total_weight = 0.0
         debug_data: dict[str, np.ndarray] | None = {} if _debug_enabled() else None
@@ -797,87 +799,113 @@ class DomainGapProcessor(DatametricProcessor):
             if weight == 0:
                 continue
 
-            n_src_key = f"cmd_{col}_n"
-            n_tgt_key = f"cmd_{col}_n"
-            if n_src_key not in source or n_tgt_key not in target:
+            layer_result = self._compute_layer_cmd(col, source, target, debug_data)
+            if layer_result is None:
                 continue
 
-            n_src = int(source[n_src_key].to_numpy()[0])
-            n_tgt = int(target[n_tgt_key].to_numpy()[0])
-            if n_src <= 0 or n_tgt <= 0:
-                continue
-
-            all_j = list(range(1, self.cmd_k + 1))
-            if not all(f"cmd_{col}_sum_{j}" in source and f"cmd_{col}_sum_{j}" in target for j in all_j):
-                continue
-
+            layer_loss, layer_debug = layer_result
             total_weight += weight
-            layer_loss = 0.0
-
-            # Raw moments from power sums: E[X^j] = sum(x^j) / n
-            src_raw = []
-            tgt_raw = []
-            for j in all_j:
-                src_sum, _ = _sum_fixed(source[f"cmd_{col}_sum_{j}"])
-                tgt_sum, _ = _sum_fixed(target[f"cmd_{col}_sum_{j}"])
-                src_raw.append(src_sum / n_src)
-                tgt_raw.append(tgt_sum / n_tgt)
-
-            # Debug: save raw moments per layer
-            if debug_data is not None:
-                layer_key = col
-                for prefix in ["image_embedding_cmd_", "image_embedding_"]:
-                    if col.startswith(prefix):
-                        layer_key = col[len(prefix) :]
-                        break
-                debug_data[f"{layer_key}/mean_src"] = src_raw[0]
-                debug_data[f"{layer_key}/mean_tgt"] = tgt_raw[0]
-                debug_data[f"{layer_key}/raw_moment2_src"] = src_raw[1]
-                debug_data[f"{layer_key}/raw_moment2_tgt"] = tgt_raw[1]
-                debug_data[f"{layer_key}/n_src"] = np.array([n_src], dtype=np.int64)
-                debug_data[f"{layer_key}/n_tgt"] = np.array([n_tgt], dtype=np.int64)
-
-            # Convert raw moments to central moments
-            # raw[t-1] = E[X^t] for t = 1..k
-            # central[0] = E[X] = raw[0] (mean)
-            # central[m] = E[(X-μ)^(m+1)] for m = 1..k-1
-            mu_src = src_raw[0]
-            mu_tgt = tgt_raw[0]
-            src_cm = [mu_src]
-            tgt_cm = [mu_tgt]
-
-            # Central moments via binomial expansion:
-            # μ_k = Σ_{i=0}^k C(k,i) * E[X^i] * (-μ)^(k-i), with E[X^0] = 1
-            for order in range(2, self.cmd_k + 1):
-                cm_src = np.zeros_like(mu_src)
-                cm_tgt = np.zeros_like(mu_tgt)
-                for i in range(order + 1):
-                    coeff = float(comb(order, i))
-                    if i == 0:
-                        raw_src = np.array(1.0)
-                        raw_tgt = np.array(1.0)
-                    else:
-                        raw_src = src_raw[i - 1]
-                        raw_tgt = tgt_raw[i - 1]
-                    cm_src += coeff * raw_src * ((-mu_src) ** (order - i))
-                    cm_tgt += coeff * raw_tgt * ((-mu_tgt) ** (order - i))
-                src_cm.append(cm_src)
-                tgt_cm.append(cm_tgt)
-
-            # Euclidean distance per moment (matching v1's RMSELoss = sqrt(sum(diff^2)))
-            for t in range(self.cmd_k):
-                diff = src_cm[t] - tgt_cm[t]
-                dist = float(np.sqrt(np.sum(diff**2)))
-                layer_loss += dist
-
-            layer_loss /= self.cmd_k
             total_loss += weight * layer_loss
 
+            if debug_data is not None and layer_debug is not None:
+                debug_data.update(layer_debug)
+
         if debug_data is not None:
-            np.savez_compressed("/tmp/debug_moments.npz", **debug_data)  # type: ignore[arg-type]
+            tmp_path = str(Path(tempfile.gettempdir()) / f"debug_moments_{os.getpid()}.npz")
+            np.savez_compressed(tmp_path, **debug_data)  # type: ignore[arg-type]
 
         if total_weight == 0:
             return {"metric": pa.array(["cmd"]), "note": pa.array(["no valid layers"])}
 
         final_loss = total_loss / total_weight
         return {"cmd": pa.array([final_loss], type=pa.float64())}
+
+    def _compute_layer_cmd(
+        self,
+        col: str,
+        source: dict[str, pa.Array],
+        target: dict[str, pa.Array],
+        debug_data: dict[str, np.ndarray] | None,
+    ) -> tuple[float, dict[str, np.ndarray]] | None:
+        """Compute CMD loss for a single embedding layer.
+
+        Args:
+            col: Layer column name.
+            source: Source statistics.
+            target: Target statistics.
+            debug_data: Optional debug dict to populate.
+
+        Returns:
+            Tuple of (layer_loss, debug_entries) or None if layer is invalid.
+        """
+        from math import comb
+
+        n_src_key = f"cmd_{col}_n"
+        n_tgt_key = f"cmd_{col}_n"
+        if n_src_key not in source or n_tgt_key not in target:
+            return None
+
+        n_src = int(source[n_src_key].to_numpy()[0])
+        n_tgt = int(target[n_tgt_key].to_numpy()[0])
+        if n_src <= 0 or n_tgt <= 0:
+            return None
+
+        all_j = list(range(1, self.cmd_k + 1))
+        if not all(f"cmd_{col}_sum_{j}" in source and f"cmd_{col}_sum_{j}" in target for j in all_j):
+            return None
+
+        # Raw moments from power sums: E[X^j] = sum(x^j) / n
+        src_raw = []
+        tgt_raw = []
+        for j in all_j:
+            src_sum, _ = _sum_fixed(source[f"cmd_{col}_sum_{j}"])
+            tgt_sum, _ = _sum_fixed(target[f"cmd_{col}_sum_{j}"])
+            src_raw.append(src_sum / n_src)
+            tgt_raw.append(tgt_sum / n_tgt)
+
+        # Debug: save raw moments per layer
+        layer_debug: dict[str, np.ndarray] = {}
+        if debug_data is not None:
+            layer_key = col
+            for prefix in ["image_embedding_cmd_", "image_embedding_"]:
+                if col.startswith(prefix):
+                    layer_key = col[len(prefix) :]
+                    break
+            layer_debug[f"{layer_key}/mean_src"] = src_raw[0]
+            layer_debug[f"{layer_key}/mean_tgt"] = tgt_raw[0]
+            layer_debug[f"{layer_key}/raw_moment2_src"] = src_raw[1]
+            layer_debug[f"{layer_key}/raw_moment2_tgt"] = tgt_raw[1]
+            layer_debug[f"{layer_key}/n_src"] = np.array([n_src], dtype=np.int64)
+            layer_debug[f"{layer_key}/n_tgt"] = np.array([n_tgt], dtype=np.int64)
+
+        # Convert raw moments to central moments
+        mu_src = src_raw[0]
+        mu_tgt = tgt_raw[0]
+        src_cm = [mu_src]
+        tgt_cm = [mu_tgt]
+
+        for order in range(2, self.cmd_k + 1):
+            cm_src = np.zeros_like(mu_src)
+            cm_tgt = np.zeros_like(mu_tgt)
+            for i in range(order + 1):
+                coeff = float(comb(order, i))
+                if i == 0:
+                    raw_src = np.array(1.0)
+                    raw_tgt = np.array(1.0)
+                else:
+                    raw_src = src_raw[i - 1]
+                    raw_tgt = tgt_raw[i - 1]
+                cm_src += coeff * raw_src * ((-mu_src) ** (order - i))
+                cm_tgt += coeff * raw_tgt * ((-mu_tgt) ** (order - i))
+            src_cm.append(cm_src)
+            tgt_cm.append(cm_tgt)
+
+        # Euclidean distance per moment (matching v1's RMSELoss = sqrt(sum(diff^2)))
+        layer_loss = 0.0
+        for t in range(self.cmd_k):
+            diff = src_cm[t] - tgt_cm[t]
+            dist = float(np.sqrt(np.sum(diff**2)))
+            layer_loss += dist
+
+        layer_loss /= self.cmd_k
+        return (layer_loss, layer_debug)

@@ -94,6 +94,6 @@ act -j test -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04
 
 ## Pipeline Timing Information
 
-Pipeline execution on GitLab typically takes ~25 minutes:
+Pipeline execution in CI typically takes ~25 minutes:
 - **code_quality stage**: ~5 minutes (linting, spell checking, type checking)
 - **test stage**: ~20 minutes (running the full test suite)

@@ -5,7 +5,7 @@ CI_MODE="${CI:-false}"
 
 uv sync
 
-if [ "$CI_MODE" != "true" ]; then
+if [[ "$CI_MODE" != "true" ]]; then
     uv run nox -s fmt
 fi
 

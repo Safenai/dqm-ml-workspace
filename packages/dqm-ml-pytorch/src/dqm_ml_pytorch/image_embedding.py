@@ -271,36 +271,58 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         with torch.no_grad():
             for batch_start in range(0, len(image_tensors), self.batch_size):
                 batch_slice = image_tensors[batch_start : batch_start + self.batch_size]
-                valid = [t for t in batch_slice if t is not None]
-                if valid:
-                    batch_tensor = torch.stack(valid).to(self.device)
-                    out = self.feature_extractor(batch_tensor)
-                    if isinstance(out, dict):
-                        flat_feats = [layer_output.flatten(1) for layer_output in out.values()]
-                        feats = torch.cat(flat_feats, dim=1)
-                    else:
-                        feats = out.flatten(1) if out.dim() > 2 else out
-                    batch_embeddings_np = feats.detach().cpu().numpy().astype("float32")
-                    pos = 0
-                    for item_or_none in batch_slice:
-                        if item_or_none is None:
-                            embs.append(None)
-                        else:
-                            embs.append(batch_embeddings_np[pos])
-                            pos += 1
-                else:
-                    embs.extend([None] * len(batch_slice))
+                self._process_batch_single(batch_slice, embs)
 
-        if self._embed_dim is None:
-            for emb in embs:
-                if emb is not None:
-                    self._embed_dim = int(emb.size)
-                    break
-            if self._embed_dim is None:
-                return {}
-        embed_dim = self._embed_dim
-
+        embed_dim = self._infer_embed_dim(embs)
+        if embed_dim is None:
+            return {}
         return {"embedding": self._build_fixed_array(embs, embed_dim)}
+
+    def _process_batch_single(self, batch_slice: list[torch.Tensor | None], embs: list[np.ndarray | None]) -> None:
+        """Process a single batch for single-layer embedding extraction.
+
+        Args:
+            batch_slice: Subset of image tensors.
+            embs: Output list to append embeddings to.
+        """
+        valid = [t for t in batch_slice if t is not None]
+        if not valid:
+            embs.extend([None] * len(batch_slice))
+            return
+
+        batch_tensor = torch.stack(valid).to(self.device)
+        out = self.feature_extractor(batch_tensor)
+        if isinstance(out, dict):
+            flat_feats = [layer_output.flatten(1) for layer_output in out.values()]
+            feats = torch.cat(flat_feats, dim=1)
+        else:
+            feats = out.flatten(1) if out.dim() > 2 else out
+        batch_embeddings_np = feats.detach().cpu().numpy().astype("float32")
+
+        pos = 0
+        for item_or_none in batch_slice:
+            if item_or_none is None:
+                embs.append(None)
+            else:
+                embs.append(batch_embeddings_np[pos])
+                pos += 1
+
+    def _infer_embed_dim(self, embs: list[np.ndarray | None]) -> int | None:
+        """Infer embedding dimension from the first valid embedding.
+
+        Args:
+            embs: List of embeddings or None.
+
+        Returns:
+            Embedding dimension, or None if no valid embeddings exist.
+        """
+        if self._embed_dim is not None:
+            return self._embed_dim
+        for emb in embs:
+            if emb is not None:
+                self._embed_dim = int(emb.size)
+                return self._embed_dim
+        return None
 
     def _compute_features_multi_layer(self, image_tensors: list[torch.Tensor | None]) -> dict[str, pa.Array]:
         """Compute embeddings for multiple target layers.
@@ -322,42 +344,81 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         with torch.no_grad():
             for batch_start in range(0, len(image_tensors), self.batch_size):
                 batch_slice = image_tensors[batch_start : batch_start + self.batch_size]
-                valid = [t for t in batch_slice if t is not None]
-                if valid:
-                    batch_tensor = torch.stack(valid).to(self.device)
-                    out_dict = self.feature_extractor(batch_tensor)
-                    # out_dict: {layer_name: tensor} per batch
-                    batch_np_dict: dict[str, np.ndarray] = {}
-                    for layer_name in self.target_layers:
-                        col = f"emb_{layer_name.replace('.', '_')}"
-                        feats = out_dict[layer_name]
-                        flat_feats = feats.flatten(1) if feats.dim() > 2 else feats
-                        batch_np_dict[col] = flat_feats.detach().cpu().numpy().astype("float32")
-                        batch_np_dict[f"{col}_channels"] = np.full(len(valid), feats.shape[1], dtype=np.int32)
+                self._process_batch_multi(batch_slice, layer_cols, channel_cols, per_layer_embs, per_layer_channels)
 
-                    pos = 0
-                    for item_or_none in batch_slice:
-                        for col in layer_cols:
-                            if item_or_none is None:
-                                per_layer_embs[col].append(None)
-                            else:
-                                per_layer_embs[col].append(batch_np_dict[col][pos])
-                        for col in channel_cols:
-                            per_layer_channels[col].append(
-                                None if item_or_none is None else int(batch_np_dict[col][pos])
-                            )
-                        if item_or_none is not None:
-                            pos += 1
-                else:
-                    for col in layer_cols:
-                        per_layer_embs[col].extend([None] * len(batch_slice))
-                    for col in channel_cols:
-                        per_layer_channels[col].extend([None] * len(batch_slice))
+        return self._build_multi_layer_results(layer_cols, channel_cols, per_layer_embs, per_layer_channels)
 
+    def _process_batch_multi(
+        self,
+        batch_slice: list[torch.Tensor | None],
+        layer_cols: list[str],
+        channel_cols: list[str],
+        per_layer_embs: dict[str, list[np.ndarray | None]],
+        per_layer_channels: dict[str, list[int | None]],
+    ) -> None:
+        """Process a single batch for multi-layer embedding extraction.
+
+        Args:
+            batch_slice: Subset of image tensors.
+            layer_cols: Layer column names.
+            channel_cols: Channel column names.
+            per_layer_embs: Per-layer embedding lists to append to.
+            per_layer_channels: Per-layer channel lists to append to.
+        """
+        valid = [t for t in batch_slice if t is not None]
+        if not valid:
+            for col in layer_cols:
+                per_layer_embs[col].extend([None] * len(batch_slice))
+            for col in channel_cols:
+                per_layer_channels[col].extend([None] * len(batch_slice))
+            return
+
+        batch_tensor = torch.stack(valid).to(self.device)
+        out_dict = self.feature_extractor(batch_tensor)
+
+        batch_np_dict: dict[str, np.ndarray] = {}
+        for layer_name in self.target_layers:
+            col = f"emb_{layer_name.replace('.', '_')}"
+            feats = out_dict[layer_name]
+            flat_feats = feats.flatten(1) if feats.dim() > 2 else feats
+            batch_np_dict[col] = flat_feats.detach().cpu().numpy().astype("float32")
+            batch_np_dict[f"{col}_channels"] = np.full(len(valid), feats.shape[1], dtype=np.int32)
+
+        pos = 0
+        for item_or_none in batch_slice:
+            if item_or_none is None:
+                for col in layer_cols:
+                    per_layer_embs[col].append(None)
+                for col in channel_cols:
+                    per_layer_channels[col].append(None)
+            else:
+                for col in layer_cols:
+                    per_layer_embs[col].append(batch_np_dict[col][pos])
+                for col in channel_cols:
+                    per_layer_channels[col].append(int(batch_np_dict[col][pos]))
+                pos += 1
+
+    def _build_multi_layer_results(
+        self,
+        layer_cols: list[str],
+        channel_cols: list[str],
+        per_layer_embs: dict[str, list[np.ndarray | None]],
+        per_layer_channels: dict[str, list[int | None]],
+    ) -> dict[str, pa.Array]:
+        """Build the result dictionary from per-layer collections.
+
+        Args:
+            layer_cols: Layer column names.
+            channel_cols: Channel column names.
+            per_layer_embs: Per-layer embedding lists.
+            per_layer_channels: Per-layer channel lists.
+
+        Returns:
+            Dictionary mapping column names to Arrow arrays.
+        """
         result: dict[str, pa.Array] = {}
         for col in layer_cols:
             embs = per_layer_embs[col]
-            # Infer dimension
             embed_dim = None
             for emb in embs:
                 if emb is not None:

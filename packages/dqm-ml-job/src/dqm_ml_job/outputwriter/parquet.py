@@ -125,16 +125,8 @@ class ParquetOutputWriter:
         else:
             filename = self.path_pattern.format(path_pattern, part)
 
-        # Write to S3 if S3 filesystem is configured, otherwise write to local disk
         if self.s3_filesystem is not None:
-            # For S3, we need to construct the full S3 path
-            s3_path = self._get_s3_path(filename)
-            try:
-                pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
-                logger.info(f"Wrote output table to S3: {s3_path}")
-            except Exception as e:
-                logger.error(f"Failed to write to S3: {e}")
-                raise
+            self._write_to_s3(table, filename)
         else:
             output_dir = Path(filename).parent
             if not Path.exists(output_dir):
@@ -183,3 +175,18 @@ class ParquetOutputWriter:
         """
         bucket_name = os.getenv("S3_BUCKET_NAME", "")
         return bucket_name + "/" + file_path
+
+    def _write_to_s3(self, table: pa.Table, filename: str) -> None:
+        """Write a PyArrow table to S3.
+
+        Args:
+            table: The table to write.
+            filename: The file path within the bucket.
+        """
+        s3_path = self._get_s3_path(filename)
+        try:
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
+            logger.info(f"Wrote output table to S3: {s3_path}")
+        except Exception:
+            logger.exception("Failed to write to S3")
+            raise

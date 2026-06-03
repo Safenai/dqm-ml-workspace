@@ -66,45 +66,62 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 - dataset_root_path: Root directory for relative paths.
         """
         super().__init__(name, config)
-
-        # Local view of config for convenience
         cfg = self.config or {}
 
-        # handle relative paths in parquet to a dataset located at dataset_root_path
         self.dataset_root_path = cfg.get("dataset_root_path", None)
+        self._configure_storage(cfg)
+        self._configure_columns(cfg)
+        self._configure_params(cfg)
+        self._validate_output_features()
 
-        # Storage filesystem support
+    def _configure_storage(self, cfg: dict[str, Any]) -> None:
+        """Configure S3 filesystem support from config.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
         self.s3_fs = None
         storage_cfg = cfg.get("storage")
-        if storage_cfg:
-            from dqm_ml_job.utils import get_s3_filesystem
+        if not storage_cfg:
+            return
 
-            if storage_cfg is True:
-                self.s3_fs = get_s3_filesystem()
-            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
-                self.s3_fs = get_s3_filesystem(
-                    access_key=storage_cfg.get("access_key"),
-                    secret_key=storage_cfg.get("secret_key"),
-                    endpoint=storage_cfg.get("endpoint_override"),
-                    region=storage_cfg.get("region"),
-                )
+        from dqm_ml_job.utils import get_s3_filesystem
 
+        if storage_cfg is True:
+            self.s3_fs = get_s3_filesystem()
+        elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
+            self.s3_fs = get_s3_filesystem(
+                access_key=storage_cfg.get("access_key"),
+                secret_key=storage_cfg.get("secret_key"),
+                endpoint=storage_cfg.get("endpoint_override"),
+                region=storage_cfg.get("region"),
+            )
+
+    def _configure_columns(self, cfg: dict[str, Any]) -> None:
+        """Configure input and output columns.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
         if not hasattr(self, "input_columns") or not self.input_columns:
             self.input_columns = ["image_bytes"]
 
         if not hasattr(self, "output_features") or not self.output_features:
-            # Use config-provided mapping if present, otherwise defaults
             cfg_outputs = cfg.get("output_features") if isinstance(cfg.get("output_features"), dict) else None
             self.output_features: Any = (
                 cfg_outputs.copy() if isinstance(cfg_outputs, dict) else self.DEFAULT_OUTPUTS.copy()
             )
 
-        # param
+    def _configure_params(self, cfg: dict[str, Any]) -> None:
+        """Configure processing parameters.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
         self.grayscale: bool = bool(cfg.get("grayscale", True))
         self.normalize: bool = bool(cfg.get("normalize", True))
         self.entropy_bins: int = int(cfg.get("entropy_bins", 256))
 
-        # TODO written to remove noqa 501 and type check error in same line, to be fixed properly later
         if cfg.get("clip_percentiles") is not None:
             self.clip_percentiles = tuple(cfg.get("clip_percentiles"))  # type: ignore
         else:
@@ -112,7 +129,8 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
         self.laplacian_kernel: str = str(cfg.get("laplacian_kernel", "3x3"))
 
-        # check if the transformation is defined in the processor
+    def _validate_output_features(self) -> None:
+        """Validate output features configuration."""
         if not isinstance(self.output_features, dict):
             raise ValueError(f"[{self.name}] 'output_features' must be a dict of metric->column_name")
         for k in ("luminosity", "contrast", "blur", "entropy"):
@@ -305,64 +323,83 @@ class VisualFeaturesProcessor(DatametricProcessor):
         Returns:
             2D numpy array in grayscale.
         """
-        img: Image.Image | None = None
-
         if isinstance(image_data, Image.Image):
-            img = image_data
-        elif isinstance(image_data, (bytes, bytearray)):
-            img = Image.open(io.BytesIO(image_data))
-        elif isinstance(image_data, str):
-            if self.s3_fs:
-                # Build the full path
-                s3_key = f"{self.dataset_root_path}/{image_data}" if self.dataset_root_path is not None else image_data
-                # Build S3 path: bucket/prefix/file
-                bucket_name = os.getenv("S3_BUCKET_NAME", "")
-                s3_path = f"{bucket_name}/{s3_key}"
-                with self.s3_fs.open_input_stream(s3_path) as f:
-                    img = Image.open(io.BytesIO(f.read()))
-                    img = img.copy()  # Load into memory before closing file
-            else:
-                # Build the full path
-                img_path = (
-                    Path(self.dataset_root_path) / image_data
-                    if self.dataset_root_path is not None
-                    else Path(image_data)
-                )
-                if img_path.is_file():
-                    img = Image.open(img_path)
-                else:
-                    raise ValueError(f"Path does not exist: {img_path}")
-        elif isinstance(image_data, np.ndarray):
-            arr = image_data
-            if arr.ndim == 2:  # already gray
-                gray = arr
-            elif arr.ndim == 3 and arr.shape[2] in (3, 4):
-                # manual luminance conversion to be independent of PIL for ndarray
-                rgb = arr[..., :3].astype(np.float32)
-                # BT.709 luma weights
-                gray = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-            else:
-                raise ValueError(f"Unsupported ndarray shape {arr.shape}")
+            return self._pil_to_gray(image_data)
+        if isinstance(image_data, (bytes, bytearray)):
+            return self._pil_to_gray(Image.open(io.BytesIO(image_data)))
+        if isinstance(image_data, str):
+            return self._pil_to_gray(self._load_image_from_path(image_data))
+        if isinstance(image_data, np.ndarray):
+            return self._ndarray_to_gray(image_data)
+        raise ValueError(f"Unsupported type for image input: {type(image_data)}")
 
-            return self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
-        else:
-            raise ValueError(f"Unsupported type for image input: {type(image_data)}")
+    def _load_image_from_path(self, path: str) -> Image.Image:
+        """Load a PIL Image from a string path (S3 or local).
 
-        # Use PIL pipeline
+        Args:
+            path: File path or relative path.
+
+        Returns:
+            PIL Image object.
+
+        Raises:
+            ValueError: If the S3 path does not exist.
+        """
+        if self.s3_fs:
+            s3_key = f"{self.dataset_root_path}/{path}" if self.dataset_root_path is not None else path
+            bucket_name = os.getenv("S3_BUCKET_NAME", "")
+            s3_path = f"{bucket_name}/{s3_key}"
+            with self.s3_fs.open_input_stream(s3_path) as f:
+                loaded = Image.open(io.BytesIO(f.read()))
+                img = loaded.copy()
+            return img
+
+        img_path = Path(self.dataset_root_path) / path if self.dataset_root_path is not None else Path(path)
+        if not img_path.is_file():
+            raise ValueError(f"Path does not exist: {img_path}")
+        return Image.open(img_path)
+
+    def _pil_to_gray(self, img: Image.Image) -> np.ndarray:
+        """Convert a PIL Image to a 2D grayscale numpy array.
+
+        Args:
+            img: PIL Image to convert.
+
+        Returns:
+            2D grayscale array.
+        """
         if self.grayscale and img.mode != "L":
             img = img.convert("L")
         elif not self.grayscale and img.mode not in ("RGB", "L"):
             img = img.convert("RGB")
 
         gray_np = np.array(img)
-        if gray_np.ndim == 3:  # RGB -> gray
+        if gray_np.ndim == 3:
             gray_np = 0.2126 * gray_np[..., 0] + 0.7152 * gray_np[..., 1] + 0.0722 * gray_np[..., 2]
 
-        if self.normalize:
-            # Revert to min-max normalization as required by existing tests
-            return self._to_float01(gray_np)
+        return self._to_float01(gray_np) if self.normalize else gray_np.astype(np.uint8)
+
+    def _ndarray_to_gray(self, arr: np.ndarray) -> np.ndarray:
+        """Convert a numpy image array to 2D grayscale.
+
+        Args:
+            arr: Input array (2D gray, 3D RGB/RGBA).
+
+        Returns:
+            2D grayscale array.
+
+        Raises:
+            ValueError: If the shape is unsupported.
+        """
+        if arr.ndim == 2:
+            gray = arr
+        elif arr.ndim == 3 and arr.shape[2] in (3, 4):
+            rgb = arr[..., :3].astype(np.float32)
+            gray = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
         else:
-            return gray_np.astype(np.uint8)
+            raise ValueError(f"Unsupported ndarray shape {arr.shape}")
+
+        return self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
 
     @staticmethod
     def _to_float01(arr: np.ndarray) -> np.ndarray:

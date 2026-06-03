@@ -9,6 +9,8 @@ from typing import Any
 import pytest
 from tests.utils.jobs import generate_job
 
+_OUTPUT_DATA_DIR = "outputs/data"
+
 
 @pytest.fixture(scope="session")
 def job_representativeness(
@@ -49,7 +51,7 @@ def job_representativeness(
 
     generate_job(
         processor_name="representativeness",
-        parquets_path=Path(test_path) / "outputs/data",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
@@ -84,7 +86,7 @@ def job_domain_gap(test_path: str) -> None:
     Args:
         test_path: Path to the tests directory.
     """
-    gen_path = Path(test_path) / "outputs/data"
+    gen_path = Path(test_path) / _OUTPUT_DATA_DIR
     metrics = ["fid", "klmvn_diag", "mmd_linear", "wasserstein_1d", "mmd_rbf", "mmd_poly", "pad", "cmd"]
 
     for metric in metrics:
@@ -129,7 +131,7 @@ def job_diversity(test_path: str, diversity_data: Any) -> None:
 
     generate_job(
         processor_name="diversity",
-        parquets_path=Path(test_path) / "outputs/data",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
