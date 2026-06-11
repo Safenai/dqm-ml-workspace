@@ -3,11 +3,11 @@ name = "dqm-workspace"
 dynamic = ["version"]
 requires-python = ">=3.10"
 dependencies = [
-    "dqm-ml",
-    "dqm-ml-core",
-    "dqm-ml-images",
-    "dqm-ml-job",
-    "dqm-ml-pytorch",
+    "dqm-ml>=2.0.0rc0",
+    "dqm-ml-core>=2.0.0rc0",
+    "dqm-ml-images>=2.0.0rc0",
+    "dqm-ml-job>=2.0.0rc0",
+    "dqm-ml-pytorch>=2.0.0rc0",
     "pre-commit>=4.5.0",
     "pycocotools>=2.0.10",
     "ruamel-yaml>=0.19.1",
