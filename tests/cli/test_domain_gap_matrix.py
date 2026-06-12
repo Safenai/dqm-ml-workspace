@@ -57,7 +57,7 @@ class TestDomainGapMatrixFull:
                     "image_embedding": {
                         "type": "image_embedding",
                         "data": {"image_column": "image_path", "mode": "path"},
-                        "model_config": {
+                        "model": {
                             "arch": "resnet18",
                             "n_layer_feature": -2,
                             "device": "cpu",

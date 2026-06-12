@@ -5,6 +5,7 @@ how well a dataset represents a target statistical distribution using
 various statistical tests.
 """
 
+import json
 import logging
 from typing import Any
 
@@ -124,7 +125,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         if dist_params_raw is not None:
             self.dist_params = dict(dist_params_raw)
 
-        # check config: avoid redondancy checks with pipeline (see datasetpipeline )
+        # Avoid redundant config validation (pipeline already validates)
         if not self.input_columns:
             raise ValueError(f"[{self.name}] 'input_columns' must be provided")
         if any(m not in self.SUPPORTED_METRICS for m in self.metrics):
@@ -138,6 +139,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         if self.epsilon <= 0:
             raise ValueError(f"[{self.name}] 'epsilon' must be positive")
 
+        self._rng = np.random.default_rng()
         self._bin_edges: dict[str, np.ndarray] = {}
         self._initialized: bool = False
 
@@ -170,6 +172,44 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         return metrics
 
+    @staticmethod
+    def _convert_column_to_numeric(feature_array: pa.Array) -> pd.Series | None:
+        """Convert a PyArrow column array to a numeric pandas Series with NaN handling.
+
+        Args:
+            feature_array: PyArrow array from the batch.
+
+        Returns:
+            Numeric pandas Series with NaN dropped, or None if conversion fails.
+        """
+        try:
+            np_col = np.asarray(feature_array.to_numpy(zero_copy_only=False))
+        except Exception:
+            np_col = pd.Series(feature_array.to_pylist()).to_numpy(copy=True)
+        numeric_values = pd.to_numeric(pd.Series(np_col), errors="coerce").dropna()
+        return numeric_values if not numeric_values.empty else None
+
+    def _compute_batch_ks_sample(self, numeric_values: pd.Series) -> np.ndarray | None:
+        """Compute a random KS sample from numeric values if KS or chi-square is enabled.
+
+        Args:
+            numeric_values: Numeric pandas Series from a batch.
+
+        Returns:
+            Sampled numpy array, or None if no sampling is needed.
+        """
+        if "kolmogorov-smirnov" not in self.metrics and "chi-square" not in self.metrics:
+            return None
+
+        sample_per_batch = min(
+            self.ks_sample_size,
+            max(self.ks_min_sample_size, len(numeric_values) // self.ks_sample_divisor),
+        )
+        if len(numeric_values) > sample_per_batch:
+            sample_indices = self._rng.choice(len(numeric_values), sample_per_batch, replace=False)
+            return np.asarray(numeric_values[sample_indices])
+        return np.asarray(numeric_values)
+
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """
@@ -191,58 +231,25 @@ class RepresentativenessProcessor(DatametricProcessor):
                 logger.warning(f"[{self.name}] column '{col}' not found in batch")
                 continue
 
-            arr = features[col]
-            # convert to numeric, handle mixed types and NaN
-            try:
-                np_col = np.asarray(arr.to_numpy(zero_copy_only=False))
-            except Exception:
-                np_col = pd.Series(arr.to_pylist()).to_numpy(copy=True)
-
-            values = pd.to_numeric(pd.Series(np_col), errors="coerce").dropna()
-
-            if values.empty:
+            numeric_values = self._convert_column_to_numeric(features[col])
+            if numeric_values is None:
                 logger.warning(f"[{self.name}] column '{col}' has no valid numeric values in this batch")
                 continue
 
             if not self._initialized or col not in self._bin_edges:
-                self._initialize_bin_edges(values.to_numpy(), col)
+                self._initialize_bin_edges(numeric_values.to_numpy(), col)
 
             edges = self._bin_edges[col]
+            hist_counts = np.histogram(numeric_values, bins=edges)[0].astype(np.int64)
 
-            # Debug
-            logger.debug(f"[{self.name}] edges shape: {edges.shape}, values shape: {values.shape}")
-
-            hist_counts = np.histogram(values, bins=edges)[0].astype(np.int64)
-
-            # debug: check histogram
-            logger.debug(f"[{self.name}] hist_counts shape: {hist_counts.shape}, expected: {self.bins}")
-
-            # store as Arrow arrays for aggregation
-            batch_metrics[f"{col}_count"] = pa.array([len(values)], type=pa.int64())
-            # batch_metrics[f"{col}_hist"] = pa.array(hist_counts.tolist(), type=pa.int64())
+            batch_metrics[f"{col}_count"] = pa.array([len(numeric_values)], type=pa.int64())
             batch_metrics[f"{col}_hist"] = pa.FixedSizeListArray.from_arrays(
                 hist_counts, list_size=hist_counts.shape[0]
             )
 
-            # sampling for KS test approximation
-            # TODO: KS need to have all the data in memory to compute,
-            # this metrics need to rely on other metrics prior computation of mean, std, min, max computation
-            if "kolmogorov-smirnov" in self.metrics or "chi-square" in self.metrics:
-                sample_per_batch = min(
-                    self.ks_sample_size,
-                    max(
-                        self.ks_min_sample_size,
-                        len(values) // self.ks_sample_divisor,
-                    ),
-                )
-                if len(values) > sample_per_batch:
-                    # Random sampling without replacement
-                    sample_indices = np.random.choice(len(values), sample_per_batch, replace=False)
-                    sample = values[sample_indices]
-                else:
-                    sample = values
-
-                batch_metrics[f"{col}_ks_sample"] = pa.array(sample.tolist(), type=pa.float64())
+            ks_sample = self._compute_batch_ks_sample(numeric_values)
+            if ks_sample is not None:
+                batch_metrics[f"{col}_ks_sample"] = pa.array(ks_sample.tolist(), type=pa.float64())
 
         if not self._initialized and batch_metrics:
             self._initialized = True
@@ -263,13 +270,333 @@ class RepresentativenessProcessor(DatametricProcessor):
             std = std if std > 0.0 else self.epsilon
             edges = self._bin_edges_normal(mean, std, self.bins, sample_data)
         else:
-            mn = float(self.dist_params.get("min", np.min(sample_data)))
-            mx = float(self.dist_params.get("max", np.max(sample_data)))
-            if mx <= mn:
-                mx = mn + self.epsilon
-            edges = self._bin_edges_uniform(mn, mx, self.bins, sample_data)
+            min_val = float(self.dist_params.get("min", np.min(sample_data)))
+            max_val = float(self.dist_params.get("max", np.max(sample_data)))
+            if max_val <= min_val:
+                max_val = min_val + self.epsilon
+            edges = self._bin_edges_uniform(min_val, max_val, self.bins, sample_data)
 
         self._bin_edges[col] = edges
+
+    def _aggregate_column_metrics(
+        self, batch_metrics: dict[str, pa.Array], col: str
+    ) -> tuple[int, np.ndarray, np.ndarray] | None:
+        """Aggregate histogram and count for a single column across all batches.
+
+        Args:
+            batch_metrics: Dictionary of batch-level metrics.
+            col: Column name.
+
+        Returns:
+            Tuple of (total_count, obs_counts, edges) or None if aggregation fails.
+        """
+        count_key = f"{col}_count"
+        hist_key = f"{col}_hist"
+        if count_key not in batch_metrics or hist_key not in batch_metrics:
+            logger.warning(f"[{self.name}] no batch metrics for column '{col}'")
+            return None
+
+        hist_batch_arrays = np.asarray(batch_metrics[hist_key].to_numpy(zero_copy_only=False))
+        if hist_batch_arrays.shape[0] == 0:
+            logger.warning(f"[{self.name}] no histogram batch for '{col}'")
+            return None
+
+        total_count = int(np.sum(batch_metrics[count_key].to_numpy()))
+        hist_arrays = hist_batch_arrays[0].copy()
+        for batch_hist in hist_batch_arrays[1:]:
+            hist_arrays += batch_hist
+        obs_counts = hist_arrays.astype(float)
+
+        if total_count <= 0 or obs_counts.sum() <= 0:
+            logger.warning(f"[{self.name}] no valid data for column '{col}'")
+            return None
+
+        if col not in self._bin_edges:
+            logger.warning(f"[{self.name}] no bin edges for column '{col}' - skipping")
+            return None
+
+        return total_count, obs_counts, self._bin_edges[col]
+
+    def _compute_expected_counts(
+        self,
+        col: str,
+        batch_metrics: dict[str, pa.Array],
+        total_count: int,
+        edges: np.ndarray,
+    ) -> np.ndarray:
+        """Generate expected counts under the configured distribution.
+
+        Args:
+            col: Column name.
+            batch_metrics: Batch-level metrics dict (used for KS samples to estimate params).
+            total_count: Total number of samples.
+            edges: Bin edges for histogram.
+
+        Returns:
+            Expected frequency counts per bin.
+        """
+        if self.distribution == "normal":
+            mean, std = self._estimate_normal_params(col, batch_metrics)
+            expected_values = self._rng.normal(mean, std, total_count)
+        else:
+            min_val = float(self.dist_params.get("min", edges[0]))
+            max_val = float(self.dist_params.get("max", edges[-1]))
+            expected_values = self._rng.uniform(min_val, max_val, total_count)
+        return np.histogram(expected_values, bins=edges)[0].astype(np.float64)
+
+    def _estimate_normal_params(self, col: str, batch_metrics: dict[str, pa.Array]) -> tuple[float, float]:
+        """Estimate normal distribution parameters from config or KS samples.
+
+        Args:
+            col: Column name.
+            batch_metrics: Batch-level metrics dict.
+
+        Returns:
+            Tuple of (mean, std).
+        """
+        sample_key = f"{col}_ks_sample"
+        if sample_key in batch_metrics:
+            sample_arrays = batch_metrics[sample_key].to_numpy()
+            if sample_arrays.ndim > 1:
+                sample_arrays = sample_arrays.flatten()
+            mean = float(self.dist_params.get("mean", np.mean(sample_arrays)))
+            std = float(self.dist_params.get("std", np.std(sample_arrays, ddof=0)))
+        else:
+            mean = float(self.dist_params.get("mean", 0.0))
+            std = float(self.dist_params.get("std", 1.0))
+        std = std if std > 0.0 else self.epsilon
+        return mean, std
+
+    def _compute_chi_square_metric(self, obs_counts: np.ndarray, exp_counts: np.ndarray) -> dict[str, Any]:
+        """Compute chi-square goodness-of-fit test between observed and expected counts.
+
+        Args:
+            obs_counts: Observed frequency counts per bin.
+            exp_counts: Expected frequency counts per bin.
+
+        Returns:
+            Dict with p_value, statistic, interpretation keys.
+        """
+        mask = exp_counts > 0
+        if mask.sum() < 2:
+            return {
+                "p_value": float("nan"),
+                "statistic": float("nan"),
+                "interpretation": "insufficient_bins",
+            }
+
+        obs_sum = obs_counts[mask].sum()
+        exp_sum = exp_counts[mask].sum()
+        if exp_sum <= 0:
+            return {
+                "p_value": float("nan"),
+                "statistic": float("nan"),
+                "interpretation": "no_expected_counts",
+            }
+
+        exp_counts_normalized = exp_counts[mask] * (obs_sum / exp_sum)
+        try:
+            chi = stats.chisquare(f_obs=obs_counts[mask], f_exp=exp_counts_normalized)
+            return {
+                "p_value": float(chi.pvalue),
+                "statistic": float(chi.statistic),
+                "interpretation": self.interpretation_thresholds.get(
+                    "follows_distribution" if chi.pvalue >= self.alpha else "does_not_follow_distribution",
+                    "follows_distribution",
+                ),
+            }
+        except ValueError as e:
+            return {
+                "p_value": float("nan"),
+                "statistic": float("nan"),
+                "interpretation": f"chi_square_failed: {e!s}",
+                "note": "using observed counts only due to statistical constraints",
+            }
+
+    def _compute_ks_metric(self, col: str, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:
+        """Compute Kolmogorov-Smirnov test using sampled data.
+
+        Args:
+            col: Column name.
+            batch_metrics: Batch-level metrics dict containing KS samples.
+
+        Returns:
+            Dict with p_value, statistic, interpretation keys.
+        """
+        sample_key = f"{col}_ks_sample"
+        if sample_key not in batch_metrics:
+            return {
+                "p_value": float("nan"),
+                "statistic": float("nan"),
+                "interpretation": "no_sample_data_found",
+            }
+
+        sample_arrays = batch_metrics[sample_key].to_numpy()
+        ks_samples = sample_arrays if sample_arrays.ndim == 1 else sample_arrays.flatten()
+
+        if len(ks_samples) == 0:
+            return {
+                "p_value": float("nan"),
+                "statistic": float("nan"),
+                "interpretation": "no_samples_available",
+            }
+
+        if self.distribution == "normal":
+            mean, std = self._estimate_normal_params(col, batch_metrics)
+            ks = stats.kstest(ks_samples, stats.norm.cdf, args=(mean, std))
+        else:
+            min_val = float(self.dist_params.get("min", np.min(ks_samples)))
+            max_val = float(self.dist_params.get("max", np.max(ks_samples)))
+            if max_val <= min_val:
+                max_val = min_val + self.epsilon
+            ks = stats.kstest(ks_samples, stats.uniform.cdf, args=(min_val, max_val - min_val))
+
+        return {
+            "p_value": float(ks.pvalue),
+            "statistic": float(ks.statistic),
+            "interpretation": self.interpretation_thresholds.get(
+                "follows_distribution" if ks.pvalue >= self.alpha else "does_not_follow_distribution",
+                "follows_distribution",
+            ),
+            "sample_size": len(ks_samples),
+            "note": "approximated_from_random_samples",
+        }
+
+    def _compute_shannon_entropy_metric(self, exp_counts: np.ndarray) -> dict[str, Any]:
+        """Compute Shannon entropy from expected frequency counts.
+
+        Args:
+            exp_counts: Expected frequency counts per bin.
+
+        Returns:
+            Dict with entropy and interpretation.
+        """
+        p_exp = exp_counts / exp_counts.sum()
+        h_exp = float(stats.entropy(p_exp))
+        is_high = h_exp > self.shannon_entropy_threshold
+        return {
+            "entropy": h_exp,
+            "interpretation": self.interpretation_thresholds.get(
+                "high_diversity" if is_high else "low_diversity",
+                "high_diversity",
+            ),
+        }
+
+    def _compute_grte_metric(self, obs_counts: np.ndarray, exp_counts: np.ndarray) -> dict[str, Any]:
+        """Compute GRTE (exponential gap between observed and theoretical entropy).
+
+        Args:
+            obs_counts: Observed frequency counts per bin.
+            exp_counts: Expected frequency counts per bin.
+
+        Returns:
+            Dict with grte_value and interpretation.
+        """
+        p_obs = obs_counts / obs_counts.sum()
+        p_exp = exp_counts / exp_counts.sum()
+        h_obs = float(stats.entropy(p_obs))
+        h_exp = float(stats.entropy(p_exp))
+        grte = float(np.exp(-2.0 * abs(h_exp - h_obs)))
+        is_high = grte > self.grte_threshold
+        return {
+            "grte_value": grte,
+            "interpretation": self.interpretation_thresholds.get(
+                "high_representativeness" if is_high else "low_representativeness",
+                "high_representativeness",
+            ),
+        }
+
+    @staticmethod
+    def _build_compute_metadata(
+        total_samples: int,
+        batch_metrics: dict[str, pa.Array],
+        input_columns: list[str],
+        distribution: str,
+        metrics: list[str],
+        bins: int,
+    ) -> str:
+        """Build metadata JSON string for compute results.
+
+        Args:
+            total_samples: Total number of samples processed.
+            batch_metrics: Batch-level metrics dict.
+            input_columns: Input column names.
+            distribution: Target distribution name.
+            metrics: List of computed metric names.
+            bins: Number of histogram bins.
+
+        Returns:
+            JSON-encoded metadata string.
+        """
+        return json.dumps(
+            {
+                "bins": bins,
+                "distribution": distribution,
+                "metrics_computed": metrics,
+                "total_samples": total_samples,
+                "columns_analyzed": [c for c in input_columns if f"{c}_count" in batch_metrics],
+                "ks_sampling_enabled": "kolmogorov-smirnov" in metrics,
+                "note": "KS test uses random sampling approximation for scalability",
+            }
+        )
+
+    @staticmethod
+    def _flatten_col_results(col_res: dict[str, Any], col: str, results: dict[str, Any]) -> None:
+        """Flatten nested metric dicts into flat output keys.
+
+        Args:
+            col_res: Per-column metric results (potentially nested).
+            col: Column name.
+            results: Output dict to populate.
+        """
+        for key, value in col_res.items():
+            if isinstance(value, dict):
+                for prop, content in value.items():
+                    results[f"{key}_{col}_{prop}"] = content
+            else:
+                results[f"{key}_{col}"] = value
+
+    def _compute_column_results(
+        self,
+        col: str,
+        batch_metrics: dict[str, pa.Array],
+        results: dict[str, Any],
+    ) -> int:
+        """Compute all metrics for a single column and write them to results.
+
+        Args:
+            col: Column name.
+            batch_metrics: Batch-level metrics dict.
+            results: Output dict to populate (mutated in place).
+
+        Returns:
+            Number of samples processed (0 if column has no valid data).
+        """
+        agg = self._aggregate_column_metrics(batch_metrics, col)
+        if agg is None:
+            return 0
+
+        total_count, obs_counts, edges = agg
+        exp_counts = self._compute_expected_counts(col, batch_metrics, total_count, edges)
+
+        col_res: dict[str, Any] = {}
+
+        if "chi-square" in self.metrics:
+            col_res["chi-square"] = self._compute_chi_square_metric(obs_counts, exp_counts)
+
+        if "kolmogorov-smirnov" in self.metrics:
+            col_res["kolmogorov-smirnov"] = self._compute_ks_metric(col, batch_metrics)
+
+        if "shannon-entropy" in self.metrics:
+            col_res["shannon-entropy"] = self._compute_shannon_entropy_metric(exp_counts)
+
+        if "grte" in self.metrics:
+            col_res["grte"] = self._compute_grte_metric(obs_counts, exp_counts)
+
+        if col_res:
+            self._flatten_col_results(col_res, col, results)
+
+        return total_count
 
     @override
     def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, Any]:
@@ -280,266 +607,26 @@ class RepresentativenessProcessor(DatametricProcessor):
             batch_metrics: Dictionary of batch-level metrics collected during processing.
 
         Returns:
-            Dictionary containing final scores and interpretations for all selected metrics.
+            Dictionary containing final scores and interpretations.
         """
         if not batch_metrics:
             return {"_metadata": {"error": "No batch metrics provided"}}
 
-        out: dict[str, Any] = {}
+        results: dict[str, Any] = {}
         total_samples = 0
 
         for col in self.input_columns:
-            count_key = f"{col}_count"
-            hist_key = f"{col}_hist"
+            total_samples += self._compute_column_results(col, batch_metrics, results)
 
-            if count_key not in batch_metrics or hist_key not in batch_metrics:
-                logger.warning(f"[{self.name}] no batch metrics for column '{col}'")
-                continue
-
-            # TODO : maybe we need a try ? as in batch or not as na already removed
-            # N/A handling shall be documented, and logs added
-            hist_batch_arrays = np.asarray(batch_metrics[hist_key].to_numpy(zero_copy_only=False))
-            if hist_batch_arrays.shape[0] == 0:
-                logger.warning(f"[{self.name}] no histograme batch for '{col}'")
-                continue
-
-            # aggregate counts and histograms across all batches
-            total_count = int(np.sum(batch_metrics[count_key].to_numpy()))
-
-            hist_arrays = None
-
-            for batch_hist in hist_batch_arrays:
-                hist_arrays = batch_hist if hist_arrays is None else hist_arrays + batch_hist
-
-            # Debug: vérifier les dimensions
-            if hist_arrays is None:
-                logger.warning(f"[{self.name}] no valid histogram for column '{col}'")
-                continue
-
-            logger.debug(f"[{self.name}] hist_arrays shape: {hist_arrays.shape}, expected bins: {self.bins}")
-
-            # sum histogram counts across batches
-            if hist_arrays.ndim == 1:
-                logger.debug("Single histogram")
-                obs_counts = hist_arrays.astype(float)
-            else:
-                # Ensure we're summing along the right axis
-                logger.debug("Multiple histograms from different batches")
-                if hist_arrays.shape[1] == self.bins:
-                    logger.debug("Sum along batch dimension (axis=0)")
-                    obs_counts = np.sum(hist_arrays, axis=0).astype(float)
-                else:
-                    logger.debug("Flatten and create a single histogram")
-                    logger.warning(f"[{self.name}] Unexpected histogram shape {hist_arrays.shape}, flattening")
-                    obs_counts = hist_arrays.flatten().astype(float)
-
-            if total_count <= 0 or obs_counts.sum() <= 0:
-                logger.warning(f"[{self.name}] no valid data for column '{col}'")
-                continue
-
-            total_samples += total_count
-
-            #  distribution parameters and bin edges
-            if col not in self._bin_edges:
-                logger.warning(f"[{self.name}] no bin edges for column '{col}' - skipping")
-                continue
-
-            edges = self._bin_edges[col]
-
-            # theoretical probabilities - Aligné sur DQM-ML officiel
-            if self.distribution == "normal":
-                logger.debug("Generate normal distribution")
-                # Utilise les MÊMES paramètres que ceux utilisés pour générer les bins
-
-                sample_key = f"{col}_ks_sample"
-                if sample_key in batch_metrics:
-                    logger.debug("Use sampled meand and std")
-                    sample_arrays = batch_metrics[sample_key].to_numpy()
-                    if sample_arrays.ndim > 1:
-                        sample_arrays = sample_arrays.flatten()
-                    mean = float(self.dist_params.get("mean", np.mean(sample_arrays)))
-                    std = float(self.dist_params.get("std", np.std(sample_arrays, ddof=0)))
-                    std = std if std > 0.0 else self.epsilon
-                else:
-                    logger.debug("Fallback: use default or configured mean and std")
-                    mean = float(self.dist_params.get("mean", 0.0))
-                    std = float(self.dist_params.get("std", 1.0))
-                logger.debug(f"mean={mean}")
-                logger.debug(f"std={mean}")
-                # génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
-                expected_values = np.random.normal(mean, std, total_count)
-                exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
-            else:  # uniform
-                logger.debug("Generate uniform distribution")
-                mn = float(self.dist_params.get("min", edges[0]))
-                mx = float(self.dist_params.get("max", edges[-1]))
-                logger.debug(f"min={mn}")
-                logger.debug(f"max={mx}")
-                # Génère des valeurs aléatoires et compte les fréquences (comme l'officiel)
-                expected_values = np.random.uniform(mn, mx, total_count)
-                exp_probs = np.histogram(expected_values, bins=edges)[0].astype(np.float64)
-
-            exp_counts = total_count * exp_probs
-
-            col_res: dict[str, Any] = {}
-
-            # chi-square: here we compute the chi-square with a alpha value of 0.05
-            if "chi-square" in self.metrics:
-                # Ensure observed and expected counts have the same sum
-
-                mask = exp_counts > 0
-                if mask.sum() >= 2:
-                    logger.debug("Normalize expected counts to match observed sum")
-                    obs_sum = obs_counts[mask].sum()
-                    exp_sum = exp_counts[mask].sum()
-
-                    if exp_sum > 0:
-                        # Scale expected counts to match observed sum
-                        exp_counts_normalized = exp_counts[mask] * (obs_sum / exp_sum)
-
-                        logger.debug("Expected frequencies:")
-                        logger.debug(exp_counts_normalized)
-                        logger.debug("Observed frequencies: ")
-                        logger.debug(obs_counts[mask])
-
-                        try:
-                            chi = stats.chisquare(
-                                f_obs=obs_counts[mask],
-                                f_exp=exp_counts_normalized,
-                            )
-                            logger.debug(f"Chi P value: {chi.pvalue}")
-                            col_res["chi-square"] = {
-                                "p_value": float(chi.pvalue),
-                                "statistic": float(chi.statistic),
-                                "interpretation": self.interpretation_thresholds.get(
-                                    "follows_distribution"
-                                    if chi.pvalue >= self.alpha
-                                    else "does_not_follow_distribution",
-                                    "follows_distribution",
-                                ),
-                            }
-                        except ValueError as e:
-                            # Fallback: use only observed counts if chi-square fails
-                            col_res["chi-square"] = {
-                                "p_value": float("nan"),
-                                "statistic": float("nan"),
-                                "interpretation": f"chi_square_failed: {e!s}",
-                                "note": "using observed counts only due to statistical constraints",
-                            }
-                    else:
-                        col_res["chi-square"] = {
-                            "p_value": float("nan"),
-                            "statistic": float("nan"),
-                            "interpretation": "no_expected_counts",
-                        }
-                else:
-                    col_res["chi-square"] = {
-                        "p_value": float("nan"),
-                        "statistic": float("nan"),
-                        "interpretation": "insufficient_bins",
-                    }
-
-            # Kolmogorov-Smirnov test using sampled data
-            if "kolmogorov-smirnov" in self.metrics:
-                sample_key = f"{col}_ks_sample"
-                if sample_key in batch_metrics:
-                    sample_arrays = batch_metrics[sample_key].to_numpy()
-                    ks_samples = sample_arrays if sample_arrays.ndim == 1 else sample_arrays.flatten()
-
-                    if len(ks_samples) > 0:
-                        # Perform KS test on aggregated samples
-                        if self.distribution == "normal":
-                            mean = float(self.dist_params.get("mean", np.mean(ks_samples)))
-                            std = float(self.dist_params.get("std", np.std(ks_samples, ddof=0)))
-                            std = std if std > 0.0 else self.epsilon
-                            ks = stats.kstest(ks_samples, stats.norm.cdf, args=(mean, std))
-                        else:  # uniform
-                            mn = float(self.dist_params.get("min", np.min(ks_samples)))
-                            mx = float(self.dist_params.get("max", np.max(ks_samples)))
-                            if mx <= mn:
-                                mx = mn + self.epsilon
-                            ks = stats.kstest(
-                                ks_samples,
-                                stats.uniform.cdf,
-                                args=(mn, mx - mn),
-                            )
-
-                        col_res["kolmogorov-smirnov"] = {
-                            "p_value": float(ks.pvalue),
-                            "statistic": float(ks.statistic),
-                            "interpretation": self.interpretation_thresholds.get(
-                                "follows_distribution" if ks.pvalue >= self.alpha else "does_not_follow_distribution",
-                                "follows_distribution",
-                            ),
-                            "sample_size": len(ks_samples),
-                            "note": "approximated_from_random_samples",
-                        }
-                    else:
-                        col_res["kolmogorov-smirnov"] = {
-                            "p_value": float("nan"),
-                            "statistic": float("nan"),
-                            "interpretation": "no_samples_available",
-                        }
-                else:
-                    col_res["kolmogorov-smirnov"] = {
-                        "p_value": float("nan"),
-                        "statistic": float("nan"),
-                        "interpretation": "no_sample_data_found",
-                    }
-
-            # Shannon entropy - aligned on dqm-ml v1 (using theoretical frequencies)
-            if "shannon-entropy" in self.metrics:
-                # Use theoretical frequencies
-                p_exp = exp_probs / exp_probs.sum()
-                h_exp = float(stats.entropy(p_exp))
-                col_res["shannon-entropy"] = {
-                    "entropy": h_exp,
-                    "interpretation": self.interpretation_thresholds.get(
-                        "high_diversity" if h_exp > self.shannon_entropy_threshold else "low_diversity",
-                        "high_diversity",
-                    ),
-                }
-
-            # GRTE (gap between observed and theoretical entropies) - aligned on dqm-ml v1
-            if "grte" in self.metrics:
-                # Use observed and theoretical frequencies
-                p_obs = obs_counts / obs_counts.sum()
-                p_exp = exp_probs / exp_probs.sum()
-                h_obs = float(stats.entropy(p_obs))
-                h_exp = float(stats.entropy(p_exp))
-                grte = float(np.exp(-2.0 * abs(h_exp - h_obs)))
-                col_res["grte"] = {
-                    "grte_value": grte,
-                    "interpretation": self.interpretation_thresholds.get(
-                        "high_representativeness" if grte > self.grte_threshold else "low_representativeness",
-                        "high_representativeness",
-                    ),
-                }
-
-            # Stupid way to flatten tree of keys
-            # TODO : refactor the implementation,for optimization
-            if col_res:
-                for key, value in col_res.items():
-                    if isinstance(value, dict):
-                        for prop, content in value.items():
-                            out[key + "_" + col + "_" + prop] = content
-                    else:
-                        out[key + "_" + col] = value
-        # TODO make optional export of metadata
-        meta_data = {
-            "bins": self.bins,
-            "distribution": self.distribution,
-            "metrics_computed": self.metrics,
-            "total_samples": total_samples,
-            "columns_analyzed": [c for c in self.input_columns if f"{c}_count" in batch_metrics],
-            "ks_sampling_enabled": "kolmogorov-smirnov" in self.metrics,
-            "note": "KS test uses random sampling approximation for scalability",
-        }
-
-        import json
-
-        out["_metadata"] = json.dumps(meta_data)
-        return out
+        results["_metadata"] = self._build_compute_metadata(
+            total_samples,
+            batch_metrics,
+            self.input_columns,
+            self.distribution,
+            self.metrics,
+            self.bins,
+        )
+        return results
 
     def reset(self) -> None:
         """Reset processor state for new processing run."""
@@ -549,30 +636,26 @@ class RepresentativenessProcessor(DatametricProcessor):
     # utils methods for bin edge calculation
 
     def _bin_edges_normal(self, mean: float, std: float, bins: int, data: np.ndarray) -> np.ndarray:
-        """
-        Calculate bin edges based on the Percent Point Function (PPF) of a Normal distribution.
+        """Calculate bin edges using the PPF of a Normal distribution.
 
-        This ensures bins represent equal probability mass under the theoretical distribution.
-        The first and last bins are extended to -inf and +inf respectively.
+        This ensures bins represent equal probability mass under the
+        theoretical distribution. The first and last bins are extended
+        to -inf and +inf respectively.
         """
-        # logic from dqm-ml v1 : use stats.norm.ppf with linspace(1/bins, 1, bins)
-        interval = []
-        for i in range(1, bins):
-            val = stats.norm.ppf(i / bins, mean, std)
-            interval.append(val)
-        interval.insert(0, -np.inf)
-        interval.append(np.inf)
-        return np.array(interval)
+        # logic from dqm-ml v1: use stats.norm.ppf with linspace(1/bins, 1, bins)
+        bin_edges_list = [stats.norm.ppf(i / bins, mean, std) for i in range(1, bins)]
+        return np.array([-np.inf] + bin_edges_list + [np.inf])
 
-    def _bin_edges_uniform(self, mn: float, mx: float, bins: int, data: np.ndarray) -> np.ndarray:
+    def _bin_edges_uniform(self, param_min: float, param_max: float, bins: int, data: np.ndarray) -> np.ndarray:
         """
         Calculate linearly spaced bin edges for a Uniform distribution.
 
         The range is determined by the minimum/maximum of both the configured
         parameters and the actual observed data.
         """
-        lo = min(mn, float(np.min(data)))
-        hi = max(mx, float(np.max(data)))
-        if hi <= lo:
-            hi = lo + self.epsilon
-        return np.linspace(lo, hi, bins + 1)
+        low_edge = min(param_min, float(np.min(data)))
+        high_edge = max(param_max, float(np.max(data)))
+        # Handle degenerate case where all data is identical
+        if high_edge <= low_edge:
+            high_edge = low_edge + self.epsilon
+        return np.linspace(low_edge, high_edge, bins + 1)

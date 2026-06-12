@@ -31,13 +31,13 @@ def test_processor_init_with_config():
 
 def test_processor_init_invalid_input_columns():
     """Test that DatametricProcessor raises error for invalid input_columns type."""
-    with pytest.raises(ValueError, match="need 'input_columns'"):
+    with pytest.raises(ValueError, match="needs 'input_columns'"):
         DatametricProcessor(name="test", config={"input_columns": "not_a_list"})
 
 
 def test_processor_init_invalid_output_columns():
     """Test that DatametricProcessor raises error for invalid output_columns type."""
-    with pytest.raises(ValueError, match="need of 'output_columns'"):
+    with pytest.raises(ValueError, match="needs 'output_columns'"):
         DatametricProcessor(name="test", config={"output_columns": ["not_a_dict"]})
 
 

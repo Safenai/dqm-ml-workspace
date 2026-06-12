@@ -12,19 +12,18 @@ class DataSelection(Protocol):
     """
     Protocol for a specific subset of data discovered by a DataLoader.
 
-    A DataSelection represents a concrete set of samples (e.g., a specific folder,
-    a filtered view of a database, or a single file) and provides an iterator
-    over data batches.
+    A DataSelection represents a concrete set of samples (e.g., a
+    specific folder, a filtered view of a database, or a single file)
+    and provides an iterator over data batches.
     """
 
     name: str
 
     def bootstrap(self, columns_list: list[str]) -> None:
-        """
-        Perform initial setup for the selection before iteration starts.
+        """Perform initial setup for the selection before iteration.
 
         Args:
-            columns_list: List of column names that must be loaded for this selection.
+            columns_list: List of column names to load.
         """
 
     def get_nb_batches(self) -> int:

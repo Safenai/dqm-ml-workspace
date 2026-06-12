@@ -38,6 +38,5 @@ docs/AGENTS.md
 docs/packages/
 .github/workflows/tests_act.yml
 
-
-# https://github.com/firecow/gitlab-ci-local
-.gitlab-ci-local/
+# Test logs
+logs/

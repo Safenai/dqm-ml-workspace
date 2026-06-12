@@ -141,6 +141,7 @@ nav:
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
+    - Diversity : metrics/diversity.md
     - Domain gap : metrics/domain_gap.md
     - Representativeness : metrics/representativeness.md
     - Visual features : metrics/visual_features.md

@@ -55,6 +55,19 @@ def test_dev(s: Session) -> None:
     s.run(
         "pytest",
         "tests",
+        "--ignore=tests/benchmark",
+        *s.posargs,
+    )
+
+
+@session(
+    python=["3.12"],
+    uv_groups=["test"],
+)
+def benchmark(s: Session) -> None:
+    s.run(
+        "pytest",
+        "tests/benchmark",
         *s.posargs,
     )
 
@@ -73,6 +86,7 @@ def test_dev(s: Session) -> None:
                 "ruff",
                 "check",
                 "packages",
+                "tests",
                 "--select",
                 "I",
                 # Also remove unused imports.
@@ -84,7 +98,15 @@ def test_dev(s: Session) -> None:
             ],
             id="sort_imports",
         ),
-        param(["ruff", "format", "packages"], id="format"),
+        param(
+            [
+                "ruff",
+                "format",
+                "packages",
+                "tests",
+            ],
+            id="format",
+        ),
     ],
 )
 def fmt(s: Session, command: list[str]) -> None:
@@ -214,6 +236,11 @@ def docs_github_pages(s: Session) -> None:
 @session(uv_groups=["licenses"], uv_no_install_project=True)
 def licenses(s: Session) -> None:
     s.run("pip-licenses", *s.posargs)
+
+
+@session(uv_groups=["complexity"])
+def complexity(s: Session) -> None:
+    s.run("complexipy", "packages", "--max-complexity-allowed", "15")
 
 
 @session(uv_groups=["spell"])

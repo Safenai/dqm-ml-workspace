@@ -8,8 +8,9 @@ import argparse
 import logging
 from unittest.mock import MagicMock, patch
 
-from dqm_ml.__main__ import _HelpAction, execute, parse_args
 import pytest
+
+from dqm_ml.__main__ import _HelpAction, execute, parse_args
 
 
 def test_help_action_no_command():

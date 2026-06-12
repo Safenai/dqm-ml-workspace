@@ -12,8 +12,6 @@ from typing import Any
 import yaml
 
 from dqm_ml_core import PluginLoadedRegistry
-from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_job.dataloaders import DataLoader
 from dqm_ml_job.job import DatasetJob
 from dqm_ml_job.outputwriter import OutputWriter
 
@@ -31,14 +29,25 @@ def parse_args(arg_list: list[str] | None) -> Any:
         The parsed Namespace object.
     """
     parser = argparse.ArgumentParser(
-        prog="dqm-ml", description="DQM-ML Job client", epilog="for more informations see README"
+        prog="dqm-ml",
+        description="DQM-ML Job client",
+        epilog="for more informations see README",
     )
 
     parser.add_argument(
-        "-p", "--process-config", type=str, nargs="+", required=True, help="configuration files to execute"
+        "-p",
+        "--process-config",
+        type=str,
+        nargs="+",
+        required=True,
+        help="configuration files to execute",
     )
 
-    parser.add_argument("--save-config", type=str, help="Path to save the resolved configuration")
+    parser.add_argument(
+        "--save-config",
+        type=str,
+        help="Path to save the resolved configuration",
+    )
 
     # TODO add parameters to pass directly files / directory as inputs for loaders
     args = parser.parse_args(arg_list)
@@ -108,46 +117,40 @@ def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], comp
     return components
 
 
-def run(config: dict[str, Any]) -> None:
+def _validate_config_key(config: dict[str, Any], key: str, label: str) -> None:
+    """Validate that a config key exists and is a dictionary.
+
+    Args:
+        config: Configuration dictionary.
+        key: Key name to validate.
+        label: Human-readable label for error messages.
+
+    Raises:
+        ValueError: If the key is missing or not a dict.
     """
-    Execute a job from a validated configuration dictionary.
-
-    The config must contain:
-    - dataloaders: Map of configurations for data sources.
-    - metrics_processor: Map of configurations for quality metrics.
-    - outputs: Map of configurations for results storage.
-    """
-    dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
-    metrics_registry = PluginLoadedRegistry.get_metrics_registry()
-    outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
-
-    if not config:
-        raise ValueError("Job requires a configuration dictionary.")
-
-    # Load data loaders
-    if "dataloaders" not in config or not isinstance(config["dataloaders"], dict):
-        raise ValueError("'dataloaders' must be provided as a dictionary")
-
-    dataloaders: dict[str, DataLoader] = _init_components(config["dataloaders"], dataloaders_registry, "dataloader")
-
-    # Load metrics
-    if "metrics_processor" not in config or not isinstance(config["metrics_processor"], dict):
-        raise ValueError("'metrics_processor' must be provided as a dictionary")
-
-    metrics: dict[str, DatametricProcessor] = _init_components(config["metrics_processor"], metrics_registry, "metric")
-
-    if "compute_delta" in config:
+    if key not in config or not isinstance(config[key], dict):
+        raise ValueError(f"'{key}' must be provided as a dictionary")
+    if label == "metrics_processor" and "compute_delta" in config:
         logger.warning("compute_delta' is deprecated and will be removed in future versions.")
 
-    # Load output writers
-    if "outputs" not in config or not isinstance(config["outputs"], dict):
-        raise ValueError("'outputs' must be provided as a dictionary")
 
+def _init_output_writers(
+    outputs_config: dict[str, Any], outputs_registry: dict[str, Any]
+) -> tuple[OutputWriter | None, OutputWriter | None, OutputWriter | None]:
+    """Initialize output writers from configuration.
+
+    Args:
+        outputs_config: Outputs configuration dict.
+        outputs_registry: Registry of available writer types.
+
+    Returns:
+        Tuple of (metrics_output, features_output, delta_output).
+    """
     metrics_output: OutputWriter | None = None
     features_output: OutputWriter | None = None
     delta_output: OutputWriter | None = None
 
-    for key, output_config in config["outputs"].items():
+    for key, output_config in outputs_config.items():
         if output_config["type"] not in outputs_registry:
             raise ValueError(f"Output '{key}' must have a valid 'type' in {list(outputs_registry.keys())}")
         writer = outputs_registry[output_config["type"]](name=key, config=output_config)
@@ -158,23 +161,57 @@ def run(config: dict[str, Any]) -> None:
         elif key == "features":
             features_output = writer
         else:
-            raise ValueError(f"Unsupported output key '{key}'. Only 'features' and 'metrics' are allowed.")
+            raise ValueError(
+                f"Unsupported output key '{key}'. Only 'features', delta_metrics' and 'metrics' are allowed."
+            )
 
-    progress_bar = config.get("progress_bar", True)
+    return metrics_output, features_output, delta_output
+
+
+def run(config: dict[str, Any]) -> None:
+    """
+    Execute a job from a validated configuration dictionary.
+
+    The config must contain:
+    - dataloaders: Map of configurations for data sources.
+    - metrics_processor: Map of configurations for quality metrics.
+    - outputs: Map of configurations for results storage.
+    """
+    if not config:
+        raise ValueError("Job requires a configuration dictionary.")
+
+    dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
+    metrics_registry = PluginLoadedRegistry.get_metrics_registry()
+    outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
+
+    _validate_config_key(config, "dataloaders", "dataloaders")
+    dataloaders = _init_components(config["dataloaders"], dataloaders_registry, "dataloader")
+
+    _validate_config_key(config, "metrics_processor", "metrics_processor")
+    metrics = _init_components(config["metrics_processor"], metrics_registry, "metric")
+
+    _validate_config_key(config, "outputs", "outputs")
+    metrics_output, features_output, delta_output = _init_output_writers(config["outputs"], outputs_registry)
 
     job = DatasetJob(
-        dataloaders=dataloaders, metrics=metrics, features_output=features_output, progress_bar=progress_bar
+        dataloaders=dataloaders,
+        metrics=metrics,
+        features_output=features_output,
+        progress_bar=config.get("progress_bar", True),
     )
 
     dataselection_metrics_list, delta_metrics_table = job.run()
 
-    # If we have computed metrics to store
     if metrics_output:
         metrics_output.write_metrics_dict(dataselection_metrics_list)
+        if hasattr(metrics_output, "flush"):
+            metrics_output.flush()
 
-    # If we have to compute delta metrics
     if delta_output and delta_metrics_table:
-        delta_output.write_table("delta", delta_metrics_table)
+        delta_data = {col: delta_metrics_table.column(col) for col in delta_metrics_table.column_names}
+        delta_output.write_table("delta", delta_data)
+        if hasattr(delta_output, "flush"):
+            delta_output.flush()
 
 
 if __name__ == "__main__":
