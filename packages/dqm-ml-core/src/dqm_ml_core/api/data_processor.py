@@ -44,7 +44,7 @@ class DatametricProcessor:
         if "input_columns" in self.config:
             if not isinstance(self.config["input_columns"], list):
                 raise ValueError(
-                    f"Metric {name} configuration need 'input_columns', got {type(self.config['input_columns'])}"
+                    f"Metric {name} configuration needs 'input_columns', got {type(self.config['input_columns'])}"
                 )
             self.input_columns = self.config["input_columns"]
         else:
@@ -54,7 +54,7 @@ class DatametricProcessor:
         if "output_columns" in self.config:
             if not isinstance(self.config["output_columns"], dict):
                 raise ValueError(
-                    f"Metric {name} configuration need of 'output_columns', got {type(self.config['output_columns'])}"
+                    f"Metric {name} configuration needs 'output_columns', got {type(self.config['output_columns'])}"
                 )
             self.outputs_columns = self.config["output_columns"]
         else:
@@ -145,8 +145,7 @@ class DatametricProcessor:
         return {}
 
     def compute_delta(self, source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
-        """
-        Compare metrics between two different dataselection.
+        """Compare metrics between two different dataselections.
 
         Args:
             source: Final metrics from the source dataselection.

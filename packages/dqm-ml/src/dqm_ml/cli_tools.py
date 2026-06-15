@@ -25,6 +25,8 @@ class Bcolors:
 
 # TODO move logging in a dedicated module
 class CustomFormatter(logging.Formatter):
+    """Custom log formatter with ANSI color support by log level."""
+
     MSG_FMT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
     LVL_COLOR = {
@@ -44,6 +46,12 @@ class CustomFormatter(logging.Formatter):
 
     @classmethod
     def init_log(cls, level: int | str, format: str = MSG_FMT) -> None:
+        """Initialize logging with the custom color formatter.
+
+        Args:
+            level: Logging level (int or str).
+            format: Log message format string.
+        """
         # TODO : forward generic parameters of init_log to basicConfig
         logging.basicConfig(format=format, level=level)
 

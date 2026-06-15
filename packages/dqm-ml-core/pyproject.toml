@@ -35,6 +35,7 @@ Repository = "https://github.com/IRT-SystemX/dqm-ml"
 [project.entry-points."dqm_ml.metrics"]
 representativeness = "dqm_ml_core:RepresentativenessProcessor"
 completeness = "dqm_ml_core:CompletenessProcessor"
+diversity = "dqm_ml_core:DiversityProcessor"
 
 
 [build-system]

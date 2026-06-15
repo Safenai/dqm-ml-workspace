@@ -6,6 +6,7 @@ correctly extracts features like luminosity, contrast, blur, and entropy from im
 
 from pathlib import Path
 import shlex
+from timeit import default_timer as timer
 from typing import Any
 
 import pyarrow.parquet as pq
@@ -32,7 +33,11 @@ def test_visual_features(
         job_visual_features: Fixture that generates the test job configuration.
     """
     command = f"-p tests/integration/fixtures/config/generated/{test_name}.yaml"
+
+    start = timer()
     execute(shlex.split(command))
+    end = timer()
+    print(f"Execution time: {end - start}")
 
     expected_scores = tests_config["visual_features"]["expected_scores"]
     col_names = tests_config["visual_features"]["params"]["columns_names"]

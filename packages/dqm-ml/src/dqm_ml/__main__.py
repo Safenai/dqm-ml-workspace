@@ -42,6 +42,15 @@ class _HelpAction(argparse._HelpAction):
 
 
 def parse_args(arg_list: list[str] | None, command_list: Iterable[str]) -> Any:
+    """Parse command-line arguments for the DQM-ML CLI.
+
+    Args:
+        arg_list: Raw argument list (or None for sys.argv).
+        command_list: Iterable of available command names.
+
+    Returns:
+        Tuple of (parsed_args, remaining_args).
+    """
     parser = argparse.ArgumentParser(
         prog="dqm-ml",
         description="DQM-ML Job client",
@@ -63,6 +72,14 @@ def parse_args(arg_list: list[str] | None, command_list: Iterable[str]) -> Any:
 
 # TODO get parameters, logs, ...
 def execute(arg_list: list[str] | None = None) -> None:
+    """Execute the DQM-ML CLI command based on parsed arguments.
+
+    Discovers available commands, parses arguments, configures logging,
+    and dispatches to the appropriate command handler.
+
+    Args:
+        arg_list: Raw argument list (or None for sys.argv).
+    """
     # Exemple of other optional dependencies command
     # with optional_dependencies(optional_dep_mode):
     #    import dqm_ml_dummy_command.cli

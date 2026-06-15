@@ -13,7 +13,19 @@ DOMAIN_GAP_INFER_PARAMS = {
     "klmvn_diag": {"batch_size": 10, "width": 20, "height": 20},
     "mmd_linear": {"batch_size": 10, "width": 224, "height": 224},
     "wasserstein_1d": {"batch_size": 18, "height": 299, "width": 299},
+    "mmd_rbf": {"batch_size": 10, "width": 224, "height": 224},
+    "mmd_poly": {"batch_size": 10, "width": 224, "height": 224},
+    "pad": {"batch_size": 10, "width": 224, "height": 224},
+    "cmd": {"batch_size": 50, "width": 224, "height": 224},
 }
+
+CMD_MULTI_LAYER = [
+    "maxpool",
+    "layer1.1.relu_1",
+    "layer2.1.relu_1",
+    "layer3.1.relu_1",
+    "layer4.1.relu_1",
+]
 
 OUTPUT_DATA = "outputs/data"
 
@@ -21,6 +33,7 @@ BATCH_SIZES = {
     "representativeness": 50000,
     "domain_gap": 50,
     "completeness": 100,
+    "diversity": 100,
     "visual_features": 100,
 }
 
@@ -29,7 +42,7 @@ def _get_config_name(processor_name: str, test_name: str, metric_name: str | Non
     """Generate configuration name based on processor and test parameters."""
     if processor_name == "domain_gap":
         return f"{processor_name}_{test_name}" if test_name else f"{processor_name}_{metric_name}"
-    if processor_name in ("completeness", "visual_features"):
+    if processor_name in ("completeness", "visual_features", "diversity"):
         return test_name
     return f"{processor_name}_{test_name}"
 
@@ -63,11 +76,20 @@ def _configure_domain_gap(inner_config: dict, processor_name: str, metric_name: 
     """Configure domain gap specific settings."""
     if processor_name != "domain_gap":
         return
-    inner_config["metrics_processor"][processor_name]["DELTA"]["metric"] = metric_name
+    inner_config["metrics_processor"][processor_name]["delta"]["metric"] = metric_name
     for param in ("batch_size", "height", "width"):
         inner_config["metrics_processor"]["image_embedding"]["infer"][param] = DOMAIN_GAP_INFER_PARAMS[metric_name][
             param
         ]
+
+    if metric_name == "cmd":
+        layers = CMD_MULTI_LAYER
+        emb_cols = [f"emb_{layer.replace('.', '_')}" for layer in layers]
+        inner_config["metrics_processor"]["image_embedding"]["model"]["n_layer_feature"] = layers
+        inner_config["metrics_processor"]["domain_gap"]["input"]["embedding_cols"] = emb_cols
+        inner_config["metrics_processor"]["domain_gap"]["input"].pop("embedding_col", None)
+        inner_config["metrics_processor"]["domain_gap"]["delta"]["feature_weights"] = [1.0] * len(layers)
+        inner_config["metrics_processor"]["domain_gap"]["delta"]["k"] = 5
 
 
 def _configure_metrics_processor(inner_config: dict, processor_name: str, test_name: str) -> None:
@@ -79,8 +101,8 @@ def _configure_metrics_processor(inner_config: dict, processor_name: str, test_n
     elif processor_name == "visual_features" and "path" in test_name:
         inner_config["metrics_processor"]["visual_features"]["input_columns"] = ["image_path"]
     elif processor_name == "domain_gap" and "bytes" in test_name:
-        inner_config["metrics_processor"]["image_embedding"]["DATA"]["image_column"] = "image_bytes"
-        inner_config["metrics_processor"]["image_embedding"]["DATA"]["mode"] = "bytes"
+        inner_config["metrics_processor"]["image_embedding"]["data"]["image_column"] = "image_bytes"
+        inner_config["metrics_processor"]["image_embedding"]["data"]["mode"] = "bytes"
 
 
 def _configure_output(inner_config: dict, output_category: str, config_name: str, output_path: Path) -> None:

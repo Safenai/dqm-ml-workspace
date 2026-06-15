@@ -23,9 +23,15 @@ class OutputWriter(Protocol):
 
     columns: list[str]
     name: str
+    add_dataloader_column: bool
+    dataloader_column_name: str
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
-        """ """
+        """Persist computed metrics for all selections.
+
+        Args:
+            metrics_dict: Map of selection names to their metric dictionaries.
+        """
 
     def write_table(self, name: str, table: Any, part_index: int | None = None) -> None:
         """

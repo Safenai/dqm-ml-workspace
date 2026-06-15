@@ -7,6 +7,7 @@ blur, and entropy.
 
 import io
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -28,16 +29,17 @@ class VisualFeaturesProcessor(DatametricProcessor):
     Computes basic image quality features per sample.
 
     Features:
-      - Luminosity: Mean intensity of the image. By default, it is the average gray level
-        mapped to the [0, 1] range.
-      - Contrast: RMS contrast, calculated as the standard deviation of the gray level
-        intensities, mapped to the [0, 1] range.
-      - Blur: Measured as the variance of the Laplacian of the image. A higher value
-        indicates more edges and higher sharpness.
-      - Entropy: Shannon entropy of the image's grayscale histogram. Measures the
-        information content or complexity.
+      - Luminosity: Mean intensity of the image. By default, it is the
+        average gray level mapped to the [0, 1] range.
+      - Contrast: RMS contrast, calculated as the standard deviation of
+        the gray level intensities, mapped to the [0, 1] range.
+      - Blur: Measured as the variance of the Laplacian of the image. A
+        higher value indicates more edges and higher sharpness.
+      - Entropy: Shannon entropy of the image's grayscale histogram.
+        Measures the information content or complexity.
 
-    This processor operates purely at the feature extraction level (per-sample).
+    This processor operates purely at the feature extraction level
+    (per-sample).
     """
 
     DEFAULT_OUTPUTS = {
@@ -54,39 +56,72 @@ class VisualFeaturesProcessor(DatametricProcessor):
         Args:
             name: Unique name of the processor instance.
             config: Configuration dictionary containing:
-                - input_columns: List containing the name of the image column (bytes or path).
-                - output_features: Mapping of feature names to output column names.
-                - grayscale: Whether to convert images to grayscale (default: True).
-                - normalize: Whether to normalize pixel values to [0, 1] (default: True).
-                - entropy_bins: Number of bins for entropy calculation (default: 256).
-                - clip_percentiles: Tuple of (low, high) percentiles for intensity clipping.
-                - laplacian_kernel: Size of the Laplacian kernel ('3x3' or '5x5').
-                - dataset_root_path: Root directory for relative image paths.
+                - input_columns: List containing the image column name.
+                - output_features: Mapping of feature names to column names.
+                - grayscale: Whether to convert images to grayscale.
+                - normalize: Whether to normalize pixel values to [0, 1].
+                - entropy_bins: Number of bins for entropy calculation.
+                - clip_percentiles: Tuple of (low, high) percentiles.
+                - laplacian_kernel: Laplacian kernel size ('3x3' or '5x5').
+                - dataset_root_path: Root directory for relative paths.
         """
         super().__init__(name, config)
-
-        # Local view of config for convenience
         cfg = self.config or {}
 
-        # handle relative paths in parquet to a dataset located at dataset_root_path
-        self.dataset_root_path = str(cfg.get("dataset_root_path", "undefined"))
+        self.dataset_root_path = cfg.get("dataset_root_path", None)
+        self._configure_storage(cfg)
+        self._configure_columns(cfg)
+        self._configure_params(cfg)
+        self._validate_output_features()
 
+    def _configure_storage(self, cfg: dict[str, Any]) -> None:
+        """Configure S3 filesystem support from config.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
+        self.s3_fs = None
+        storage_cfg = cfg.get("storage")
+        if not storage_cfg:
+            return
+
+        from dqm_ml_job.utils import get_s3_filesystem
+
+        if storage_cfg is True:
+            self.s3_fs = get_s3_filesystem()
+        elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
+            self.s3_fs = get_s3_filesystem(
+                access_key=storage_cfg.get("access_key"),
+                secret_key=storage_cfg.get("secret_key"),
+                endpoint=storage_cfg.get("endpoint_override"),
+                region=storage_cfg.get("region"),
+            )
+
+    def _configure_columns(self, cfg: dict[str, Any]) -> None:
+        """Configure input and output columns.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
         if not hasattr(self, "input_columns") or not self.input_columns:
             self.input_columns = ["image_bytes"]
 
         if not hasattr(self, "output_features") or not self.output_features:
-            # Use config-provided mapping if present, otherwise defaults
             cfg_outputs = cfg.get("output_features") if isinstance(cfg.get("output_features"), dict) else None
             self.output_features: Any = (
                 cfg_outputs.copy() if isinstance(cfg_outputs, dict) else self.DEFAULT_OUTPUTS.copy()
             )
 
-        # param
+    def _configure_params(self, cfg: dict[str, Any]) -> None:
+        """Configure processing parameters.
+
+        Args:
+            cfg: Configuration dictionary.
+        """
         self.grayscale: bool = bool(cfg.get("grayscale", True))
         self.normalize: bool = bool(cfg.get("normalize", True))
         self.entropy_bins: int = int(cfg.get("entropy_bins", 256))
 
-        # TODO written to remove noqa 501 and type check error in same line, to be fixed properly later
         if cfg.get("clip_percentiles") is not None:
             self.clip_percentiles = tuple(cfg.get("clip_percentiles"))  # type: ignore
         else:
@@ -94,12 +129,62 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
         self.laplacian_kernel: str = str(cfg.get("laplacian_kernel", "3x3"))
 
-        # check if the transformation is defined in the processor
+    def _validate_output_features(self) -> None:
+        """Validate output features configuration."""
         if not isinstance(self.output_features, dict):
             raise ValueError(f"[{self.name}] 'output_features' must be a dict of metric->column_name")
         for k in ("luminosity", "contrast", "blur", "entropy"):
             if k not in self.output_features:
                 self.output_features[k] = self.DEFAULT_OUTPUTS[k]
+
+    def _process_single_image(self, idx: int, v: Any) -> np.ndarray | None:
+        """Convert a raw image value to a grayscale numpy array, applying clipping.
+
+        Args:
+            idx: Position index for error logging.
+            v: Raw image value (bytes, path, PIL Image, or ndarray).
+
+        Returns:
+            Grayscale numpy array or None if processing fails.
+        """
+        try:
+            gray = self._to_gray_np(v)
+            if self.clip_percentiles is not None:
+                p_lo, p_hi = self.clip_percentiles
+                lo = np.percentile(gray, p_lo)
+                hi = np.percentile(gray, p_hi)
+                if hi > lo:
+                    gray = np.clip(gray, lo, hi)
+                    if self.normalize:
+                        gray = (gray - lo) / max(1e-12, (hi - lo))
+            return gray
+        except Exception as e:
+            logger.exception(f"[{self.name}] failed to process sample {idx}: {e}")
+            return None
+
+    @staticmethod
+    def _compute_scalar_feature(
+        gray_images: list[np.ndarray | None],
+        func: Any,
+        normalize: bool,
+    ) -> pa.Array:
+        """Compute a per-image scalar feature using a given function.
+
+        Args:
+            gray_images: List of grayscale image arrays (or None for failed images).
+            func: Callable that takes a grayscale array and returns a scalar.
+            normalize: Whether pixel values are normalized to [0, 1].
+
+        Returns:
+            PyArrow array of feature values.
+        """
+        values = []
+        for gray in gray_images:
+            if gray is not None:
+                values.append(float(func(gray if normalize else gray / 255.0)))
+            else:
+                values.append(float("nan"))
+        return pa.array(values, type=pa.float32())
 
     @override
     def compute_features(
@@ -125,33 +210,15 @@ class VisualFeaturesProcessor(DatametricProcessor):
             logger.warning(f"[{self.name}] column '{image_column}' not found in batch")
             return {}
 
-        col = batch.column(image_column)
-        values = col.to_pylist()  #
-        # Use grayscale image
-        gray_images: list[Any] = []
-        for idx, v in enumerate(values):
-            try:
-                gray = self._to_gray_np(v)
-                if self.clip_percentiles is not None:
-                    p_lo, p_hi = self.clip_percentiles
-                    lo = np.percentile(gray, p_lo)
-                    hi = np.percentile(gray, p_hi)
-                    if hi > lo:
-                        gray = np.clip(gray, lo, hi)
-                        if self.normalize:
-                            gray = (gray - lo) / max(1e-12, (hi - lo))
-                gray_images.append(gray)
-            except Exception as e:
-                logger.exception(f"[{self.name}] failed to process sample {idx}: {e}")
-                gray_images.append(None)
+        values = batch.column(image_column).to_pylist()
+        gray_images = [self._process_single_image(idx, v) for idx, v in enumerate(values)]
 
-        # Compute each feature type with dedicated functions
-        features = {}
-        features[self.output_features["luminosity"]] = self._compute_luminosity_feature(gray_images)
-        features[self.output_features["contrast"]] = self._compute_contrast_feature(gray_images)
-        features[self.output_features["blur"]] = self._compute_blur_feature(gray_images)
-        features[self.output_features["entropy"]] = self._compute_entropy_feature(gray_images)
-        return features
+        return {
+            self.output_features["luminosity"]: self._compute_scalar_feature(gray_images, np.mean, self.normalize),
+            self.output_features["contrast"]: self._compute_scalar_feature(gray_images, np.std, self.normalize),
+            self.output_features["blur"]: self._compute_scalar_feature(gray_images, self._variance_of_laplacian, True),
+            self.output_features["entropy"]: self._compute_scalar_feature(gray_images, self._entropy, True),
+        }
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
@@ -174,140 +241,120 @@ class VisualFeaturesProcessor(DatametricProcessor):
     def reset(self) -> None:
         """Reset processor state for new processing run."""
 
-    # TODO : Check if it can be vectorized, parallelized
-
-    def _compute_luminosity_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute luminosity (mean gray level) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of luminosity values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                # Original logic: if not self.normalize, it's uint8 [0,255], divide by 255
-                # If self.normalize, it's already [0,1] (min-max)
-                luminosity = float(np.mean(gray if self.normalize else gray / 255.0))
-                values.append(luminosity)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_contrast_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute contrast (RMS contrast = std of gray) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of contrast values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                contrast = float(np.std(gray if self.normalize else gray / 255.0))
-                values.append(contrast)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_blur_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute blur (variance of Laplacian) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of blur values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                blur_val = float(self._variance_of_laplacian(gray))
-                values.append(blur_val)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
-    def _compute_entropy_feature(self, gray_images: list[np.ndarray | None]) -> pa.Array:
-        """Compute entropy (Shannon entropy) for each image.
-
-        Args:
-            gray_images: List of grayscale image arrays (or None for failed images).
-
-        Returns:
-            PyArrow array of entropy values.
-        """
-        values = []
-        for gray in gray_images:
-            if gray is not None:
-                entropy_val = float(self._entropy(gray))
-                values.append(entropy_val)
-            else:
-                values.append(float("nan"))
-        return pa.array(values, type=pa.float32())
-
     # --- helpers --------------------------------------------------------------
 
-    def _to_gray_np(self, x: Any) -> np.ndarray:
-        """Convert various input types to a 2D grayscale numpy array.
-
-        If `self.normalize` is True, returns float32 in [0,1]. Otherwise returns uint8 [0,255].
+    def _is_s3_path(self, path: str) -> bool:
+        """Check if a path is an S3 path.
 
         Args:
-            x: Input data (PIL Image, bytes, string path, or numpy array).
+            path: The path to check.
+
+        Returns:
+            True if the path is an S3 path, False otherwise.
+        """
+        return path.startswith("s3://") or ("/" in path and not Path(path).is_absolute())
+
+    def _get_s3_path(self, file_path: str) -> str:
+        """Construct an S3 path by combining the bucket name with a file path.
+
+        Args:
+            file_path: The file path within the bucket.
+
+        Returns:
+            str: The full S3 path in format "bucket_name/file_path".
+        """
+        bucket_name = os.getenv("S3_BUCKET_NAME", "")
+        return bucket_name + "/" + file_path
+
+    def _to_gray_np(self, image_data: Any) -> np.ndarray:
+        """Convert various input types to a 2D grayscale numpy array.
+
+        If `self.normalize` is True, returns float32 in [0,1].
+        Otherwise returns uint8 [0,255].
+
+        Args:
+            image_data: Input data (PIL Image, bytes, string path, or numpy array).
 
         Returns:
             2D numpy array in grayscale.
+        """
+        if isinstance(image_data, Image.Image):
+            return self._pil_to_gray(image_data)
+        if isinstance(image_data, (bytes, bytearray)):
+            return self._pil_to_gray(Image.open(io.BytesIO(image_data)))
+        if isinstance(image_data, str):
+            return self._pil_to_gray(self._load_image_from_path(image_data))
+        if isinstance(image_data, np.ndarray):
+            return self._ndarray_to_gray(image_data)
+        raise ValueError(f"Unsupported type for image input: {type(image_data)}")
+
+    def _load_image_from_path(self, path: str) -> Image.Image:
+        """Load a PIL Image from a string path (S3 or local).
+
+        Args:
+            path: File path or relative path.
+
+        Returns:
+            PIL Image object.
 
         Raises:
-            ValueError: If input type is unsupported or path does not exist.
+            ValueError: If the S3 path does not exist.
         """
-        img: Image.Image | None = None
+        if self.s3_fs:
+            s3_key = f"{self.dataset_root_path}/{path}" if self.dataset_root_path is not None else path
+            bucket_name = os.getenv("S3_BUCKET_NAME", "")
+            s3_path = f"{bucket_name}/{s3_key}"
+            with self.s3_fs.open_input_stream(s3_path) as f:
+                loaded = Image.open(io.BytesIO(f.read()))
+                img = loaded.copy()
+            return img
 
-        if isinstance(x, Image.Image):
-            img = x
-        elif isinstance(x, (bytes, bytearray)):
-            img = Image.open(io.BytesIO(x))
-        elif isinstance(x, str):
-            img_path = Path(self.dataset_root_path) / x if self.dataset_root_path != "undefined" else Path(x)
-            if img_path.is_file():
-                img = Image.open(img_path)
-            else:
-                raise ValueError(f"Path does not exist: {img_path}")
-        elif isinstance(x, np.ndarray):
-            arr = x
-            if arr.ndim == 2:  # already gray
-                gray = arr
-            elif arr.ndim == 3 and arr.shape[2] in (3, 4):
-                # manual luminance conversion to be independent of PIL for ndarray
-                rgb = arr[..., :3].astype(np.float32)
-                gray = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-            else:
-                raise ValueError(f"Unsupported ndarray shape {arr.shape}")
+        img_path = Path(self.dataset_root_path) / path if self.dataset_root_path is not None else Path(path)
+        if not img_path.is_file():
+            raise ValueError(f"Path does not exist: {img_path}")
+        return Image.open(img_path)
 
-            return self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
-        else:
-            raise ValueError(f"Unsupported type for image input: {type(x)}")
+    def _pil_to_gray(self, img: Image.Image) -> np.ndarray:
+        """Convert a PIL Image to a 2D grayscale numpy array.
 
-        # Use PIL pipeline
+        Args:
+            img: PIL Image to convert.
+
+        Returns:
+            2D grayscale array.
+        """
         if self.grayscale and img.mode != "L":
             img = img.convert("L")
         elif not self.grayscale and img.mode not in ("RGB", "L"):
             img = img.convert("RGB")
 
         gray_np = np.array(img)
-        if gray_np.ndim == 3:  # RGB -> gray
+        if gray_np.ndim == 3:
             gray_np = 0.2126 * gray_np[..., 0] + 0.7152 * gray_np[..., 1] + 0.0722 * gray_np[..., 2]
 
-        if self.normalize:
-            # Revert to min-max normalization as required by existing tests
-            return self._to_float01(gray_np)
+        return self._to_float01(gray_np) if self.normalize else gray_np.astype(np.uint8)
+
+    def _ndarray_to_gray(self, arr: np.ndarray) -> np.ndarray:
+        """Convert a numpy image array to 2D grayscale.
+
+        Args:
+            arr: Input array (2D gray, 3D RGB/RGBA).
+
+        Returns:
+            2D grayscale array.
+
+        Raises:
+            ValueError: If the shape is unsupported.
+        """
+        if arr.ndim == 2:
+            gray = arr
+        elif arr.ndim == 3 and arr.shape[2] in (3, 4):
+            rgb = arr[..., :3].astype(np.float32)
+            gray = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
         else:
-            return gray_np.astype(np.uint8)
+            raise ValueError(f"Unsupported ndarray shape {arr.shape}")
+
+        return self._to_float01(gray) if self.normalize else gray.astype(np.uint8)
 
     @staticmethod
     def _to_float01(arr: np.ndarray) -> np.ndarray:
@@ -331,11 +378,12 @@ class VisualFeaturesProcessor(DatametricProcessor):
             gray: Grayscale image array.
 
         Returns:
-            Variance of Laplacian (higher values indicate more edges/sharpness).
+            Variance of Laplacian (higher values indicate
+            more edges/sharpness).
         """
-        g = gray.astype(np.float32)
+        gray = gray.astype(np.float32)
         if self.laplacian_kernel == "5x5":
-            k = np.array(
+            kernel = np.array(
                 [
                     [0, 0, -1, 0, 0],
                     [0, -1, -2, -1, 0],
@@ -346,10 +394,10 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 dtype=np.float32,
             )
         else:
-            k = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
+            kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
 
         # Use scipy for optimized convolution
-        lap = signal.convolve2d(g, k, mode="same")
+        lap = signal.convolve2d(gray, kernel, mode="same")
         return float(np.var(lap))
 
     def _entropy(self, gray: np.ndarray) -> float:
@@ -361,18 +409,17 @@ class VisualFeaturesProcessor(DatametricProcessor):
         Returns:
             Shannon entropy value. Returns NaN if histogram sum is zero.
         """
-        g = gray
         if self.normalize:
             # histogram on [0,1]
-            hist, _ = np.histogram(g, bins=self.entropy_bins, range=(0.0, 1.0))
+            hist, _ = np.histogram(gray, bins=self.entropy_bins, range=(0.0, 1.0))
         else:
             # uint8 range
-            hist, _ = np.histogram(g, bins=min(256, self.entropy_bins), range=(0, 255))
-        p = hist.astype(np.float64)
-        s = p.sum()
-        if s <= 0:
+            hist, _ = np.histogram(gray, bins=min(256, self.entropy_bins), range=(0, 255))
+        prob = hist.astype(np.float64)
+        total = prob.sum()
+        if total <= 0:
             return float("nan")
-        p /= s
+        prob /= total
         # avoid log(0)
-        p = p[p > 0]
-        return float(-(p * np.log(p)).sum())
+        prob = prob[prob > 0]
+        return float(-(prob * np.log(prob)).sum())

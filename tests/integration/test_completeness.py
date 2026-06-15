@@ -6,6 +6,7 @@ correctly computes completeness scores for tabular data.
 
 from pathlib import Path
 import shlex
+from timeit import default_timer as timer
 from typing import Any
 
 import pyarrow.parquet as pq
@@ -32,7 +33,11 @@ def test_completeness(
         job_completeness: Fixture that generates the test job configuration.
     """
     command = f"-p tests/integration/fixtures/config/generated/{test_name}.yaml"
+
+    start = timer()
     execute(shlex.split(command))
+    end = timer()
+    print(f"Execution time: {end - start}")
 
     expected_scores = tests_config["completeness"]["expected_scores"]
     epsilon = tests_config["completeness"]["params"]["tolerance"]

@@ -255,6 +255,11 @@ metrics_processor:
     type: representativeness
     input_columns: ["feature_x", "feature_y"]
     distribution: "normal"
+
+  diversity_check:
+    type: diversity
+    input_columns: ["category", "class_label"]
+    metrics: ["simpson", "gini", "shannon", "richness"]
 ```
 
 ### Using split_by for Multiple Selections

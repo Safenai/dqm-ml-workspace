@@ -5,6 +5,7 @@ class correctly writes metrics and features to Parquet files.
 """
 
 import pyarrow.parquet as pq
+
 from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 
 
@@ -24,6 +25,7 @@ def test_parquet_output_writer_creates_directory(temp_output_path):
     assert not temp_output_path.exists()
 
     writer.write_metrics_dict(metrics_data)
+    writer.flush()
 
     # Assert that the directory was created and the file exists
     assert temp_output_path.exists()

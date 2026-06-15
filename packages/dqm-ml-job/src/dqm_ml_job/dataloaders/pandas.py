@@ -43,6 +43,11 @@ class PandasDataSelection(DataSelection):
 
     @override
     def bootstrap(self, columns_list: list[str] | None = None) -> None:
+        """Load the CSV file into memory as a pandas DataFrame.
+
+        Args:
+            columns_list: Unused, kept for API compatibility.
+        """
         # For CSV, we currently load everything
         self.data = pd.read_csv(self.path, sep=",")
 
@@ -51,6 +56,11 @@ class PandasDataSelection(DataSelection):
 
     @override
     def get_nb_batches(self) -> int:
+        """Return the estimated number of batches (always 1 for CSV).
+
+        Returns:
+            1 if data is loaded, 0 otherwise.
+        """
         return 1 if self.data is not None else 0
 
     @override

@@ -64,6 +64,7 @@ Only some metrics support pairwise comparisons:
 |--------|---------------|------------------|
 | Completeness | ✓ | |
 | Representativeness | ✓ | |
+| Diversity | ✓ | |
 | Domain Gap | | ✓ |
 | Visual Features | ✓ | |
 
@@ -90,16 +91,26 @@ metrics_processor:
     distribution: normal  # or uniform
 ```
 
+### Diversity
+
+```yaml
+metrics_processor:
+  diversity:
+    type: diversity
+    input_columns: [class_label, category]
+    metrics: [simpson, gini, shannon, richness]
+```
+
 ### Domain Gap
 
 ```yaml
 metrics_processor:
   domain_gap:
     type: domain_gap
-    INPUT:
+    input:
       embedding_col: embedding
-    DELTA:
-      metric: mmd_linear  # or fid, wasserstein_1d, klmvn_diag
+    delta:
+      metric: mmd_linear  # or fid, wasserstein_1d, klmvn_diag, mmd_rbf, mmd_poly, pad, cmd
 ```
 
 ### Visual Features
@@ -108,7 +119,7 @@ metrics_processor:
 metrics_processor:
   visual_features:
     type: visual_features
-    DATA:
+    data:
       image_column: image_path
       mode: path
 ```
@@ -144,6 +155,7 @@ Example columns:
 
 - [Metrics Overview](metrics.md) - All available metrics
 - [Completeness](metrics/completeness.md) - Completeness metric details
+- [Diversity](metrics/diversity.md) - Diversity metric details
 - [Domain Gap](metrics/domain_gap.md) - Domain gap metric details
 - [Representativeness](metrics/representativeness.md) - Representativeness metric details
 - [Visual Features](metrics/visual_features.md) - Visual features details
