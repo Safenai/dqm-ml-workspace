@@ -80,6 +80,68 @@
     "dataloaders"
   ],
   "$defs": {
+    "ColumnDistributionParams": {
+      "title": "ColumnDistributionParams",
+      "description": "Per-column distribution parameters for user_provided mean_std_estimation.",
+      "type": "object",
+      "properties": {
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "max": {
+          "title": "Max",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean": {
+          "title": "Mean",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min": {
+          "title": "Min",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "std": {
+          "title": "Std",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "column"
+      ]
+    },
     "ColumnRename": {
       "title": "ColumnRename",
       "description": "Mapping from an original column name to a new name.",
@@ -185,7 +247,7 @@
     },
     "CompletenessProcessorConfig": {
       "title": "CompletenessProcessorConfig",
-      "description": "Computes per-column and overall completeness metrics.",
+      "description": "Configuration for completeness metric computation. Computes per-column and overall completeness (non-null) metrics. Attributes: type: Processor type discriminator (\"completeness\"). include_per_column: Include per-column completeness scores in output. include_overall: Include overall completeness score in output. include_metadata: Include metadata (total rows, null counts) in output.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -292,7 +354,8 @@
           "title": "Threads",
           "description": "Number of worker threads.",
           "type": "integer",
-          "default": 4
+          "default": 4,
+          "exclusiveMinimum": 0
         }
       }
     },
@@ -345,21 +408,6 @@
             }
           ]
         },
-        "mode": {
-          "title": "Mode",
-          "default": null,
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/ModeConfig"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "name": {
           "title": "Name",
           "description": "Unique name for this dataloader.",
@@ -369,6 +417,21 @@
           "title": "Path",
           "description": "Glob pattern or path to data files.",
           "type": "string"
+        },
+        "sample_path": {
+          "title": "Sample Path",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SamplePathConfig"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "split": {
           "default": null,
@@ -447,7 +510,7 @@
     },
     "DistanceConfig": {
       "title": "DistanceConfig",
-      "description": "Distance metric configuration for domain-gap computation.",
+      "description": "Distance metric configuration for domain-gap computation. Attributes: metric: Distance metric name (e.g., \"mmd\", \"discriminative\", \"klmvn_diag\"). evaluator: Optional evaluator type for discriminative metrics. k: Number of nearest neighbours (for k-NN based metrics). feature_weights: Per-feature weights for weighted distance computation. kernel_params: Kernel parameters (RBF or Polynomial) for kernel-based metrics. epsilon: Regularization epsilon for numerical stability of covariance-based metrics. klmvn_var_eps: Variance regularization for KL divergence numerical stability.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -515,6 +578,13 @@
             }
           ]
         },
+        "klmvn_var_eps": {
+          "title": "Klmvn Var Eps",
+          "description": "Variance regularization for klmvn_diag numerical stability (default 0.0). When > 0, source and target variances are replaced by var + klmvn_var_eps * mean(var) before computing KL divergence, preventing blow-up from near-zero variance dimensions.",
+          "type": "number",
+          "default": 0.0,
+          "minimum": 0
+        },
         "metric": {
           "title": "Metric",
           "description": "Distance metric name (e.g. 'mmd', 'discriminative').",
@@ -527,7 +597,7 @@
     },
     "DiversityProcessorConfig": {
       "title": "DiversityProcessorConfig",
-      "description": "Computes diversity metrics (Simpson, Gini, Shannon, richness).",
+      "description": "Configuration for diversity metric computation. Computes diversity metrics: Simpson, Gini, Shannon entropy, and richness. Attributes: type: Processor type discriminator (\"diversity\"). metrics: List of diversity metrics to compute.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -574,7 +644,7 @@
     },
     "DomainGapProcessorConfig": {
       "title": "DomainGapProcessorConfig",
-      "description": "Measures distribution shift between datasets using a distance metric.",
+      "description": "Configuration for domain-gap (distribution shift) measurement. Measures distribution shift between datasets using a configured distance metric. Attributes: type: Processor type discriminator (\"domain_gap\"). columns: Column input configuration (required). distance: Distance metric configuration. summary: Embedding summary configuration.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -585,15 +655,8 @@
           "default": "domain_gap"
         },
         "columns": {
-          "default": null,
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ColumnsConfig"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "description": "Column input configuration (required).",
+          "$ref": "#/$defs/ColumnsConfig"
         },
         "distance": {
           "description": "Distance metric configuration.",
@@ -618,6 +681,7 @@
       },
       "required": [
         "name",
+        "columns",
         "distance"
       ]
     },
@@ -652,7 +716,9 @@
           "title": "Max Failure Rate",
           "description": "Maximum tolerated failure rate before the job aborts (from 0.0 to 1.0).",
           "type": "number",
-          "default": 0.05
+          "default": 0.05,
+          "minimum": 0,
+          "maximum": 1
         },
         "tabular": {
           "default": null,
@@ -669,7 +735,7 @@
     },
     "FeaturesEmbeddingsProcessorConfig": {
       "title": "FeaturesEmbeddingsProcessorConfig",
-      "description": "Extracts neural-network embedding features from images.",
+      "description": "Configuration for neural-network embedding feature extraction. Extracts deep learning embeddings from images using a configured model. Attributes: type: Processor type discriminator (\"features_embeddings\"). model: Neural network model configuration. infer: Inference pre-processing settings.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1013,7 +1079,7 @@
     },
     "GrteConfig": {
       "title": "GrteConfig",
-      "description": "Gini-ratio-threshold-entropy (GRTE) configuration.",
+      "description": "Gini-ratio-threshold-entropy (GRTE) configuration for representativeness. Attributes: threshold: Gini ratio threshold for flagging. scaling_factor: Scaling applied to the Gini ratio (negative inverts).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1033,7 +1099,7 @@
     },
     "HistogramConfig": {
       "title": "HistogramConfig",
-      "description": "Histogram parameters for feature extraction.",
+      "description": "Histogram parameters for feature extraction. Attributes: bins: Number of histogram bins (must be positive).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1041,13 +1107,14 @@
           "title": "Bins",
           "description": "Number of histogram bins.",
           "type": "integer",
-          "default": 256
+          "default": 256,
+          "exclusiveMinimum": 0
         }
       }
     },
     "HistogramSummaryConfig": {
       "title": "HistogramSummaryConfig",
-      "description": "Histogram settings for embedding summary statistics.",
+      "description": "Histogram settings for embedding summary statistics. Attributes: dims: Number of dimensions to histogram. bins: Number of bins per dimension (must be positive). range: Histogram range [min, max] for each dimension.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1055,13 +1122,15 @@
           "title": "Bins",
           "description": "Number of bins per dimension.",
           "type": "integer",
-          "default": 32
+          "default": 32,
+          "exclusiveMinimum": 0
         },
         "dims": {
           "title": "Dims",
           "description": "Number of dimensions to histogram.",
           "type": "integer",
-          "default": 64
+          "default": 64,
+          "exclusiveMinimum": 0
         },
         "range": {
           "title": "Range",
@@ -1079,7 +1148,7 @@
     },
     "HistogramsConfig": {
       "title": "HistogramsConfig",
-      "description": "Histogram parameters for representativeness evaluation.",
+      "description": "Histogram parameters for representativeness evaluation. Attributes: bins: Number of histogram bins (must be positive).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1087,7 +1156,8 @@
           "title": "Bins",
           "description": "Number of histogram bins.",
           "type": "integer",
-          "default": 10
+          "default": 10,
+          "exclusiveMinimum": 0
         }
       }
     },
@@ -1131,7 +1201,7 @@
     },
     "ImageFeaturesProcessorConfig": {
       "title": "ImageFeaturesProcessorConfig",
-      "description": "Extracts low-level image features (luminosity, contrast, blur, entropy).",
+      "description": "Configuration for low-level image feature extraction. Extracts luminosity, contrast, blur, and entropy features from images. Attributes: type: Processor type discriminator (\"image_features\"). features: List of image features to compute. batch_size: Batch size for image processing. grayscale: Whether to convert images to grayscale. normalize: Whether to normalize pixel values to [0, 1]. laplacian_kernel: Laplacian kernel size for blur detection (\"3x3\" or \"5x5\"). clip_percentiles: Percentile clipping for extreme pixel values, e.g. (1, 99). histogram: Histogram configuration for feature computation. luminosity_weights: Luminosity weights for grayscale conversion. Standard name ('bt601', 'bt709', 'bt2020') or [R, G, B] list/tuple. Defaults to BT.709 when None.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1145,7 +1215,8 @@
           "title": "Batch Size",
           "description": "Batch size for image processing.",
           "type": "integer",
-          "default": 64
+          "default": 64,
+          "exclusiveMinimum": 0
         },
         "clip_percentiles": {
           "title": "Clip Percentiles",
@@ -1265,7 +1336,7 @@
     },
     "InferConfig": {
       "title": "InferConfig",
-      "description": "Inference pre-processing settings.",
+      "description": "Inference pre-processing settings for image embeddings. Attributes: batch_size: Inference batch size. width: Resize width for input images. height: Resize height for input images. norm_mean: Per-channel mean used for normalisation (ImageNet defaults). norm_std: Per-channel std used for normalisation (ImageNet defaults).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1273,13 +1344,15 @@
           "title": "Batch Size",
           "description": "Inference batch size.",
           "type": "integer",
-          "default": 32
+          "default": 32,
+          "exclusiveMinimum": 0
         },
         "height": {
           "title": "Height",
           "description": "Resize height for input images.",
           "type": "integer",
-          "default": 224
+          "default": 224,
+          "exclusiveMinimum": 0
         },
         "norm_mean": {
           "title": "Norm Mean",
@@ -1311,13 +1384,14 @@
           "title": "Width",
           "description": "Resize width for input images.",
           "type": "integer",
-          "default": 224
+          "default": 224,
+          "exclusiveMinimum": 0
         }
       }
     },
     "InterpretationConfig": {
       "title": "InterpretationConfig",
-      "description": "Human-readable labels for representativeness and diversity results.",
+      "description": "Human-readable labels for representativeness and diversity results. Attributes: follows_distribution: Label when data follows the expected distribution. does_not_follow_distribution: Label when data diverges from expected distribution. high_diversity: Label for high diversity results. low_diversity: Label for low diversity results. high_representativeness: Label for high representativeness results. low_representativeness: Label for low representativeness results.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1361,7 +1435,7 @@
     },
     "KernelParamsPoly": {
       "title": "KernelParamsPoly",
-      "description": "Polynomial kernel parameters.",
+      "description": "Polynomial kernel parameters for distance metrics. Attributes: degree: Polynomial degree. gamma: Polynomial kernel gamma parameter. coefficient0: Polynomial kernel coefficient offset (constant term).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1387,7 +1461,7 @@
     },
     "KernelParamsRbf": {
       "title": "KernelParamsRbf",
-      "description": "RBF kernel parameters.",
+      "description": "RBF (Radial Basis Function) kernel parameters for distance metrics. Attributes: gamma: RBF kernel gamma parameter (inverse kernel width).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1401,7 +1475,7 @@
     },
     "KsConfig": {
       "title": "KsConfig",
-      "description": "Kolmogorov-Smirnov test configuration.",
+      "description": "Kolmogorov-Smirnov test configuration for representativeness. Attributes: sample_size: Number of samples for KS testing. min_sample_size: Minimum samples required for KS test. sample_divisor: Divisor for automatic sample-size calculation.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1409,19 +1483,22 @@
           "title": "Min Sample Size",
           "description": "Minimum samples required for KS test.",
           "type": "integer",
-          "default": 50
+          "default": 50,
+          "exclusiveMinimum": 0
         },
         "sample_divisor": {
           "title": "Sample Divisor",
           "description": "Divisor for automatic sample-size calculation.",
           "type": "integer",
-          "default": 20
+          "default": 20,
+          "exclusiveMinimum": 0
         },
         "sample_size": {
           "title": "Sample Size",
           "description": "Number of samples for KS testing.",
           "type": "integer",
-          "default": 500
+          "default": 500,
+          "exclusiveMinimum": 0
         }
       }
     },
@@ -1535,38 +1612,9 @@
         "path"
       ]
     },
-    "ModeConfig": {
-      "title": "ModeConfig",
-      "description": "Named data-loading mode with an optional output prefix.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "title": "Name",
-          "description": "Mode name (matched at runtime).",
-          "type": "string"
-        },
-        "prefix": {
-          "title": "Prefix",
-          "description": "Prefix prepended to output column names.",
-          "default": null,
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
-        "name"
-      ]
-    },
     "ModelConfig": {
       "title": "ModelConfig",
-      "description": "Neural network model configuration.",
+      "description": "Neural network model configuration for embedding extraction. Attributes: arch: Model architecture name (e.g., \"resnet18\", \"resnet50\"). n_layer_feature: Layer index (negative for reverse) or list of layer names for feature extraction. Default -2 (second to last layer). device: Device for model inference (\"auto\", \"cpu\", \"cuda\").",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1607,7 +1655,7 @@
     },
     "RepresentativenessProcessorConfig": {
       "title": "RepresentativenessProcessorConfig",
-      "description": "Evaluates how representative a dataset is against a reference distribution.",
+      "description": "Configuration for representativeness evaluation against a reference distribution. Evaluates how well a dataset represents a target distribution using multiple statistical metrics. Attributes: type: Processor type discriminator (\"representativeness\"). metrics: List of representativeness metrics to compute. alpha: Significance level for statistical tests. epsilon: Small constant to avoid division by zero. distribution: Expected reference distribution (\"normal\" or \"uniform\"). interpretation: Human-readable labels for results. histogram: Histogram configuration for evaluation. shannon: Shannon entropy threshold configuration. grte: GRTE configuration. ks: Kolmogorov-Smirnov test configuration.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1644,11 +1692,38 @@
           ],
           "default": "normal"
         },
+        "distribution_params": {
+          "title": "Distribution Params",
+          "description": "Per-column explicit distribution parameters for 'user_provided' strategy. Example: [{'column': 'col1', 'mean': 0.0, 'std': 1.0}]",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ColumnDistributionParams"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "epsilon": {
           "title": "Epsilon",
           "description": "Small constant to avoid division by zero.",
           "type": "number",
-          "default": 1e-09
+          "default": 1e-09,
+          "exclusiveMinimum": 0
+        },
+        "expected_counts_method": {
+          "title": "Expected Counts Method",
+          "description": "Method for computing expected bin counts. 'cdf' \u2014 exact expected counts via CDF (deterministic). 'monte_carlo' \u2014 Monte Carlo sampling via RNG (stochastic).",
+          "type": "string",
+          "enum": [
+            "cdf",
+            "monte_carlo"
+          ],
+          "default": "cdf"
         },
         "grte": {
           "default": null,
@@ -1693,6 +1768,18 @@
               "type": "null"
             }
           ]
+        },
+        "mean_std_estimation": {
+          "title": "Mean Std Estimation",
+          "description": "How distribution parameters (mean/std for normal, min/max for uniform) are estimated. 'from_first_batch' \u2014 estimate from the first batch and reuse (consistent with bin edges). 'per_batch' \u2014 re-estimate on each batch (use with high-variance data, risks insufficient_bins). 'user_provided' \u2014 use explicit parameters from distribution_params. 'from_all_data' \u2014 estimate from full dataset (not yet implemented).",
+          "type": "string",
+          "enum": [
+            "from_first_batch",
+            "per_batch",
+            "from_all_data",
+            "user_provided"
+          ],
+          "default": "from_first_batch"
         },
         "metrics": {
           "title": "Metrics",
@@ -1739,7 +1826,8 @@
           "title": "Max Attempts",
           "description": "Maximum number of retry attempts.",
           "type": "integer",
-          "default": 3
+          "default": 3,
+          "exclusiveMinimum": 0
         },
         "mode": {
           "title": "Mode",
@@ -1753,9 +1841,38 @@
         }
       }
     },
+    "SamplePathConfig": {
+      "title": "SamplePathConfig",
+      "description": "Per-column path prefix configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "description": "Column name containing relative file paths.",
+          "type": "string"
+        },
+        "prefix": {
+          "title": "Prefix",
+          "description": "Base directory for resolving relative paths.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "column"
+      ]
+    },
     "ShannonConfig": {
       "title": "ShannonConfig",
-      "description": "Shannon-entropy threshold configuration.",
+      "description": "Shannon-entropy threshold configuration for representativeness. Attributes: threshold: Entropy threshold for flagging under-represented values.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -1916,7 +2033,8 @@
           "title": "Load Frequency",
           "description": "Frequency (seconds) to refresh credentials / role.",
           "type": "integer",
-          "default": 900
+          "default": 900,
+          "exclusiveMinimum": 0
         },
         "proxy_options": {
           "title": "Proxy Options",
@@ -2057,7 +2175,7 @@
     },
     "SummaryConfig": {
       "title": "SummaryConfig",
-      "description": "Embedding summary configuration.",
+      "description": "Embedding summary configuration for domain-gap computation. Attributes: collect_sum_outer: Collect sum-of-outer-products for covariance estimation. store_embeddings: Store full embedding vectors in output. histogram: Histogram configuration for embedding summaries.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -2134,16 +2252,16 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "column": {
+          "title": "Column",
+          "description": "Column name to transform.",
+          "type": "string"
+        },
         "in_place": {
           "title": "In Place",
           "description": "Overwrite the original column in place.",
           "type": "boolean",
           "default": false
-        },
-        "name": {
-          "title": "Name",
-          "description": "Column name to transform.",
-          "type": "string"
         },
         "to_type": {
           "description": "Target data type.",
@@ -2151,7 +2269,7 @@
         }
       },
       "required": [
-        "name",
+        "column",
         "to_type"
       ]
     },
