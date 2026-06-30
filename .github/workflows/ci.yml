@@ -9,12 +9,11 @@ on:
     branches:
     - main
     - dev
-    
+  workflow_dispatch:
+
 permissions:
   contents: read
   
-env:
-  UV_VERSION: "0.8.17"
 
 jobs:
   quality:
@@ -23,19 +22,7 @@ jobs:
       matrix:
         nox-session: ["lint", "spell", "type_check", "complexity"]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
+      - uses: ./.github/actions/setup
 
       - name: Install hunspell library
         run: sudo apt-get update && sudo apt-get install -y libhunspell-dev
@@ -47,27 +34,14 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        # dqml v1 requires python >= 3.11
-        # 3.11: ImportError: cannot import name 'override' from 'typing'
-        python-version: [ "3.12", "3.13" ]
-        # python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        python-version: ["3.12", "3.13"]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
-          enable-cache: true
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Compatibility with Nox
-        run: uv run nox -s compatibility-${{ matrix.python-version }}  
+        run: uv run nox -s compatibility-${{ matrix.python-version }}
 
   test:
     runs-on: ubuntu-24.04
@@ -75,20 +49,7 @@ jobs:
       matrix:
         python-version: ["3.12"]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
-          enable-cache: true
-
-      - name: Restore coco dataset from cache
-        uses: actions/cache/restore@v4
-        with:
-          path: /home/runner/fiftyone
-          key: dqm-test-coco-dataset
+      - uses: ./.github/actions/setup
 
       - name: Restore resnet from cache
         uses: actions/cache/restore@v4
@@ -97,13 +58,6 @@ jobs:
           key: dqm-test-resnet
 
       - name: Test with Nox
-        # Step with only quick tests, with condition on pushes and pulol request to dev
-        if: github.event.pull_request.base.ref == 'dev' || github.ref == 'refs/heads/dev'
-        run: uv run nox -s test-${{ matrix.python-version }}
-
-      - name: Test with Nox
-        # Step with all tests, with condition on pushes and pulol request to main
-        if: github.event.pull_request.base.ref == 'main' || github.ref == 'refs/heads/main'
         run: uv run nox -s test-${{ matrix.python-version }}
 
       - uses: actions/upload-artifact@v4
@@ -120,13 +74,6 @@ jobs:
           retention-days: 1
           overwrite: true
 
-      - name: Update cache containing coco dataset
-        uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: /home/runner/fiftyone
-          key: dqm-test-coco-dataset
-
       - name: Update cache containing resnet
         uses: actions/cache/save@v4
         if: always()
@@ -135,29 +82,17 @@ jobs:
           key: dqm-test-resnet
 
   pages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
       - name: Configure Git User
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
 
       - uses: actions/download-artifact@v4
         with:
@@ -171,3 +106,5 @@ jobs:
 
       - name: Publish Docs
         run: uv run nox -s docs_github_pages
+
+

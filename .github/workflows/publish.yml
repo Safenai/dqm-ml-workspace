@@ -1,0 +1,55 @@
+name: Publish
+
+on:
+  push:
+    tags:
+    - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # To switch from PyPI token to OIDC trusted publishing:
+  #   1. Uncomment the line below
+  #   2. Remove UV_PUBLISH_TOKEN from all publish steps below
+  #   3. Configure OIDC on PyPI: https://docs.pypi.org/trusted-publishers/
+  # id-token: write
+
+jobs:
+  publish-pypi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: ./.github/actions/setup
+
+      - name: Build packages
+        run: |
+          uv build packages/dqm-ml-core
+          uv build packages/dqm-ml-images
+          uv build packages/dqm-ml-job
+          uv build packages/dqm-ml-pytorch
+          uv build packages/dqm-ml
+
+      # Publish in dependency order: core -> images -> job -> pytorch -> dqm-ml
+      - name: Publish dqm-ml-core
+        run: uv publish packages/dqm-ml-core/dist/*
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish dqm-ml-images
+        run: uv publish packages/dqm-ml-images/dist/*
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish dqm-ml-job
+        run: uv publish packages/dqm-ml-job/dist/*
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish dqm-ml-pytorch
+        run: uv publish packages/dqm-ml-pytorch/dist/*
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Publish dqm-ml
+        run: uv publish packages/dqm-ml/dist/*
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
