@@ -263,7 +263,7 @@ class ParquetDataLoader:
             config = {}
         self.name = name
         self.config = config
-        self.path = config["path"]
+        self.path: str = config["path"]
         self.batch_size = config.get("batch_size", 100_000)
         self.threads = config.get("threads", 4)
         # Use SplitConfig model fields instead of hardcoded keys
