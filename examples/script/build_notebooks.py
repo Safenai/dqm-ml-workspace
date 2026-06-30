@@ -4,6 +4,27 @@ import json
 
 I = "    "  # one indent level
 
+# ---- Constants for duplicated strings (SonarQube python:S1192) ----
+CONFIG_MARKER = "# ---- Config ----"
+RUN_CONFIG = "run(config)"
+LUMINOSITY = '"image_bytes_luminosity",'
+CONTRAST = '"image_bytes_contrast",'
+BLUR = '"image_bytes_blur",'
+ENTROPY = '"image_bytes_entropy",'
+TIGHT_LAYOUT = "plt.tight_layout()"
+PLT_SHOW = "plt.show()"
+PRINT_DF = "print(df.to_markdown(index=False))"
+COLORBAR = "plt.colorbar(im, shrink=0.8)"
+CONFIG_OPEN = "config={"
+COLUMNS_INPUT_IMAGE_BYTES = '"columns": {"input": ["image_bytes"]},'
+PATH_DATA_FILE = '"path": data_file,'
+BATCH_SIZE_500 = '"batch_size": 500,'
+FILTERS_OPEN = '"filters": ['
+SPLIT_OPEN = '"split": {'
+BY_CLASS_NAME = '"by": "class_name",'
+VALUES_ELEPHANT_ZEBRA = '"values": ["elephant", "zebra"],'
+COLUMNS_INPUT_EMBEDDING = '"columns": {"input": ["image_bytes_embedding"]},'
+
 
 def md(text):
     return {"cell_type": "markdown", "metadata": {}, "source": [text + "\n"]}
@@ -113,19 +134,19 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/visual_features.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_visual_features.parquet")',
         'print("First 5 rows:")',
         "print(df.head(5).to_markdown(index=False))",
         'print("\\nAggregated by source:")',
         "feature_cols = [",
-        I + '"image_bytes_luminosity",',
-        I + '"image_bytes_contrast",',
-        I + '"image_bytes_blur",',
-        I + '"image_bytes_entropy",',
+        I + LUMINOSITY,
+        I + CONTRAST,
+        I + BLUR,
+        I + ENTROPY,
         "]",
         'agg = df.groupby("source")[feature_cols].mean()',
         "print(agg.to_markdown())",
@@ -136,10 +157,10 @@ cells_n1.append(
     code(
         'df = pd.read_parquet("../outputs/story_visual_features.parquet")',
         "feature_cols = [",
-        I + '"image_bytes_luminosity",',
-        I + '"image_bytes_contrast",',
-        I + '"image_bytes_blur",',
-        I + '"image_bytes_entropy",',
+        I + LUMINOSITY,
+        I + CONTRAST,
+        I + BLUR,
+        I + ENTROPY,
         "]",
         'agg = df.groupby("source")[feature_cols].mean()',
         "",
@@ -156,8 +177,8 @@ cells_n1.append(
         'ax.set_ylabel("Mean value")',
         'ax.set_title("Visual Features by Acquisition Source")',
         "ax.legend()",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -169,9 +190,9 @@ cells_n1.append(md("## 2. Embeddings\n\nComputes 512-d ResNet-18 embedding vecto
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/embeddings.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_embeddings.parquet")',
         "#print(df.head(5).to_markdown(index=False))",
@@ -201,8 +222,8 @@ cells_n1.append(
         I + 'ax.set_ylabel(f"PC2 ({vp[1]:.1%} var)")',
         I + 'ax.set_title("Embeddings \u2014 PCA Projection by Source")',
         I + "ax.legend(markerscale=4)",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -218,12 +239,12 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/completeness.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_completeness.parquet")',
-        "print(df.to_markdown(index=False))",
+        PRINT_DF,
     )
 )
 
@@ -246,8 +267,8 @@ cells_n1.append(
         'ax.set_xlabel("Completeness")',
         'ax.set_title("Per-Column Completeness")',
         "ax.legend()",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -265,12 +286,12 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/diversity.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_diversity.parquet")',
-        "print(df.to_markdown(index=False))",
+        PRINT_DF,
     )
 )
 
@@ -294,8 +315,8 @@ cells_n1.append(
         I + 'autopct="%1.0f%%", colors=colors_pt, startangle=90)',
         'ax2.set_title("Source Split")',
         "",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -313,9 +334,9 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/representativeness.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_representativeness.parquet")',
         "",
@@ -357,8 +378,8 @@ cells_n1.append(
         I + 'ax.set_ylabel("Density")',
         I + "ax.legend(fontsize=8)",
         "",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -376,12 +397,12 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/domain_gap_with_split.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_gap_split.parquet")',
-        "print(df.to_markdown(index=False))",
+        PRINT_DF,
     )
 )
 
@@ -415,9 +436,9 @@ cells_n1.append(
         I * 2 + 'ax.text(j, i, f"{val:.0f}", ha="center", va="center",',
         I * 3 + 'color=color, fontweight="bold")',
         'ax.set_title("Pairwise FID (Zoo / Safari / Reserve)")',
-        "plt.colorbar(im, shrink=0.8)",
-        "plt.tight_layout()",
-        "plt.show()",
+        COLORBAR,
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -435,12 +456,12 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/domain_gap_with_filter.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_gap_filter.parquet")',
-        "print(df.to_markdown(index=False))",
+        PRINT_DF,
     )
 )
 
@@ -461,12 +482,12 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        "# ---- Config ----",
+        CONFIG_MARKER,
         'config = _load_config("../config/scenario/domain_gap_with_split_and_filter.yaml")',
-        "run(config)",
+        RUN_CONFIG,
         "",
         'df = pd.read_parquet("../outputs/story_gap_split_filter.parquet")',
-        "print(df.to_markdown(index=False))",
+        PRINT_DF,
     )
 )
 
@@ -500,9 +521,9 @@ cells_n1.append(
         I * 2 + 'ax.text(j, i, f"{val:.3f}", ha="center", va="center",',
         I * 3 + 'color=color, fontweight="bold")',
         'ax.set_title("Wasserstein-1D Distance (Zoo: All Classes)")',
-        "plt.colorbar(im, shrink=0.8)",
-        "plt.tight_layout()",
-        "plt.show()",
+        COLORBAR,
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -570,8 +591,8 @@ cells_n2.append(
         "",
         "vf_stats = VisualFeaturesProcessor(",
         I + 'name="vf_stats",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_IMAGE_BYTES,
         I * 2 + '"features": ["luminosity", "contrast", "blur", "entropy"],',
         I * 2 + '"grayscale": True,',
         I * 2 + '"normalize": True,',
@@ -612,45 +633,45 @@ cells_n2.append(
     code(
         "loader_safari = ParquetDataLoader(",
         I + 'name="safari",',
-        I + "config={",
-        I * 2 + '"path": data_file,',
-        I * 2 + '"batch_size": 500,',
-        I * 2 + '"filters": [',
+        I + CONFIG_OPEN,
+        I * 2 + PATH_DATA_FILE,
+        I * 2 + BATCH_SIZE_500,
+        I * 2 + FILTERS_OPEN,
         I * 3 + '{"column": "source", "values": ["safari"]},',
         I * 2 + "],",
-        I * 2 + '"split": {',
-        I * 3 + '"by": "class_name",',
-        I * 3 + '"values": ["elephant", "zebra"],',
+        I * 2 + SPLIT_OPEN,
+        I * 3 + BY_CLASS_NAME,
+        I * 3 + VALUES_ELEPHANT_ZEBRA,
         I * 2 + "},",
         I + "},",
         ")",
         "",
         "loader_reserve = ParquetDataLoader(",
         I + 'name="reserve",',
-        I + "config={",
-        I * 2 + '"path": data_file,',
-        I * 2 + '"batch_size": 500,',
-        I * 2 + '"filters": [',
+        I + CONFIG_OPEN,
+        I * 2 + PATH_DATA_FILE,
+        I * 2 + BATCH_SIZE_500,
+        I * 2 + FILTERS_OPEN,
         I * 3 + '{"column": "source", "values": ["reserve"]},',
         I * 2 + "],",
-        I * 2 + '"split": {',
-        I * 3 + '"by": "class_name",',
-        I * 3 + '"values": ["elephant", "zebra"],',
+        I * 2 + SPLIT_OPEN,
+        I * 3 + BY_CLASS_NAME,
+        I * 3 + VALUES_ELEPHANT_ZEBRA,
         I * 2 + "},",
         I + "},",
         ")",
         "",
         "loader_zoo = ParquetDataLoader(",
         I + 'name="zoo",',
-        I + "config={",
-        I * 2 + '"path": data_file,',
-        I * 2 + '"batch_size": 500,',
-        I * 2 + '"filters": [',
+        I + CONFIG_OPEN,
+        I * 2 + PATH_DATA_FILE,
+        I * 2 + BATCH_SIZE_500,
+        I * 2 + FILTERS_OPEN,
         I * 3 + '{"column": "source", "values": ["zoo"]},',
         I * 2 + "],",
-        I * 2 + '"split": {',
-        I * 3 + '"by": "class_name",',
-        I * 3 + '"values": ["elephant", "zebra"],',
+        I * 2 + SPLIT_OPEN,
+        I * 3 + BY_CLASS_NAME,
+        I * 3 + VALUES_ELEPHANT_ZEBRA,
         I * 2 + "},",
         I + "},",
         ")",
@@ -679,8 +700,8 @@ cells_n2.append(
         "# Feature processors",
         "vf = VisualFeaturesProcessor(",
         I + 'name="visual_features",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_IMAGE_BYTES,
         I * 2 + '"features": ["luminosity", "contrast", "blur", "entropy"],',
         I * 2 + '"grayscale": True,',
         I * 2 + '"normalize": True,',
@@ -691,8 +712,8 @@ cells_n2.append(
         "",
         "emb = ImageEmbeddingProcessor(",
         I + 'name="embedding",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_IMAGE_BYTES,
         I * 2 + '"model": {"arch": "resnet18", "n_layer_feature": -2},',
         I * 2 + '"infer": {',
         I * 3 + '"batch_size": 32,',
@@ -707,7 +728,7 @@ cells_n2.append(
         "# Metric processors",
         "comp = CompletenessProcessor(",
         I + 'name="completeness",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"columns": {',
         I * 3 + '"input": [',
         I * 4 + '"quality_score",',
@@ -720,7 +741,7 @@ cells_n2.append(
         "",
         "div = DiversityProcessor(",
         I + 'name="diversity",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"columns": {"input": ["class_name"]},',
         I * 2 + '"metrics": ["simpson", "gini", "shannon", "richness"],',
         I + "},",
@@ -728,13 +749,13 @@ cells_n2.append(
         "",
         "rep = RepresentativenessProcessor(",
         I + 'name="representativeness",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"columns": {',
         I * 3 + '"input": [',
-        I * 4 + '"image_bytes_luminosity",',
-        I * 4 + '"image_bytes_contrast",',
-        I * 4 + '"image_bytes_blur",',
-        I * 4 + '"image_bytes_entropy",',
+        I * 4 + LUMINOSITY,
+        I * 4 + CONTRAST,
+        I * 4 + BLUR,
+        I * 4 + ENTROPY,
         I * 3 + "],",
         I * 2 + "},",
         I * 2 + '"metrics": [',
@@ -750,16 +771,16 @@ cells_n2.append(
         "# Gap processors",
         "fid = DomainGapProcessor(",
         I + 'name="fid_gap",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes_embedding"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_EMBEDDING,
         I * 2 + '"distance": {"metric": "fid", "epsilon": 1e-6},',
         I + "},",
         ")",
         "",
         "mmd = DomainGapProcessor(",
         I + 'name="mmd_rbf_gap",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes_embedding"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_EMBEDDING,
         I * 2 + '"distance": {',
         I * 3 + '"metric": "mmd_rbf",',
         I * 3 + '"kernel_params": {"gamma": 1.0},',
@@ -769,8 +790,8 @@ cells_n2.append(
         "",
         "wass = DomainGapProcessor(",
         I + 'name="wasserstein_gap",',
-        I + "config={",
-        I * 2 + '"columns": {"input": ["image_bytes_embedding"]},',
+        I + CONFIG_OPEN,
+        I * 2 + COLUMNS_INPUT_EMBEDDING,
         I * 2 + '"distance": {"metric": "wasserstein_1d"},',
         I + "},",
         ")",
@@ -797,7 +818,7 @@ cells_n2.append(
     code(
         "feat_writer = ParquetOutputWriter(",
         I + 'name="features",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"path_pattern": "../outputs/full_story_features.parquet",',
         I * 2 + '"columns": ["sample_id", "source", "class_name"],',
         I + "},",
@@ -805,14 +826,14 @@ cells_n2.append(
         "",
         "met_writer = ParquetOutputWriter(",
         I + 'name="metrics",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"path_pattern": "../outputs/full_story_metrics.parquet",',
         I + "},",
         ")",
         "",
         "gap_writer = ParquetOutputWriter(",
         I + 'name="delta",',
-        I + "config={",
+        I + CONFIG_OPEN,
         I * 2 + '"path_pattern": "../outputs/full_story_gap.parquet",',
         I + "},",
         ")",
@@ -883,10 +904,10 @@ cells_n2.append(
         "",
         '#print("### Features \u2014 aggregated by source")',
         "feat_cols = [",
-        I + '"image_bytes_luminosity",',
-        I + '"image_bytes_contrast",',
-        I + '"image_bytes_blur",',
-        I + '"image_bytes_entropy",',
+        I + LUMINOSITY,
+        I + CONTRAST,
+        I + BLUR,
+        I + ENTROPY,
         "]",
         '#print(features.groupby("source")[feat_cols].describe().to_markdown())',
         "",
@@ -983,9 +1004,9 @@ cells_n2.append(
         I * 2 + 'ax.text(j, i, txt, ha="center", va="center", color=color, fontsize=8)',
         "",
         'ax.set_title("Normality Test (chi-square) \\u2014 \\u2212log\\u2081\\u2080(p-value)")',
-        "plt.colorbar(im, shrink=0.8)",
-        "plt.tight_layout()",
-        "plt.show()",
+        COLORBAR,
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -1029,9 +1050,9 @@ cells_n2.append(
         I * 3 + 'ax.text(j, i, f"{val:.0f}", ha="center", va="center",',
         I * 4 + "color=color, fontsize=7)",
         'ax.set_title("Pairwise FID \u2014 All 6 Selections")',
-        "plt.colorbar(im, shrink=0.8)",
-        "plt.tight_layout()",
-        "plt.show()",
+        COLORBAR,
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -1072,8 +1093,8 @@ cells_n2.append(
         'ax.set_ylabel("Normalised score (0\u20131)")',
         'ax.set_title("Top 8 Domain Gaps \u2014 Three Metrics (Min-Max Normalised)")',
         "ax.legend(fontsize=9)",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 
@@ -1113,8 +1134,8 @@ cells_n2.append(
         I + 'ax.set_ylabel(f"PC2 ({vp[1]:.1%} var)")',
         I + 'ax.set_title("Embedding Space \u2014 PCA (color = source, shape = class)")',
         I + "ax.legend(markerscale=2, fontsize=6, ncol=2)",
-        "plt.tight_layout()",
-        "plt.show()",
+        TIGHT_LAYOUT,
+        PLT_SHOW,
     )
 )
 

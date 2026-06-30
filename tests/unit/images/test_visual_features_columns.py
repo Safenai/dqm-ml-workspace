@@ -135,9 +135,8 @@ class TestVisualFeaturesEdgeCases:
             name="test",
             config={"columns": {"input": ["img"]}, "laplacian_kernel": "5x5"},
         )
-        self = proc
         gray = np.array([[50, 100, 150], [100, 200, 250], [150, 250, 200]], dtype=np.uint8)
-        result = self._variance_of_laplacian(gray)
+        result = proc._variance_of_laplacian(gray)
         assert result >= 0.0
 
     def test_entropy_non_normalized(self):
@@ -155,7 +154,7 @@ class TestVisualFeaturesEdgeCases:
         proc = _make_processor()
         img = np.zeros((2, 2), dtype=np.float32)
         result = proc._entropy(img)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_compute_scalar_feature_failed_image(self, caplog):
         """Verify _compute_scalar_feature returns NaN for failed image processing.
@@ -218,7 +217,7 @@ class TestVisualFeaturesExtremeValues:
         )
         img = np.zeros((4, 4), dtype=np.uint8)
         result = proc._entropy(img)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_entropy_bins_two(self) -> None:
         """Verify entropy works with two histogram bins."""
@@ -249,7 +248,7 @@ class TestVisualFeaturesExtremeValues:
         )
         img = np.zeros((4, 4), dtype=np.uint8)
         result = proc._entropy(img)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_entropy_non_normalized_all_255(self) -> None:
         """Verify entropy returns 0.0 for all-255 non-normalized image."""
@@ -259,14 +258,14 @@ class TestVisualFeaturesExtremeValues:
         )
         img = np.full((4, 4), 255, dtype=np.uint8)
         result = proc._entropy(img)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_variance_of_laplacian_all_zeros(self) -> None:
         """Verify variance of Laplacian returns 0.0 for all-zero image."""
         proc = _make_processor()
         gray = np.zeros((10, 10), dtype=np.uint8)
         result = proc._variance_of_laplacian(gray)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_variance_of_laplacian_all_255(self) -> None:
         """Verify variance of Laplacian handles all-255 image."""
@@ -279,4 +278,4 @@ class TestVisualFeaturesExtremeValues:
         """Verify _to_float01 returns zeros for constant input image."""
         gray = np.full((4, 4), 100, dtype=np.uint8)
         result = VisualFeaturesProcessor._to_float01(gray)
-        assert (result == 0.0).all()
+        assert (result == pytest.approx(0.0)).all()

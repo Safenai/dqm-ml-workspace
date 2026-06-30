@@ -303,6 +303,15 @@ class ParquetDataLoader:
 
                 self.filesystem = get_s3_filesystem(storage_config)
 
+    def _resolve_selection_path(self) -> str:
+        """Resolve the full path, prepending S3 bucket if applicable."""
+        path = self.path
+        if self.filesystem is not None and isinstance(self.filesystem, fs.S3FileSystem):
+            bucket_name = self.storage_config.bucket if self.storage_config else os.getenv("S3_BUCKET_NAME", "")
+            if bucket_name and not path.startswith(bucket_name + "/"):
+                path = f"{bucket_name}/{path}"
+        return path
+
     def get_selections(self) -> list[DataSelection]:
         """Create one or more ParquetDataSelection instances based on configuration.
 
@@ -311,13 +320,7 @@ class ParquetDataLoader:
             returns one selection per unique value. Otherwise, returns a
             single selection for the entire dataset.
         """
-        path = self.path
-        if self.filesystem is not None and isinstance(self.filesystem, fs.S3FileSystem):
-            # Use bucket from StorageConfig if available
-            bucket_name = self.storage_config.bucket if self.storage_config else os.getenv("S3_BUCKET_NAME", "")
-            # Avoid prepending bucket if it's a local path (starts with dqm_data/) or already has bucket
-            if bucket_name and not path.startswith(bucket_name + "/"):
-                path = f"{bucket_name}/{path}"
+        path = self._resolve_selection_path()
 
         if not self.split_by:
             # Single selection

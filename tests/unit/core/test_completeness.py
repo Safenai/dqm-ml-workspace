@@ -132,7 +132,7 @@ class TestExtremeDataValues:
             "col1",
             {"col1_total_count": pa.array([0]), "col1_complete_count": pa.array([0])},
         )
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_all_complete(self) -> None:
         """Verify 100% completeness when all values are present."""
@@ -140,7 +140,7 @@ class TestExtremeDataValues:
             "col1",
             {"col1_total_count": pa.array([10]), "col1_complete_count": pa.array([10])},
         )
-        assert result == 1.0
+        assert result == pytest.approx(1.0)
 
     def test_all_null(self) -> None:
         """Verify 0% completeness when all values are null."""
@@ -148,7 +148,7 @@ class TestExtremeDataValues:
             "col1",
             {"col1_total_count": pa.array([10]), "col1_complete_count": pa.array([0])},
         )
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_missing_total_key(self) -> None:
         """Verify returns None when total_count key is missing from batch metrics."""

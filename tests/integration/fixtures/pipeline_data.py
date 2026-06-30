@@ -18,7 +18,7 @@ _SOURCES = ["studio", "outdoor", "zoo"]
 _SAMPLE_TYPES = ["train", "test", "val"]
 
 
-def _generate_pipeline_images(img_dir: Path, n: int, rng: np.random.Generator) -> list[bytes]:
+def _generate_pipeline_images(img_dir: Path, n: int, rng: np.random.Generator) -> tuple[list[bytes], list[str]]:
     """Generate small RGB images with source-specific pixel distributions."""
     from PIL import Image, ImageDraw
 

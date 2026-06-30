@@ -130,7 +130,7 @@ def test_scenario_quality_gate(
     assert "completeness_contrast" in df.columns
     assert df["completeness_contrast"].iloc[0] < 1.0, "contrast has 10% nulls, expected < 1.0"
     assert "completeness_brightness" in df.columns
-    assert df["completeness_brightness"].iloc[0] == 1.0, "brightness has no nulls, expected 1.0"
+    assert df["completeness_brightness"].iloc[0] == pytest.approx(1.0), "brightness has no nulls, expected 1.0"
 
 
 @pytest.mark.timeout(300)

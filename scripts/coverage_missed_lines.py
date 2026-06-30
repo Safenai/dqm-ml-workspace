@@ -13,7 +13,11 @@ DEFAULT_REPORT = REPO_ROOT / "docs" / "reports" / "coverage.json"
 
 
 def load_report(path: Path) -> dict:
-    return json.loads(path.read_text())
+    resolved = path.resolve()
+    if REPO_ROOT not in resolved.parents and resolved != REPO_ROOT:
+        print(f"Error: report path {resolved} is outside the repository root", file=sys.stderr)
+        sys.exit(1)
+    return json.loads(resolved.read_text())
 
 
 def read_source_line(src_path: Path, line_num: int) -> str:
@@ -27,6 +31,20 @@ def read_source_line(src_path: Path, line_num: int) -> str:
     return ""
 
 
+def _is_near_missing(ln: int, missing_set: set[int], context: int) -> bool:
+    """Check if *ln* is within *context* lines of any missing line."""
+    return any(neighbor in missing_set for neighbor in range(ln - context, ln + context + 1))
+
+
+def _build_show_lines(missing_lines: list[int], context: int) -> set[int]:
+    """Build the set of all line numbers to display (missing lines + context)."""
+    all_show_lines: set[int] = set()
+    for ln in missing_lines:
+        for offset in range(-context, context + 1):
+            all_show_lines.add(ln + offset)
+    return {ln for ln in all_show_lines if ln >= 1}
+
+
 def format_block(
     file_path: str,
     missing_lines: list[int],
@@ -37,12 +55,7 @@ def format_block(
         return []
 
     missing_set = set(missing_lines)
-    all_show_lines: set[int] = set()
-    for ln in missing_lines:
-        for offset in range(-context, context + 1):
-            all_show_lines.add(ln + offset)
-
-    all_show_lines = {ln for ln in all_show_lines if ln >= 1}
+    all_show_lines = _build_show_lines(missing_lines, context)
 
     output: list[str] = []
     output.append(f"{'=' * 72}")
@@ -52,13 +65,11 @@ def format_block(
     prev_was_gap = False
     for ln in sorted(all_show_lines):
         is_missing = ln in missing_set
-        if not is_missing:
-            neighbors = any(neighbor in missing_set for neighbor in range(ln - context, ln + context + 1))
-            if not neighbors:
-                if not prev_was_gap:
-                    output.append("  ...")
-                    prev_was_gap = True
-                continue
+        if not is_missing and not _is_near_missing(ln, missing_set, context):
+            if not prev_was_gap:
+                output.append("  ...")
+                prev_was_gap = True
+            continue
 
         prev_was_gap = False
         marker = ">>" if is_missing else "  "
@@ -69,7 +80,8 @@ def format_block(
     return output
 
 
-def main() -> None:
+def _parse_args() -> argparse.Namespace:
+    """Parse and validate CLI arguments."""
     parser = argparse.ArgumentParser(description="Extract missed lines from coverage.py JSON report")
     parser.add_argument(
         "--report",
@@ -102,25 +114,52 @@ def main() -> None:
     )
     parser.add_argument("--no-exclude-version", action="store_false", dest="exclude_version")
     args = parser.parse_args()
-
     if not args.report.exists():
         print(f"Report not found: {args.report}", file=sys.stderr)
         sys.exit(1)
+    return args
+
+
+def _filter_files(
+    files: dict[str, object],
+    exclude_version: bool,
+    file_patterns: list[str] | None,
+) -> dict[str, object]:
+    """Filter coverage files by version exclusion and glob patterns."""
+    filtered = dict(files)
+    if exclude_version:
+        filtered = {k: v for k, v in filtered.items() if "_version_" not in k}
+    if file_patterns:
+        matched = {}
+        for pat in file_patterns:
+            for key in filtered:
+                if fnmatch.fnmatch(key, pat):
+                    matched[key] = filtered[key]
+        filtered = matched
+    return filtered
+
+
+def _print_no_source(missing_lines: list[int]) -> str:
+    """Format missing lines as compact ranges (no source context)."""
+    ranges = []
+    start = missing_lines[0]
+    end = missing_lines[0]
+    for n in missing_lines[1:]:
+        if n == end + 1:
+            end = n
+        else:
+            ranges.append(f"{start}-{end}" if start != end else str(start))
+            start = n
+            end = n
+    ranges.append(f"{start}-{end}" if start != end else str(start))
+    return ", ".join(ranges)
+
+
+def main() -> None:
+    args = _parse_args()
 
     report = load_report(args.report)
-    files = report["files"]
-
-    filtered_files = dict(files)
-    if args.exclude_version:
-        filtered_files = {k: v for k, v in filtered_files.items() if "_version_" not in k}
-
-    if args.files:
-        matched = {}
-        for pat in args.files:
-            for key in filtered_files:
-                if fnmatch.fnmatch(key, pat):
-                    matched[key] = filtered_files[key]
-        filtered_files = matched
+    filtered_files = _filter_files(report["files"], args.exclude_version, args.files)
 
     if not filtered_files:
         print("No files matched the given filters.", file=sys.stderr)
@@ -141,27 +180,11 @@ def main() -> None:
 
         if args.no_source:
             any_output = True
-            ranges = []
-            start = missing_lines[0]
-            end = missing_lines[0]
-            for n in missing_lines[1:]:
-                if n == end + 1:
-                    end = n
-                else:
-                    ranges.append(f"{start}-{end}" if start != end else str(start))
-                    start = n
-                    end = n
-            ranges.append(f"{start}-{end}" if start != end else str(start))
             print(f"{file_path} ({len(missing_lines)} missed)")
-            print(f"  Lines: {', '.join(ranges)}")
+            print(f"  Lines: {_print_no_source(missing_lines)}")
             print()
         else:
-            blocks = format_block(
-                file_path,
-                missing_lines,
-                src_path,
-                args.context,
-            )
+            blocks = format_block(file_path, missing_lines, src_path, args.context)
             if blocks:
                 any_output = True
                 sys.stdout.write("\n".join(blocks))

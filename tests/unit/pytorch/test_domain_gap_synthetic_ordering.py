@@ -126,7 +126,7 @@ def test_domain_gap_monotonic_synthetic(metric: str) -> None:
 
     values: list[float] = []
     for shift in SHIFTS:
-        if shift == 0.0:
+        if shift == pytest.approx(0.0):
             src = rng.normal(0, 1, (n, d)).astype(np.float64)
             tgt = src.copy()
         else:

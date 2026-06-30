@@ -65,7 +65,7 @@ class TestExecuteEdgeCases:
         ):
             execute(["-p", "config.yaml"])
 
-        assert True  # should not raise
+        # should not raise
 
     def test_save_config(self, tmp_path):
         config_path = tmp_path / "config.yaml"

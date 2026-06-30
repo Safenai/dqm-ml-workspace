@@ -35,7 +35,7 @@ class TestOptionalDependencies:
     def test_success_path_does_nothing(self):
         """Verify context manager works normally when no error occurs."""
         with optional_dependencies("raise"):
-            pass
+            _ = 1
 
 
 class TestGetAvailableCommand:

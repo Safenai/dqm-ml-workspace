@@ -12,7 +12,11 @@ DEFAULT_REPORT = REPO_ROOT / "docs" / "reports" / "coverage.json"
 
 
 def load_report(path: Path) -> dict:
-    return json.loads(path.read_text())
+    resolved = path.resolve()
+    if REPO_ROOT not in resolved.parents and resolved != REPO_ROOT:
+        print(f"Error: report path {resolved} is outside the repository root", file=sys.stderr)
+        sys.exit(1)
+    return json.loads(resolved.read_text())
 
 
 def print_table(rows: list[dict]) -> None:

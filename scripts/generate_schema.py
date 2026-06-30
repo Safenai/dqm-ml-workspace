@@ -73,35 +73,43 @@ def _walk_schema(schema: dict) -> None:
                     _walk_schema(item)
 
 
+def _reorder_root_properties(props: dict[str, object]) -> dict[str, object]:
+    """Reorder root-level ``properties`` keys according to _ROOT_PROPERTIES."""
+    ordered: dict[str, object] = {}
+    for pk in _ROOT_PROPERTIES:
+        if pk in props:
+            ordered[pk] = props.pop(pk)
+    for pk in sorted(props):
+        ordered[pk] = props[pk]
+    return ordered
+
+
+def _reorder_dict(obj: dict[str, object], is_root: bool) -> dict[str, object]:
+    """Recursively reorder keys of a single dict according to schema conventions."""
+    result: dict[str, object] = {}
+    for k, v in obj.items():
+        if k == "properties" and is_root:
+            props = {pk: _reorder(pv) for pk, pv in v.items()}
+            result[k] = _reorder_root_properties(props)
+        else:
+            result[k] = _reorder(v)
+
+    ordered: dict[str, object] = {}
+    for k in _SCHEMA_KEY_ORDER:
+        if k in result:
+            ordered[k] = result[k]
+    for k in sorted(result):
+        if k not in _SCHEMA_KEY_ORDER:
+            ordered[k] = result[k]
+    return ordered
+
+
 def _reorder(obj: object, is_root: bool = False) -> object:
     """Recursively reorder dict keys and root-level ``properties``."""
     if isinstance(obj, dict):
-        result: dict[str, object] = {}
-        for k, v in obj.items():
-            if k == "properties" and is_root:
-                props = {pk: _reorder(pv) for pk, pv in v.items()}
-                ordered: dict[str, object] = {}
-                for pk in _ROOT_PROPERTIES:
-                    if pk in props:
-                        ordered[pk] = props.pop(pk)
-                for pk in sorted(props):
-                    ordered[pk] = props[pk]
-                result[k] = ordered
-            else:
-                result[k] = _reorder(v)
-
-        ordered = {}
-        for k in _SCHEMA_KEY_ORDER:
-            if k in result:
-                ordered[k] = result[k]
-        for k in sorted(result):
-            if k not in _SCHEMA_KEY_ORDER:
-                ordered[k] = result[k]
-        return ordered
-
+        return _reorder_dict(obj, is_root)
     if isinstance(obj, list):
         return [_reorder(item) for item in obj]
-
     return obj
 
 

@@ -179,8 +179,8 @@ def _make_domain_gap_split(
     name: str = "domain_gap",
     input_col: str = "image_bytes_embedding",
     metric: str = "mmd_linear",
-    split_by: str = "source",
-    split_values: list[str] | None = None,
+    _split_by: str = "source",
+    _split_values: list[str] | None = None,
     **extra: Any,
 ) -> ProcessorSpec:
     """Create a ProcessorSpec for domain gap with split configuration.
@@ -334,7 +334,7 @@ def build_pipeline_config(
 # ---------------------------------------------------------------------------
 
 
-def scenario_overview_chain(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_overview_chain(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Full 8-step chain from examples/overview.md.
 
     Returns (processors, config_name).
@@ -350,7 +350,7 @@ def scenario_overview_chain(data_path: str) -> tuple[list[ProcessorSpec], str]:
     return processors, "scenario_overview_chain"
 
 
-def scenario_quality_gate(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_quality_gate(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Completeness on critical columns as a quality gate."""
     processors = [
         _make_completeness(columns=["blur_score", "contrast", "quality_score", "brightness"]),
@@ -358,7 +358,7 @@ def scenario_quality_gate(data_path: str) -> tuple[list[ProcessorSpec], str]:
     return processors, "scenario_quality_gate"
 
 
-def scenario_class_imbalance(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_class_imbalance(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Diversity by class_name across source cohorts."""
     processors = [
         _make_diversity(columns=["class_name"]),
@@ -366,7 +366,7 @@ def scenario_class_imbalance(data_path: str) -> tuple[list[ProcessorSpec], str]:
     return processors, "scenario_class_imbalance"
 
 
-def scenario_preprocessing_sanity(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_preprocessing_sanity(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Representativeness on raw tabular columns."""
     processors = [
         _make_representativeness(columns=["brightness", "sharpness"], distribution="uniform"),
@@ -374,7 +374,7 @@ def scenario_preprocessing_sanity(data_path: str) -> tuple[list[ProcessorSpec], 
     return processors, "scenario_preprocessing_sanity"
 
 
-def scenario_train_test_drift(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_train_test_drift(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Embeddings → domain_gap split by sample_type (train/test)."""
     processors = [
         _make_features_embeddings(),
@@ -383,7 +383,7 @@ def scenario_train_test_drift(data_path: str) -> tuple[list[ProcessorSpec], str]
     return processors, "scenario_train_test_drift"
 
 
-def scenario_acquisition_drift(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_acquisition_drift(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Embeddings → domain_gap split by source (environmental drift)."""
     processors = [
         _make_features_embeddings(),
@@ -392,7 +392,7 @@ def scenario_acquisition_drift(data_path: str) -> tuple[list[ProcessorSpec], str
     return processors, "scenario_acquisition_drift"
 
 
-def scenario_multi_source_vf_diversity(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_multi_source_vf_diversity(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Visual features → diversity on VF columns, stratified by source."""
     processors = [
         _make_visual_features(input_col="image_bytes"),
@@ -403,7 +403,7 @@ def scenario_multi_source_vf_diversity(data_path: str) -> tuple[list[ProcessorSp
     return processors, "scenario_multi_source_vf_diversity"
 
 
-def scenario_feature_selection_assist(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_feature_selection_assist(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Completeness + representativeness on the same columns."""
     cols = ["brightness", "sharpness"]
     processors = [
@@ -421,7 +421,7 @@ _VF_COLS = [
 ]
 
 
-def scenario_full_story(data_path: str) -> tuple[list[ProcessorSpec], str]:
+def scenario_full_story(_data_path: str) -> tuple[list[ProcessorSpec], str]:
     """Full end-to-end pipeline matching ``examples/config/full_story.yaml``.
 
     Includes visual features, ResNet-18 embeddings, completeness, diversity,

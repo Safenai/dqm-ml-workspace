@@ -28,7 +28,7 @@ TGT="${3:-$(pwd)}"
 # Discover files changed in the commit
 mapfile -t FILES < <(git -C "$SRC" diff-tree --no-commit-id -r --name-only "$COMMIT")
 
-if [ ${#FILES[@]} -eq 0 ]; then
+if [[ ${#FILES[@]} -eq 0 ]]; then
   echo "No files changed in commit $COMMIT"
   exit 1
 fi
@@ -58,7 +58,7 @@ echo "=== Applying patches ==="
 cd "$TGT"
 for f in "${FILES[@]}"; do
   patch="$TMPDIR/$(echo "$f" | tr '/' '_').patch"
-  if [ ! -s "$patch" ]; then
+  if [[ ! -s "$patch" ]]; then
     continue
   fi
   echo "Applying $f..."

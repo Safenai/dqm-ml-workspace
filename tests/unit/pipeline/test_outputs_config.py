@@ -41,7 +41,7 @@ class TestInitInterfaceOutputs:
     def test_features_passes_include_exclude(self) -> None:
         """Features outputs include/exclude passed to writer config."""
         outputs = FeaturesOutputsConfig(
-            path="/tmp/test.parquet",
+            path="test.parquet",
             include=["id", "img_*"],
             exclude=["meta_*"],
         )
@@ -51,7 +51,7 @@ class TestInitInterfaceOutputs:
         registry["parquet"].assert_called_once_with(
             name="features",
             config={
-                "path_pattern": "/tmp/test.parquet",
+                "path_pattern": "test.parquet",
                 "columns": ["id", "img_*"],
                 "exclude": ["meta_*"],
             },
@@ -59,7 +59,7 @@ class TestInitInterfaceOutputs:
 
     def test_features_no_include_exclude(self) -> None:
         """Features outputs without include/exclude uses empty lists."""
-        outputs = FeaturesOutputsConfig(path="/tmp/test.parquet")
+        outputs = FeaturesOutputsConfig(path="test.parquet")
 
         interface = FeaturesInterfaceConfig(outputs=outputs)
         registry = self._registry()
@@ -67,7 +67,7 @@ class TestInitInterfaceOutputs:
         registry["parquet"].assert_called_once_with(
             name="features",
             config={
-                "path_pattern": "/tmp/test.parquet",
+                "path_pattern": "test.parquet",
                 "columns": [],
                 "exclude": [],
             },
@@ -75,7 +75,7 @@ class TestInitInterfaceOutputs:
 
     def test_metrics_no_include_exclude(self) -> None:
         """Metrics outputs without include/exclude uses empty lists."""
-        outputs = MetricsOutputsConfig(path="/tmp/metrics.parquet")
+        outputs = MetricsOutputsConfig(path="metrics.parquet")
 
         interface = MetricsInterfaceConfig(outputs=outputs)
         registry = self._registry()
@@ -83,7 +83,7 @@ class TestInitInterfaceOutputs:
         registry["parquet"].assert_called_once_with(
             name="metrics",
             config={
-                "path_pattern": "/tmp/metrics.parquet",
+                "path_pattern": "metrics.parquet",
                 "columns": [],
                 "exclude": [],
             },
@@ -91,7 +91,7 @@ class TestInitInterfaceOutputs:
 
     def test_gap_no_include_exclude(self) -> None:
         """Gap outputs without include/exclude uses empty lists."""
-        outputs = GapOutputsConfig(path="/tmp/gap.parquet")
+        outputs = GapOutputsConfig(path="gap.parquet")
 
         interface = GapInterfaceConfig(outputs=outputs)
         registry = self._registry()
@@ -99,7 +99,7 @@ class TestInitInterfaceOutputs:
         registry["parquet"].assert_called_once_with(
             name="gap",
             config={
-                "path_pattern": "/tmp/gap.parquet",
+                "path_pattern": "gap.parquet",
                 "columns": [],
                 "exclude": [],
             },
@@ -242,15 +242,15 @@ class TestPairwiseGapOutput:
 
     def test_default_is_true(self):
         """Pairwise defaults to True when not explicitly set."""
-        assert self._check_pairwise({"gap": {"outputs": {"path": "/tmp/g.parquet"}}})
+        assert self._check_pairwise({"gap": {"outputs": {"path": "g.parquet"}}})
 
     def test_explicit_true(self):
         """Pairwise is True when explicitly set."""
-        assert self._check_pairwise({"gap": {"outputs": {"path": "/tmp/g.parquet", "pairwise": True}}})
+        assert self._check_pairwise({"gap": {"outputs": {"path": "g.parquet", "pairwise": True}}})
 
     def test_false_omits_column(self):
         """Pairwise column is omitted when pairwise is False."""
-        assert not self._check_pairwise({"gap": {"outputs": {"path": "/tmp/g.parquet", "pairwise": False}}})
+        assert not self._check_pairwise({"gap": {"outputs": {"path": "g.parquet", "pairwise": False}}})
 
     def test_no_gap_interface(self):
         """Returns False when gap interface is absent."""

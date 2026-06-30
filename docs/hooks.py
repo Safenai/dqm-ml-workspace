@@ -144,7 +144,7 @@ def fix_example_links():
                 f.write(updated_md)
 
 
-def page_markdown(markdown, page, config, files):
+def page_markdown(markdown, page, _config, _files):
     """Rewrite ../examples/ links to examples/ for mkdocs.
 
     Source docs/configuration.md uses ../examples/... links that work

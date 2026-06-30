@@ -11,6 +11,7 @@ from typing import Any
 
 from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 
@@ -238,7 +239,7 @@ def test_compute_batch_ks_sample_none_for_non_ks_metrics():
         name="test",
         config={"columns": {"input": ["col1"]}, "metrics": ["shannon-entropy"]},
     )
-    result = proc._compute_batch_ks_sample(None)
+    result = proc._compute_batch_ks_sample(pd.Series([]))
     assert result is None
 
 
@@ -296,7 +297,7 @@ class TestExtremeDataValues:
         obs = np.array([5, 5], dtype=np.float64)
         exp = np.array([5, 5], dtype=np.float64)
         result = proc._compute_grte_metric(obs, exp)
-        assert result["grte_value"] == 1.0
+        assert result["grte_value"] == pytest.approx(1.0)
 
     def test_grte_scaling_factor_positive_increases_with_gap(self) -> None:
         """Verify GRTE increases with gap when scaling_factor is positive."""
@@ -586,8 +587,8 @@ def test_mean_std_user_provided_normal():
     edges = proc._bin_edges["col1"]
     assert len(edges) == 11  # 10 bins = 11 edges
     params = proc._bin_params["col1"]
-    assert params["mean"] == 5.0
-    assert params["std"] == 2.0
+    assert params["mean"] == pytest.approx(5.0)
+    assert params["std"] == pytest.approx(2.0)
 
 
 def test_mean_std_user_provided_uniform():
@@ -605,7 +606,7 @@ def test_mean_std_user_provided_uniform():
     edges = proc._bin_edges["col1"]
     assert len(edges) == 11
     assert edges[0] == -1.0
-    assert edges[-1] == 1.0
+    assert edges[-1] == pytest.approx(1.0)
 
 
 def test_mean_std_user_provided_missing_params_raises():

@@ -41,11 +41,11 @@ def test_parquet_output_writer_creates_directory(temp_output_path):
     assert table.column("value").to_pylist() == [0.9, 0.85]
 
 
-def test_write_table_missing_column_logs(caplog):
+def test_write_table_missing_column_logs(caplog, tmp_path):
     """Logs an error when a required column is missing from the written table."""
     writer = ParquetOutputWriter(
         name="test",
-        config={"path_pattern": "/tmp/test.parquet", "columns": ["required_col"]},
+        config={"path_pattern": str(tmp_path / "test.parquet"), "columns": ["required_col"]},
     )
     with caplog.at_level(logging.ERROR):
         writer.write_table("sel1", {"wrong_col": pa.array([1.0])}, 0)

@@ -19,27 +19,29 @@ class TestMmdFunctions:
 
     def test_mmd_rbf_single_sample_src(self):
         """Verify MMD RBF returns 0 when source has single sample."""
-        assert _mmd_rbf(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0], [5.0, 6.0]]), 1.0) == 0.0
+        assert _mmd_rbf(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0], [5.0, 6.0]]), 1.0) == pytest.approx(0.0)
 
     def test_mmd_rbf_single_sample_tgt(self):
         """Verify MMD RBF returns 0 when target has single sample."""
-        assert _mmd_rbf(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0]]), 1.0) == 0.0
+        assert _mmd_rbf(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0]]), 1.0) == pytest.approx(0.0)
 
     def test_mmd_rbf_both_single(self):
         """Verify MMD RBF returns 0 when both source and target have single sample."""
-        assert _mmd_rbf(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0]]), 1.0) == 0.0
+        assert _mmd_rbf(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0]]), 1.0) == pytest.approx(0.0)
 
     def test_mmd_poly_single_sample_src(self):
         """Verify MMD Poly returns 0 when source has single sample."""
-        assert _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0], [5.0, 6.0]]), 2.0, 1.0, 0.0) == 0.0
+        result = _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0], [5.0, 6.0]]), 2.0, 1.0, 0.0)
+        assert result == pytest.approx(0.0)
 
     def test_mmd_poly_single_sample_tgt(self):
         """Verify MMD Poly returns 0 when target has single sample."""
-        assert _mmd_poly(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0]]), 2.0, 1.0, 0.0) == 0.0
+        result = _mmd_poly(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0]]), 2.0, 1.0, 0.0)
+        assert result == pytest.approx(0.0)
 
     def test_mmd_poly_both_single(self):
         """Verify MMD Poly returns 0 when both source and target have single sample."""
-        assert _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0]]), 2.0, 1.0, 0.0) == 0.0
+        assert _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0]]), 2.0, 1.0, 0.0) == pytest.approx(0.0)
 
 
 class TestDomainGapComputeFeatures:
@@ -283,7 +285,7 @@ class TestDomainGapExtremeValues:
         """Verify MMD RBF returns 0 for identical embeddings with gamma=0."""
         src = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float64)
         result = _mmd_rbf(src, src, 0.0)
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     @pytest.mark.parametrize("gamma", [0.0, 1e10])
     def test_mmd_poly_extreme_gamma(self, gamma: float) -> None:
@@ -413,7 +415,7 @@ class TestDomainGapExtremeValues:
         tgt = {"__emb__": pa.FixedSizeListArray.from_arrays(pa.array(vals), dim)}
         result = proc._compute_delta_mmd_rbf(src, tgt)
         val = result["mmd_rbf"].to_pylist()[0]
-        assert val == 0.0
+        assert val == pytest.approx(0.0)
 
     def test_delta_mmd_poly_identical_embeddings(self) -> None:
         """Verify MMD Poly returns 0 for identical source/target embeddings."""
@@ -431,7 +433,7 @@ class TestDomainGapExtremeValues:
         tgt = {"__emb__": pa.FixedSizeListArray.from_arrays(pa.array(vals), dim)}
         result = proc._compute_delta_mmd_poly(src, tgt)
         val = result["mmd_poly"].to_pylist()[0]
-        assert val == 0.0
+        assert val == pytest.approx(0.0)
 
     def test_mmd_poly_negative_gamma(self) -> None:
         """Verify MMD Poly handles negative gamma."""

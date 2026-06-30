@@ -112,9 +112,9 @@ class TestExtremeDataValues:
         }
         result = proc.compute(batch_metrics=batch_metrics)
         assert result["col1_richness"] == 1
-        assert result["col1_shannon"] == 0.0
-        assert result["col1_gini"] == 0.0
-        assert result["col1_simpson"] == 0.0
+        assert result["col1_shannon"] == pytest.approx(0.0)
+        assert result["col1_gini"] == pytest.approx(0.0)
+        assert result["col1_simpson"] == pytest.approx(0.0)
 
     def test_single_sample_total(self) -> None:
         """Verify diversity indices when only one sample exists."""
@@ -125,7 +125,7 @@ class TestExtremeDataValues:
         }
         result = proc.compute(batch_metrics=batch_metrics)
         assert result["col1_richness"] == 1
-        assert result["col1_simpson"] == 0.0
+        assert result["col1_simpson"] == pytest.approx(0.0)
 
     def test_extremely_skewed(self) -> None:
         """Verify diversity indices for extremely skewed distribution (999:1)."""

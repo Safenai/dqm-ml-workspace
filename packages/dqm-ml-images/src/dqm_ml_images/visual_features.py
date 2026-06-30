@@ -125,11 +125,10 @@ class VisualFeaturesProcessor(DatametricProcessor):
         self.clip_percentiles = cfg.clip_percentiles
         self.laplacian_kernel: str = cfg.laplacian_kernel
         raw = cfg.luminosity_weights
-        self._luminosity_weights = (
-            _LUMINOSITY_STANDARDS[raw]
-            if isinstance(raw, str)
-            else (raw if raw is not None else _LUMINOSITY_STANDARDS["bt709"])
-        )
+        if isinstance(raw, str):
+            self._luminosity_weights = _LUMINOSITY_STANDARDS[raw]
+        else:
+            self._luminosity_weights = raw if raw is not None else _LUMINOSITY_STANDARDS["bt709"]
 
     def _validate_output_features(self) -> None:
         """Validate and populate default output features configuration.

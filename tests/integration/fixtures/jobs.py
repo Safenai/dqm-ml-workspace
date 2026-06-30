@@ -10,6 +10,10 @@ import pytest
 from tests.utils.jobs import generate_job
 
 _OUTPUT_DATA_DIR = "outputs/data"
+_NORMAL_DIST_PARQUET = "normal_distribution.parquet"
+_COMPLETENESS_PARQUET = "completeness.parquet"
+_DIVERSITY_PARQUET = "diversity.parquet"
+_VISUAL_FEATURES_PARQUET = "visual_features.parquet"
 
 
 @pytest.fixture(scope="session")
@@ -32,7 +36,7 @@ def job_representativeness(
     test_list = [
         {
             "test_name": "normal_distribution",
-            "parquet": "normal_distribution.parquet",
+            "parquet": _NORMAL_DIST_PARQUET,
         },
         {
             "test_name": "not_normal_distribution",
@@ -46,14 +50,14 @@ def job_representativeness(
             "test_name": "not_uniform_distribution",
             "parquet": "not_uniform_distribution.parquet",
         },
-        {"test_name": "batch", "parquet": "normal_distribution.parquet"},
+        {"test_name": "batch", "parquet": _NORMAL_DIST_PARQUET},
         {
             "test_name": "normal_distribution_custom_interpretations",
-            "parquet": "normal_distribution.parquet",
+            "parquet": _NORMAL_DIST_PARQUET,
         },
         {
             "test_name": "normal_distribution_shannon_threshold",
-            "parquet": "normal_distribution.parquet",
+            "parquet": _NORMAL_DIST_PARQUET,
         },
     ]
 
@@ -75,10 +79,10 @@ def job_completeness(test_path: str, completeness_data: Any) -> None:
         completeness_data: Fixture that generates completeness.parquet.
     """
     test_list = [
-        {"test_name": "completeness", "parquet": "completeness.parquet"},
-        {"test_name": "completeness_batch", "parquet": "completeness.parquet"},
-        {"test_name": "completeness_no_per_column", "parquet": "completeness.parquet"},
-        {"test_name": "completeness_no_overall", "parquet": "completeness.parquet"},
+        {"test_name": "completeness", "parquet": _COMPLETENESS_PARQUET},
+        {"test_name": "completeness_batch", "parquet": _COMPLETENESS_PARQUET},
+        {"test_name": "completeness_no_per_column", "parquet": _COMPLETENESS_PARQUET},
+        {"test_name": "completeness_no_overall", "parquet": _COMPLETENESS_PARQUET},
     ]
 
     generate_job(
@@ -156,9 +160,9 @@ def job_diversity(test_path: str, diversity_data: Any) -> None:
         diversity_data: Fixture that generates diversity test parquet.
     """
     test_list = [
-        {"test_name": "diversity", "parquet": "diversity.parquet"},
-        {"test_name": "diversity_batch", "parquet": "diversity.parquet"},
-        {"test_name": "diversity_single_metric", "parquet": "diversity.parquet"},
+        {"test_name": "diversity", "parquet": _DIVERSITY_PARQUET},
+        {"test_name": "diversity_batch", "parquet": _DIVERSITY_PARQUET},
+        {"test_name": "diversity_single_metric", "parquet": _DIVERSITY_PARQUET},
     ]
 
     generate_job(
@@ -179,34 +183,34 @@ def job_features_embeddings(test_path: str, visual_features_data: Any) -> None:
         visual_features_data: Fixture that generates visual features parquets.
     """
     test_list = [
-        {"test_name": "features_embeddings", "parquet": "visual_features.parquet"},
+        {"test_name": "features_embeddings", "parquet": _VISUAL_FEATURES_PARQUET},
         {
             "test_name": "features_embeddings_batch",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_multi_layer",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_n_layer_0",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_custom_norm",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_prefix",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_suffix",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "features_embeddings_infer_batch_size",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
     ]
 
@@ -228,10 +232,10 @@ def job_visual_features(test_path: str, visual_features_data: Any) -> None:
         visual_features_data: Fixture that generates visual features parquets.
     """
     test_list = [
-        {"test_name": "visual_features", "parquet": "visual_features.parquet"},
+        {"test_name": "visual_features", "parquet": _VISUAL_FEATURES_PARQUET},
         {
             "test_name": "visual_features_batch",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "visual_features_path",
@@ -239,11 +243,11 @@ def job_visual_features(test_path: str, visual_features_data: Any) -> None:
         },
         {
             "test_name": "visual_features_prefix",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
         {
             "test_name": "visual_features_grayscale_false",
-            "parquet": "visual_features.parquet",
+            "parquet": _VISUAL_FEATURES_PARQUET,
         },
     ]
 

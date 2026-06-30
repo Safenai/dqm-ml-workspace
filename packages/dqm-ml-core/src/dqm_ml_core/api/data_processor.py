@@ -188,7 +188,6 @@ class DatametricProcessor:
         edges in RepresentativenessProcessor) MUST override this to
         clear that state.  Called by DatasetJob after each selection.
         """
-        return
 
     def compute_delta(self, source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
         """Compare metrics between two different dataselections.
