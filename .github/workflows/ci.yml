@@ -22,6 +22,7 @@ jobs:
       matrix:
         nox-session: ["lint", "spell", "type_check", "complexity"]
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
       - name: Install hunspell library
@@ -36,6 +37,7 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
@@ -49,6 +51,7 @@ jobs:
       matrix:
         python-version: ["3.12"]
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
       - name: Restore resnet from cache
@@ -87,6 +90,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
       - name: Configure Git User

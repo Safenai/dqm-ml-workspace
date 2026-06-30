@@ -1,5 +1,5 @@
 name: Setup workspace
-description: Checkout + uv + Python — shared by all jobs
+description: uv + Python — shared by all jobs (checkout must run first)
 
 inputs:
   python-version:
@@ -14,8 +14,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
-
     - uses: astral-sh/setup-uv@v7
       with:
         version: ${{ inputs.uv-version }}
