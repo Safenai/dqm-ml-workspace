@@ -9,11 +9,10 @@ of missing columns, non-numeric data, seed reproducibility, and edge cases.
 import logging
 from typing import Any
 
+from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 import numpy as np
 import pyarrow as pa
 import pytest
-
-from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 
 # --- Batch Metric Computation Tests ---
 

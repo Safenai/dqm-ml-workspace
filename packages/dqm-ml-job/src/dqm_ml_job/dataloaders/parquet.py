@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Any
 
+from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude, resolve_patterns
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.fs as fs
@@ -17,7 +18,6 @@ import pyarrow.parquet as pq
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude, resolve_patterns
 from dqm_ml_job.dataloaders.proto import DataSelection
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def _match_wildcard_arrow(col_expr: Any, patterns: list[str]) -> Any:
     regex_patterns = [_fnmatch_to_regex(p) for p in patterns]
     # Combine with OR
     combined_regex = "|".join(f"({p})" for p in regex_patterns)
-    return pc.match_substring_regex(col_expr, combined_regex)  # type: ignore[attr-defined]
+    return pc.match_substring_regex(col_expr, combined_regex)
 
 
 def _resolve_pyarrow_type(type_name: str) -> Any:
@@ -141,9 +141,9 @@ class ParquetDataSelection(DataSelection):
             col_expr = build_filter_condition(
                 col,
                 val,
-                wildcard_fn=lambda c, vals: _match_wildcard_arrow(pc.field(c), vals),  # type: ignore[no-untyped-call]
-                isin_fn=lambda c, vals: pc.is_in(pc.field(c), pa.array(vals)),  # type: ignore[attr-defined, no-untyped-call]
-                equal_fn=lambda c, v: pc.equal(pc.field(c), v),  # type: ignore[attr-defined, no-untyped-call]
+                wildcard_fn=lambda c, vals: _match_wildcard_arrow(pc.field(c), vals),
+                isin_fn=lambda c, vals: pc.is_in(pc.field(c), pa.array(vals)),
+                equal_fn=lambda c, v: pc.equal(pc.field(c), v),
             )
             expr = col_expr if expr is None else (expr & col_expr)
         return expr
@@ -160,7 +160,7 @@ class ParquetDataSelection(DataSelection):
         logger.debug(f"[DEBUG] ParquetDataSelection.bootstrap: {self.name} received columns_list = {columns_list}")
         self.filter_expr = self._build_filter_expr()
         logger.debug(f"[DEBUG] ParquetDataSelection.bootstrap: filter_expr = {self.filter_expr}")
-        self.dataset = pq.ParquetDataset(self.path, filters=self.filter_expr, filesystem=self.filesystem)  # type: ignore[no-untyped-call]
+        self.dataset = pq.ParquetDataset(self.path, filters=self.filter_expr, filesystem=self.filesystem)
         if len(self.dataset.fragments) > 0:
             self.samples_count = sum(p.count_rows() for p in self.dataset.fragments)
         else:
@@ -184,8 +184,8 @@ class ParquetDataSelection(DataSelection):
             return
         logger.debug(f"[DEBUG] ParquetDataSelection.__iter__: {self.name} using columns_list = {self.columns_list}")
         for file in self.dataset.files:
-            parquet_file = pq.ParquetFile(file, filesystem=self.filesystem)  # type: ignore[no-untyped-call]
-            batch_iterator = parquet_file.iter_batches(  # type: ignore[no-untyped-call]
+            parquet_file = pq.ParquetFile(file, filesystem=self.filesystem)
+            batch_iterator = parquet_file.iter_batches(
                 batch_size=self.batch_size,
                 columns=self.columns_list,
                 use_threads=self.threads,
@@ -312,7 +312,7 @@ class ParquetDataLoader:
             single selection for the entire dataset.
         """
         path = self.path
-        if self.filesystem is not None and isinstance(self.filesystem, fs.S3FileSystem):  # type: ignore[attr-defined]
+        if self.filesystem is not None and isinstance(self.filesystem, fs.S3FileSystem):
             # Use bucket from StorageConfig if available
             bucket_name = self.storage_config.bucket if self.storage_config else os.getenv("S3_BUCKET_NAME", "")
             # Avoid prepending bucket if it's a local path (starts with dqm_data/) or already has bucket
@@ -339,14 +339,14 @@ class ParquetDataLoader:
         if values is None:
             # Automatic discovery if split_values not provided
             logger.info(f"Discovering unique values for split_by='{self.split_by}' in {path}")
-            table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)  # type: ignore[no-untyped-call]
-            values = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]  # type: ignore[attr-defined]
+            table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)
+            values = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]
         else:
             # Expand wildcard patterns in values against available data
             if any(has_pattern(v) for v in values):
                 logger.info(f"Expanding wildcard values for split_by='{self.split_by}' in {path}")
-                table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)  # type: ignore[no-untyped-call]
-                available = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]  # type: ignore[attr-defined]
+                table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)
+                available = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]
                 values = resolve_patterns(values, available)
 
         # Apply split.exclude (including wildcard patterns)

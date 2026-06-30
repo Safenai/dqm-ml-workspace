@@ -6,10 +6,9 @@ using actual CSV files written to a temporary directory.
 
 from pathlib import Path
 
+from dqm_ml_job.dataloaders.pandas import PandasDataLoader, PandasDataSelection, _apply_pandas_transforms
 import pandas as pd
 import pytest
-
-from dqm_ml_job.dataloaders.pandas import PandasDataLoader, PandasDataSelection, _apply_pandas_transforms
 
 
 @pytest.fixture

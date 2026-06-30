@@ -8,10 +8,9 @@ and edge cases with extreme distributions.
 
 import logging
 
+from dqm_ml_core.metrics.diversity import DiversityProcessor
 import pyarrow as pa
 import pytest
-
-from dqm_ml_core.metrics.diversity import DiversityProcessor
 
 
 def test_compute_empty_batch_metrics():

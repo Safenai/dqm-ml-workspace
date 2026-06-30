@@ -14,6 +14,10 @@ from pathlib import Path
 from typing import Any
 import warnings
 
+from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.models.columns import ColumnsConfig
+from dqm_ml_core.models.processors import FeaturesEmbeddingsProcessorConfig
+from dqm_ml_core.utils.matching import resolve_include_exclude
 import numpy as np
 from PIL import Image
 import pyarrow as pa
@@ -24,11 +28,6 @@ from torchvision.models.feature_extraction import create_feature_extractor
 
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
-
-from dqm_ml_core import DatametricProcessor
-from dqm_ml_core.models.columns import ColumnsConfig
-from dqm_ml_core.models.processors import FeaturesEmbeddingsProcessorConfig
-from dqm_ml_core.utils.matching import resolve_include_exclude
 
 logger = logging.getLogger(__name__)
 

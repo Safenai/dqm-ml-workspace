@@ -8,10 +8,9 @@ from pathlib import Path
 import shlex
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
-
-from dqm_ml_job.cli import execute
 
 
 def _assert_metric_value(

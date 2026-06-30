@@ -6,13 +6,12 @@ max_failure_rate) is correctly consumed at runtime by the processors.
 
 import logging
 
+from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig, TabularErrorsConfig
 from dqm_ml_images import VisualFeaturesProcessor
 from dqm_ml_pytorch import ImageEmbeddingProcessor
 import pyarrow as pa
 import pytest
-
-from dqm_ml_core import DatametricProcessor
-from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig, TabularErrorsConfig
 
 # --- on_missing_column (TabularErrorsConfig) ---
 

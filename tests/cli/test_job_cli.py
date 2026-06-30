@@ -9,10 +9,9 @@ import shlex
 import subprocess
 from unittest.mock import MagicMock, mock_open, patch
 
+from dqm_ml_job.cli import _init_components_from_list, _merge_errors, execute, parse_args, run
 import pytest
 import yaml
-
-from dqm_ml_job.cli import _init_components_from_list, _merge_errors, execute, parse_args, run
 
 test_cases = [
     ("-p examples/config/completeness.yaml", ""),  # no args

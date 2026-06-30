@@ -4,9 +4,8 @@ This module contains tests for the optional dependency handling and
 command availability utilities in the v2 package.
 """
 
-import pytest
-
 from dqm_ml.dependency import get_available_command, optional_dependencies
+import pytest
 
 
 class TestOptionalDependencies:

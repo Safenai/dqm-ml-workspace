@@ -6,11 +6,10 @@ correctly orchestrates metric computation on DataFrames.
 
 from unittest.mock import MagicMock
 
-import pandas as pd
-import pyarrow as pa
-
 from dqm_ml_core.api.data_processor import DatametricProcessor
 from dqm_ml_core.utils.metric_runner import MetricRunner
+import pandas as pd
+import pyarrow as pa
 
 
 def test_metric_runner_run_empty_df():

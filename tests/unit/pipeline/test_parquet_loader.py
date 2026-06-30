@@ -7,9 +7,8 @@ and ParquetDataSelection classes work correctly.
 import re
 from unittest.mock import MagicMock, patch
 
-import pyarrow as pa
-
 from dqm_ml_job.dataloaders.parquet import ParquetDataLoader, ParquetDataSelection
+import pyarrow as pa
 
 
 def test_parquet_dataloader_get_selections_no_split() -> None:

@@ -3,9 +3,8 @@
 import os
 from typing import Any
 
-import pyarrow as pa
-
 from dqm_ml_core.models.global_ import StorageConfig
+import pyarrow as pa
 
 _SIMPLE_KWARGS: list[tuple[str, str]] = [
     ("region", "region"),

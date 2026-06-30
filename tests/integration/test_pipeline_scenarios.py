@@ -7,6 +7,7 @@ specific data quality use cases end-to-end.
 from pathlib import Path
 from timeit import default_timer as timer
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.pipeline_configs import (
@@ -21,8 +22,6 @@ from tests.utils.pipeline_configs import (
     scenario_quality_gate,
     scenario_train_test_drift,
 )
-
-from dqm_ml_job.cli import execute
 
 _ROOT_KEY_ORDERS = [
     ["dataloaders", "features", "metrics", "gap"],

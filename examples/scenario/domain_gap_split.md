@@ -1,6 +1,6 @@
 # Domain Gap (Split)
 
-[📄 Config](../config/domain_gap_with_split.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
+[📄 Config](../config/scenario/domain_gap_with_split.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
 
 Splits the dataset by `source` (zoo, safari, reserve) and computes the FID between every pair. A high FID between zoo and safari suggests a significant distribution shift — the model may need to be trained on both environments to generalise.
 

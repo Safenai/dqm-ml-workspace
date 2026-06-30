@@ -127,17 +127,23 @@ repo_url: https://github.com/Safenai/dqm-ml-workspace
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
+  - Concepts: formal_concepts.md
   - Getting Started:
     - Quick Start: quickstart.md
     - Why a dqm-ml V2: dqm-ml-v2.md
     - Overview: dqm-ml-overview.md
   - User Guide:
     - CLI Reference: cli.md
-    - Configuration: configuration.md
+    - Configuration:
+      - Overview: configuration/overview.md
+      - Interfaces: configuration/interfaces.md
+      - Processors: configuration/processors.md
+      - Features: configuration/features.md
+      - Metrics: configuration/metrics.md
+      - Gap: configuration/gap.md
+      - Data Selection: configuration/data_selection.md
+      - Global: configuration/global.md
     - YAML Basics: yaml_basics.md
-    - Data Loaders: dataloaders.md
-    - Metrics Computation: metrics_computation.md
-    - Direct Call: TBD1.md
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
@@ -146,7 +152,24 @@ nav:
     - Representativeness : metrics/representativeness.md
     - Visual features : metrics/visual_features.md
   - Tutorials and Examples:
-    - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
+    - Fictive Scenario:
+      - Overview: examples/overview.md
+      - Config by Metric:
+        - Completeness: examples/scenario/completeness.md
+        - Diversity: examples/scenario/diversity.md
+        - Representativeness: examples/scenario/representativeness.md
+        - Visual Features: examples/scenario/visual_features.md
+        - Embeddings: examples/scenario/embeddings.md
+      - Domain Gap:
+        - With Split: examples/scenario/domain_gap_split.md
+        - With Filter: examples/scenario/domain_gap_filter.md
+        - With Split + Filter: examples/scenario/domain_gap_split_filter.md
+      - Full Pipeline: examples/scenario/full_story.md
+      - Notebook with run: examples/notebooks/scenario_individual_steps.ipynb
+      - Notebook with classes: examples/notebooks/scenario_full_pipeline.ipynb
+    - Industrial Scenario:
+      - Overview: TBD2.md
+      - Notebook: examples/notebooks/multiple_metrics_tests_v2.ipynb
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md
   - Developer Guide:
@@ -159,8 +182,7 @@ nav:
       - Images: packages/dqm-ml-images.md
       - PyTorch: packages/dqm-ml-pytorch.md
       - CLI: packages/dqm-ml.md
-    - Test Reports:
-      - Results: reports/pytest/pytest_report.html
-      - Coverage: reports/htmlcov/coverage_report.html
-      - Performance Report: TBD2.md
+    - Pytest Report: reports/pytest/pytest_report.html
+    - Coverage: reports/htmlcov/coverage_report.html
+    - Performance: TBD1.md
 

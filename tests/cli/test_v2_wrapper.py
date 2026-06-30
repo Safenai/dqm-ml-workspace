@@ -7,10 +7,9 @@ correctly parses arguments, displays version, and lists available plugins.
 import shlex
 import subprocess
 
-import pytest
-
 from dqm_ml.__main__ import execute, parse_args
 from dqm_ml_core._version_ import version
+import pytest
 
 test_cases = [
     ("version", f"DQML version : {version}"),  # no args

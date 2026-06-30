@@ -11,6 +11,9 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.models.columns import ColumnsConfig
+from dqm_ml_core.models.processors import _LUMINOSITY_STANDARDS, ImageFeaturesProcessorConfig
 import numpy as np
 from PIL import Image
 import pyarrow as pa
@@ -18,10 +21,6 @@ from scipy import signal
 
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
-
-from dqm_ml_core import DatametricProcessor
-from dqm_ml_core.models.columns import ColumnsConfig
-from dqm_ml_core.models.processors import _LUMINOSITY_STANDARDS, ImageFeaturesProcessorConfig
 
 logger = logging.getLogger(__name__)
 

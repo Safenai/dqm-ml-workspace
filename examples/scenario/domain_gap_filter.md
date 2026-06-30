@@ -1,6 +1,6 @@
 # Domain Gap (Filter)
 
-[📄 Config](../config/domain_gap_with_filter.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
+[📄 Config](../config/scenario/domain_gap_with_filter.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
 
 Two dataloaders read the same source file but filter on different `source` values (safari vs reserve). MMD-RBF measures the distribution shift between these two subsets in a focused pairwise comparison.
 

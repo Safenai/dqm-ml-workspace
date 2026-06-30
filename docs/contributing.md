@@ -47,11 +47,6 @@ cd dqm-ml-workspace
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install git-lfs for large test files
-sudo apt-get install git-lfs
-git lfs pull
-```
-
 ### 2. Initialize Workspace
 
 ```bash

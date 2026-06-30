@@ -9,13 +9,13 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
-import pyarrow as pa
-import yaml
-
 from dqm_ml_core import PluginLoadedRegistry
 from dqm_ml_core.models.config import JobConfig
 from dqm_ml_core.models.global_ import ComputeConfig, ErrorsConfig
 from dqm_ml_core.models.interfaces import FeaturesInterfaceConfig, GapInterfaceConfig, MetricsInterfaceConfig
+import pyarrow as pa
+import yaml
+
 from dqm_ml_job.job import DatasetJob
 from dqm_ml_job.outputwriter import OutputWriter
 

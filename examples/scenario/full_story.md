@@ -1,6 +1,6 @@
 # Full Pipeline
 
-[📄 Config](../config/full_story.yaml) · [📖 Docs](../overview.md)
+[📄 Config](../config/scenario/full_story.yaml) · [📖 Docs](../overview.md)
 
 End-to-end pipeline combining all metric types on the synthetic images dataset. Runs visual feature extraction, deep embeddings, completeness, diversity, representativeness, and three domain-gap metrics (FID, MMD-RBF, Wasserstein-1D) in a single `dqm-ml process` invocation.
 

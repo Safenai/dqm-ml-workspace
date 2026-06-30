@@ -6,6 +6,7 @@ mixed raw + feature column inputs in a single ``columns.input`` list.
 
 from pathlib import Path
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.pipeline_configs import (
@@ -19,8 +20,6 @@ from tests.utils.pipeline_configs import (
     build_pipeline_config,
     make_loader,
 )
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.mark.timeout(600)

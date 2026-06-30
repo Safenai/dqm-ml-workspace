@@ -1,6 +1,6 @@
 # Domain Gap (Split + Filter)
 
-[📄 Config](../config/domain_gap_with_split_and_filter.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
+[📄 Config](../config/scenario/domain_gap_with_split_and_filter.yaml) · [📖 Docs](../../docs/metrics/domain_gap.md)
 
 Filters to the zoo source only, then splits by `class_name` without restricting values — all four animal classes (elephant, giraffe, lion, zebra) are carried through. Wasserstein-1D compares every class pair, producing 6 pairwise distances that answer: within the zoo environment, how separable are the four species in embedding space?
 

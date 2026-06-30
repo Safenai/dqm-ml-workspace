@@ -1,6 +1,6 @@
 # Diversity
 
-[📄 Config](../config/diversity.yaml) · [📖 Docs](../../docs/metrics/diversity.md)
+[📄 Config](../config/scenario/diversity.yaml) · [📖 Docs](../../docs/metrics/diversity.md)
 
 Measures how evenly samples are distributed across `class_name` and `source` using four complementary indices (Simpson, Gini-Simpson, Shannon Entropy, Richness). Useful for detecting class imbalance or source-representation issues before training.
 

@@ -6,11 +6,10 @@ correctly handles initialization, configuration validation, and method behaviors
 
 import logging
 
-import pyarrow as pa
-import pytest
-
 from dqm_ml_core import DatametricProcessor
 from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig
+import pyarrow as pa
+import pytest
 
 
 def test_processor_compute_features(caplog):

@@ -1,6 +1,6 @@
 # Completeness
 
-[📄 Config](../config/completeness_scenario.yaml) · [📖 Docs](../../docs/metrics/completeness.md)
+[📄 Config](../config/scenario/completeness.yaml) · [📖 Docs](../../docs/metrics/completeness.md)
 
 Checks that every sample has non-null values for the visual-feature columns computed by the Visual Features pipeline. Nulls here indicate an image-processing failure (corrupt bytes, load error, etc.). The scenario uses 1200 rows × 4 visual-feature columns — a small dataset, so false alarms are a risk.
 

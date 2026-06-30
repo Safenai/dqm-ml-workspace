@@ -7,10 +7,9 @@ of missing columns, null values, NaN values, and edge cases.
 
 import logging
 
+from dqm_ml_core.metrics.completeness import CompletenessProcessor
 import pyarrow as pa
 import pytest
-
-from dqm_ml_core.metrics.completeness import CompletenessProcessor
 
 
 def test_compute_features_column_not_in_batch(caplog):

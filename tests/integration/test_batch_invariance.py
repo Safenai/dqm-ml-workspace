@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dqm_ml_job.cli import execute
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.pipeline_configs import ProcessorSpec, build_pipeline_config, make_loader
-
-from dqm_ml_job.cli import execute
 
 # ---------------------------------------------------------------------------
 # Constants

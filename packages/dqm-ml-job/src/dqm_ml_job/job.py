@@ -9,12 +9,12 @@ import itertools
 import logging
 from typing import Any
 
+from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude
 import numpy as np
 import pyarrow as pa
 from tqdm import tqdm
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude
 from dqm_ml_job.dataloaders import DataLoader, DataSelection
 from dqm_ml_job.outputwriter import OutputWriter
 

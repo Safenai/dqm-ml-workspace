@@ -12,10 +12,9 @@ data can produce p < 0.05 (type I error). Tests assert monotonic ordering
 of statistics (chi-sq, KS D, GRTE) rather than pass/fail interpretations.
 """
 
+from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 import numpy as np
 import pyarrow as pa
-
-from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 
 N_SAMPLES = 100_000
 RNG_SEED = 42

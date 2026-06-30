@@ -7,14 +7,13 @@ accumulation.  It does NOT retest Pydantic's own model validation.
 
 from unittest.mock import MagicMock
 
-import pyarrow as pa
-import pytest
-
 from dqm_ml_core.models.config import JobConfig
 from dqm_ml_core.models.interfaces import FeaturesInterfaceConfig, GapInterfaceConfig, MetricsInterfaceConfig
 from dqm_ml_core.models.outputs import FeaturesOutputsConfig, GapOutputsConfig, MetricsOutputsConfig
 from dqm_ml_job.cli import _init_interface_outputs
 from dqm_ml_job.job import DatasetJob
+import pyarrow as pa
+import pytest
 
 
 class TestInitInterfaceOutputs:

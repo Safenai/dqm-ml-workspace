@@ -9,11 +9,11 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dqm_ml_core.models.global_ import StorageConfig
+from dqm_ml_core.models.outputs import ParquetOutputConfig
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from dqm_ml_core.models.global_ import StorageConfig
-from dqm_ml_core.models.outputs import ParquetOutputConfig
 from dqm_ml_job.utils.s3 import get_s3_filesystem
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class ParquetOutputWriter:
                 logger.info(f"Creating output directory: {output_dir}")
                 Path.mkdir(output_dir, parents=True, exist_ok=True)
 
-            pq.write_table(table, filename)  # type: ignore[no-untyped-call]
+            pq.write_table(table, filename)
             logger.info(f"Wrote output table to {filename}")
 
     def flush(self) -> None:
@@ -154,14 +154,14 @@ class ParquetOutputWriter:
 
         if self.s3_filesystem is not None:
             s3_path = self._get_s3_path(filename)
-            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)  # type: ignore[no-untyped-call]
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
             logger.info(f"Wrote accumulated output table to S3: {s3_path}")
         else:
             output_dir = Path(filename).parent
             if not Path.exists(output_dir):
                 logger.info(f"Creating output directory: {output_dir}")
                 Path.mkdir(output_dir, parents=True, exist_ok=True)
-            pq.write_table(table, filename)  # type: ignore[no-untyped-call]
+            pq.write_table(table, filename)
             logger.info(f"Wrote accumulated output table to {filename}")
 
         self._accumulated_features.clear()
@@ -187,7 +187,7 @@ class ParquetOutputWriter:
         """
         s3_path = self._get_s3_path(filename)
         try:
-            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)  # type: ignore[no-untyped-call]
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
             logger.info(f"Wrote output table to S3: {s3_path}")
         except Exception:
             logger.exception("Failed to write to S3")

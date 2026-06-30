@@ -9,11 +9,10 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 import yaml
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.fixture(scope="module")

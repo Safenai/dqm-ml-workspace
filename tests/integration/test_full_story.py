@@ -8,11 +8,10 @@ image data with 3 sources x 2 classes = 6 selections.
 from pathlib import Path
 from timeit import default_timer as timer
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.pipeline_configs import build_pipeline_config, make_loader, scenario_full_story
-
-from dqm_ml_job.cli import execute
 
 _VF_COLS = [
     "image_bytes_luminosity",

@@ -8,13 +8,12 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import yaml
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.fixture(scope="module")

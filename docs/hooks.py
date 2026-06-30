@@ -50,8 +50,13 @@ def copy_examples():
     config_dst = dst_root / "config"
     config_dst.mkdir(exist_ok=True)
     for yaml_file in (src_root / "config").glob("*.yaml"):
-        if yaml_file.name != "config_v2.yaml":
-            shutil.copy(yaml_file, config_dst / yaml_file.name)
+        shutil.copy(yaml_file, config_dst / yaml_file.name)
+
+    # Copy configs
+    config_dst = dst_root / "config/scenario"
+    config_dst.mkdir(exist_ok=True)
+    for yaml_file in (src_root / "config/scenario").glob("*.yaml"):
+        shutil.copy(yaml_file, config_dst / yaml_file.name)
 
     # Copy scripts
     script_dst = dst_root / "script"

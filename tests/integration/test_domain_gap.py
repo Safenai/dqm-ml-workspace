@@ -10,12 +10,11 @@ import shlex
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 from tests.utils.jobs import _parse_domain_gap_test_name
 import yaml
-
-from dqm_ml_job.cli import execute
 
 _DOMAIN_GAP_FEATURES = {
     "name": "image_embedding",

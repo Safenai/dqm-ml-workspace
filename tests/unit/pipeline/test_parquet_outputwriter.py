@@ -6,10 +6,9 @@ class correctly writes metrics and features to Parquet files.
 
 import logging
 
+from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 import pyarrow as pa
 import pyarrow.parquet as pq
-
-from dqm_ml_job.outputwriter.parquet import ParquetOutputWriter
 
 
 def test_parquet_output_writer_creates_directory(temp_output_path):

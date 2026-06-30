@@ -9,10 +9,9 @@ import shlex
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize(

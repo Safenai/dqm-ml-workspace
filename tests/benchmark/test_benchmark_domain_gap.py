@@ -7,11 +7,10 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 import yaml
-
-from dqm_ml_job.cli import execute
 
 _INFER_PARAMS = {
     "fid": {"batch_size": 32, "width": 299, "height": 299},

@@ -1,6 +1,6 @@
 # Representativeness
 
-[📄 Config](../config/representativeness.yaml) · [📖 Docs](../../docs/metrics/representativeness.md)
+[📄 Config](../config/scenario/representativeness.yaml) · [📖 Docs](../../docs/metrics/representativeness.md)
 
 Validates that the visual features — luminosity, contrast, blur, and entropy — follow a normal distribution. These features are extracted from `image_bytes` in step 3. A column that fails the chi-square or KS test may indicate a preprocessing bug or acquisition artifact affecting those derived features.
 

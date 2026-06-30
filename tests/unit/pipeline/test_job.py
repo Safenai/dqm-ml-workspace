@@ -9,11 +9,10 @@ processor column analysis, path prefix injection, and feature flushing.
 import logging
 from unittest.mock import MagicMock
 
+from dqm_ml_job.job import DatasetJob
 import numpy as np
 import pyarrow as pa
 import pytest
-
-from dqm_ml_job.job import DatasetJob
 
 
 class TestGetInterfaceForProcessor:

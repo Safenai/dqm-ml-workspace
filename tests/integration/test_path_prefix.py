@@ -7,12 +7,11 @@ using the sample_path prefix configuration.
 from pathlib import Path
 import shlex
 
+from dqm_ml_job.cli import execute
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.fixture(scope="module")

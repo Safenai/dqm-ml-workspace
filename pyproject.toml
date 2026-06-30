@@ -125,7 +125,7 @@ disable_error_code = ["no-untyped-call"]
 
 [tool.ruff]
 line-length = 120
-src = ["src", "packages/dqm-ml-core/src", "packages/dqm-ml-job/src", "packages/dqm-ml/src"]
+src = ["src", "packages", "tests"]
 # Ruff will automatically exclude all files listed in .gitignore as well as common temporary Python
 # tool directories.
 # To exclude additional folders, use extend-exclude.

@@ -8,13 +8,13 @@ import fnmatch
 import logging
 from typing import Any
 
+from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude, resolve_patterns
 import pandas as pd
 import pyarrow as pa
 
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude, resolve_patterns
 from dqm_ml_job.dataloaders.proto import DataSelection
 
 logger = logging.getLogger(__name__)

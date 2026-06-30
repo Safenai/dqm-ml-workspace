@@ -1,6 +1,6 @@
 # Embeddings
 
-[📄 Config](../config/embeddings.yaml) · [📖 Docs](../../docs/metrics/features_embeddings.md)
+[📄 Config](../config/scenario/embeddings.yaml) · [📖 Docs](../../docs/metrics/features_embeddings.md)
 
 Runs a pre-trained ResNet-18 on every image to produce 512-d embedding vectors. These are the essential input to all Domain Gap metrics. You can inspect the output parquet to see how samples from different sources cluster.
 

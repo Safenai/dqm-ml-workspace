@@ -1,6 +1,6 @@
 # Visual Features
 
-[📄 Config](../config/visual_features.yaml) · [📖 Docs](../../docs/metrics/visual_features.md)
+[📄 Config](../config/scenario/visual_features.yaml) · [📖 Docs](../../docs/metrics/visual_features.md)
 
 Extracts per-image quality indicators (luminosity, contrast, blur, entropy) from the synthetic 32×32 images. The output columns can be consumed downstream by Diversity or Representativeness processors.
 
