@@ -37,8 +37,9 @@ def test(s: Session) -> None:
         "--cov=packages/dqm-ml-images/src",
         "--cov=packages/dqm-ml/src",
         "--cov-report=html:docs/reports/htmlcov",
+        "--cov-report=json:docs/reports/coverage.json",
         "--cov-report=term",
-        "--cov-fail-under=1",
+        "--cov-fail-under=90",
         "--html=docs/reports/pytest/pytest_report.html",
         "tests/unit",
         "tests/integration",
@@ -51,11 +52,9 @@ def test(s: Session) -> None:
     python=["3.12"],
     uv_groups=["test"],
 )
-def test_dev(s: Session) -> None:
+def test_custom(s: Session) -> None:
     s.run(
         "pytest",
-        "tests",
-        "--ignore=tests/benchmark",
         *s.posargs,
     )
 
@@ -228,6 +227,20 @@ def docs_offline(s: Session) -> None:
     python=["3.12"],
     uv_groups=["docs"],
 )
+def docs_gitlab_pages(s: Session) -> None:
+    s.run(
+        "mkdocs",
+        "build",
+        "--site-dir",
+        "public",
+        env=doc_env,
+    )
+
+
+@session(
+    python=["3.12"],
+    uv_groups=["docs"],
+)
 def docs_github_pages(s: Session) -> None:
     s.run("mkdocs", "gh-deploy", "--force", env=doc_env)
 
@@ -241,6 +254,11 @@ def licenses(s: Session) -> None:
 @session(uv_groups=["complexity"])
 def complexity(s: Session) -> None:
     s.run("complexipy", "packages", "--max-complexity-allowed", "15")
+
+
+@session(uv_groups=["complexity"])
+def test_complexity(s: Session) -> None:
+    s.run("complexipy", "tests", "--max-complexity-allowed", "15")
 
 
 @session(uv_groups=["spell"])

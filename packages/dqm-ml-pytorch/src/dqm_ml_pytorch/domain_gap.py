@@ -16,11 +16,14 @@ from typing import Any
 
 import numpy as np
 import pyarrow as pa
+import torch
 
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.models.processors import DomainGapProcessorConfig
+from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude
 
 _MISSING_EMB_MSG = "missing __emb__ — set summary.store_embeddings=true"
 
@@ -182,12 +185,16 @@ def _pad_distance(src_emb: np.ndarray, tgt_emb: np.ndarray, evaluator: str) -> f
     Raises:
         ImportError: If scikit-learn is not installed.
     """
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.svm import SVC
 
     x_svm = np.vstack([src_emb, tgt_emb])
     y = np.hstack([np.zeros(len(src_emb)), np.ones(len(tgt_emb))])
 
-    svm = SVC(C=1, kernel="linear", probability=True, random_state=42, verbose=0, gamma="auto")
+    svm = CalibratedClassifierCV(
+        SVC(C=1, kernel="linear", random_state=42, verbose=0, gamma="auto"),
+        ensemble=False,
+    )
     svm.fit(x_svm, y)
     pred = svm.predict_proba(x_svm)
 
@@ -250,84 +257,132 @@ class DomainGapProcessor(DatametricProcessor):
                     - evaluator: Error metric for PAD ("mse" or "mae").
         """
         super().__init__(name, config)
-        self._checked = False
 
-    # ---------------- API ----------------
-    def check_config(self) -> None:
-        """Validate and configure the domain gap processor.
-
-        This method parses the configuration dictionary and sets:
-        - input: Embedding column(s)
-        - summary: Options for collecting summary statistics
-        - delta: The target metric and its parameters
-        """
-        cfg = self.config or {}
-        input_cfg = cfg.get("input", {})
-        self.embedding_col: str = input_cfg.get("embedding_col", "embedding")
-
-        delta_cfg = cfg.get("delta", {})
-        self.delta_metric: str = str(delta_cfg.get("metric", "klmvn_diag")).lower()
+        cfg = DomainGapProcessorConfig.model_validate({**self.config, "name": self.name})
+        self._validate_and_set_columns(cfg)
+        self.delta_metric = cfg.distance.metric.lower()
         self.is_cmd = self.delta_metric == "cmd"
+        self._configure_summary(cfg)
+        self._configure_cmd(cfg)
+        self._configure_kernel_and_pad(cfg)
 
-        summary_cfg = cfg.get("summary", {})
+    def _validate_and_set_columns(self, cfg: DomainGapProcessorConfig) -> None:
+        """Validate and set embedding column configuration."""
+        if not cfg.columns.input:
+            raise ValueError("columns.input is required for domain_gap processor")
+        self.embedding_col = cfg.columns.input[0]
+        self.embedding_cols = list(cfg.columns.input)
 
-        # Determine auto-settings per metric
+    def _resolve_summary_bool(self, cfg: DomainGapProcessorConfig, attr: str, default: bool) -> bool:
+        """Resolve a summary boolean config value with a fallback default."""
+        if cfg.summary and getattr(cfg.summary, attr, None) is not None:
+            return bool(getattr(cfg.summary, attr))
+        return default
+
+    def _configure_summary(self, cfg: DomainGapProcessorConfig) -> None:
+        """Configure summary collection flags and histogram parameters."""
         full_data_metrics = {"mmd_rbf", "mmd_poly", "pad", "cmd"}
         auto_store_emb = self.delta_metric in full_data_metrics
+        auto_sum_outer = self.delta_metric == "fid"
 
-        if self.delta_metric == "fid":
-            auto_sum_outer = True
-            auto_hist_1d = False
-        elif self.delta_metric == "wasserstein_1d":
-            auto_sum_outer = False
-            auto_hist_1d = True
-        else:
-            auto_sum_outer = False
-            auto_hist_1d = False
+        self.collect_sum_outer = self._resolve_summary_bool(cfg, "collect_sum_outer", auto_sum_outer)
+        self.store_embeddings = self._resolve_summary_bool(cfg, "store_embeddings", auto_store_emb)
 
-        self.collect_sum_outer: bool = bool(summary_cfg.get("collect_sum_outer", auto_sum_outer))
-        self.collect_hist_1d: bool = bool(summary_cfg.get("collect_hist_1d", auto_hist_1d))
-        self.store_embeddings: bool = bool(summary_cfg.get("store_embeddings", auto_store_emb))
-
-        # Wasserstein-1D parameters
-        self.hist_dims: int = int(summary_cfg.get("hist_dims", 64))
-        self.hist_bins: int = int(summary_cfg.get("hist_bins", 32))
-        rng = summary_cfg.get("hist_range", [-3.0, 3.0])
-        self.hist_range: tuple[float, float] = (float(rng[0]), float(rng[1]))
-
-        # CMD-specific parameters
-        if self.is_cmd:
-            self.cmd_k: int = int(delta_cfg.get("k", 5))
-            self.cmd_embedding_cols: list[str] = input_cfg.get("embedding_cols", [self.embedding_col])
-            self.cmd_feature_weights: list[float] = list(
-                delta_cfg.get("feature_weights", [1.0] * len(self.cmd_embedding_cols))
+        self.hist_dims = 64
+        self.hist_bins = 32
+        self.hist_range = (-3.0, 3.0)
+        if cfg.summary and cfg.summary.histogram:
+            self.collect_hist_1d = True
+            self.hist_dims = cfg.summary.histogram.dims
+            self.hist_bins = cfg.summary.histogram.bins
+            self.hist_range = (
+                float(cfg.summary.histogram.range[0]),
+                float(cfg.summary.histogram.range[1]),
             )
-            if len(self.cmd_feature_weights) != len(self.cmd_embedding_cols):
-                raise ValueError(
-                    f"[{self.name}] feature_weights length ({len(self.cmd_feature_weights)}) "
-                    f"must match embedding_cols length ({len(self.cmd_embedding_cols)})"
-                )
+        else:
+            self.collect_hist_1d = self.delta_metric == "wasserstein_1d"
 
-        # Kernel parameters for MMD-RBF / MMD-Poly
-        self.kernel_params: dict[str, Any] = delta_cfg.get("kernel_params", {})
+    def _configure_cmd(self, cfg: DomainGapProcessorConfig) -> None:
+        """Configure CMD-specific parameters."""
+        if not self.is_cmd:
+            return
+        self.cmd_k = cfg.distance.k or 5
+        self.cmd_embedding_cols = cfg.columns.input if cfg.columns and cfg.columns.input else [self.embedding_col]
+        self.cmd_feature_weights = list(cfg.distance.feature_weights or [1.0] * len(self.cmd_embedding_cols))
 
-        # PAD parameters
-        self.pad_evaluator: str = str(cfg.get("method", {}).get("evaluator", "mse"))
+    def _configure_kernel_and_pad(self, cfg: DomainGapProcessorConfig) -> None:
+        """Configure kernel parameters and PAD evaluator."""
+        self.kernel_params = dict(cfg.distance.kernel_params) if cfg.distance.kernel_params else {}
+        self.pad_evaluator = cfg.distance.evaluator or "mse"
+        self.epsilon = cfg.distance.epsilon
+        self.klmvn_var_eps = cfg.distance.klmvn_var_eps
 
-        self._checked = True
+    def check_config(self) -> None:
+        """Validate configuration.
+
+        Kept for backward compatibility. All config is already
+        parsed in ``__init__``.
+        """
+
+    def _embedding_cols(self) -> list[str]:
+        """Get the embedding columns based on metric type.
+
+        For CMD, returns all configured embedding columns.
+        For other metrics, returns the single primary embedding column.
+
+        Returns:
+            List of embedding column names.
+        """
+        if self.is_cmd:
+            return self.cmd_embedding_cols
+        return [self.embedding_col]
 
     @override
     def needed_columns(self) -> list[str]:
         """Return the list of columns required for domain gap computation.
 
         Returns:
-            List of embedding column names. For CMD returns multi-layer columns.
+            List of embedding column names needed for the configured metric.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-        if self.is_cmd:
-            return self.cmd_embedding_cols
-        return [self.embedding_col]
+        return self._embedding_cols()
+
+    @override
+    def compute_features(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
+        """Extract embedding columns from the batch for domain gap computation.
+
+        Passes through the configured embedding columns from the batch
+        or previous features, resolving include/exclude patterns.
+
+        Args:
+            batch: Input batch of data containing embedding columns.
+            prev_features: Previously computed features to include.
+
+        Returns:
+            Dictionary mapping embedding column names to their arrays.
+        """
+        available = list(prev_features.keys()) + batch.schema.names
+        cols = resolve_include_exclude(
+            self.input_columns or None,
+            self.exclude_columns or None,
+            available,
+        )
+        features: dict[str, pa.Array] = {}
+        for col in cols:
+            if col in prev_features:
+                continue
+            if col not in batch.schema.names:
+                logger.warning(f"[{self.name}] column '{col}' not found in batch")
+                continue
+            features[col] = batch.column(col)
+        return features
+
+    # utils functions
+    @staticmethod
+    def _resolve_device(device: str) -> str:
+        """Resolve ``"auto"`` to CUDA if available, else CPU."""
+        if device == "auto":
+            return "cuda" if torch.cuda.is_available() else "cpu"
+        return device
 
     def generated_columns(self) -> list[str]:
         """Return the list of columns generated by this processor.
@@ -336,6 +391,19 @@ class DomainGapProcessor(DatametricProcessor):
             Empty list as this processor computes deltas rather than features.
         """
         return []
+
+    def _resolve_embedding_patterns(self, available: list[str]) -> None:
+        """Resolve wildcard patterns in embedding column config against available columns.
+        Updates ``embedding_col`` and ``embedding_cols`` / ``cmd_embedding_cols`` in place.
+        """
+        if has_pattern(self.embedding_col):
+            matched = resolve_include_exclude([self.embedding_col], None, available)
+            if matched:
+                self.embedding_col = matched[0]
+                self.embedding_cols = matched
+                if self.is_cmd:
+                    self.cmd_embedding_cols = list(matched)
+                    self.cmd_feature_weights = [1.0] * len(matched)
 
     @override
     def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
@@ -353,9 +421,7 @@ class DomainGapProcessor(DatametricProcessor):
         Returns:
             Dictionary of aggregated statistics per batch.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-
+        self._resolve_embedding_patterns(list(features.keys()))
         if self.is_cmd:
             return self._compute_batch_metric_cmd(features)
 
@@ -412,9 +478,6 @@ class DomainGapProcessor(DatametricProcessor):
         Returns:
             Dictionary of power sums and counts per batch.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-
         out: dict[str, pa.Array] = {}
         for col in self.cmd_embedding_cols:
             emb = features.get(col)
@@ -447,6 +510,22 @@ class DomainGapProcessor(DatametricProcessor):
         return out
 
     def _resolve_cmd_channels(self, col: str, flattened_dim: int, features: dict[str, pa.Array]) -> int:
+        """Determine number of channels for CMD spatial moment computation.
+
+        Tries to read channel count from metadata column '{col}_channels'.
+        Falls back to legacy ResNet-18 dimension lookup if metadata unavailable.
+
+        Args:
+            col: Embedding column name.
+            flattened_dim: Total flattened dimension of embeddings.
+            features: Dictionary of feature arrays (may contain channels column).
+
+        Returns:
+            Number of channels (C) for reshaping (N, C*H*W) -> (N, C, H*W).
+
+        Raises:
+            ValueError: If channels cannot be determined from metadata or lookup.
+        """
         channels_col = f"{col}_channels"
         channels_arr = features.get(channels_col)
         if channels_arr is not None and len(channels_arr) > 0:
@@ -569,9 +648,6 @@ class DomainGapProcessor(DatametricProcessor):
         Returns:
             Dictionary containing the calculated metric value.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-
         metric = self.delta_metric
 
         if self.is_cmd:
@@ -643,6 +719,10 @@ class DomainGapProcessor(DatametricProcessor):
         var_tgt = np.maximum(_sum_fixed(target["sum_sq"])[0] / n_tgt - mean_tgt * mean_tgt, 1e-9)
 
         if metric == "klmvn_diag":
+            if self.klmvn_var_eps > 0:
+                mean_var = 0.5 * (var_src.mean() + var_tgt.mean())
+                var_src = var_src + self.klmvn_var_eps * mean_var
+                var_tgt = var_tgt + self.klmvn_var_eps * mean_var
             term_var = np.sum(var_src / var_tgt - 1.0 - np.log(var_src / var_tgt))
             term_mean = np.sum((mean_tgt - mean_src) ** 2 / var_tgt)
             val = 0.5 * (term_var + term_mean)
@@ -651,12 +731,16 @@ class DomainGapProcessor(DatametricProcessor):
         if metric == "fid":
             from scipy.linalg import sqrtm
 
+            eps = self.epsilon
+
             sum_outer_src = _sum_fixed(source["sum_outer"])[0]
             sum_outer_tgt = _sum_fixed(target["sum_outer"])[0]
             embed_dim = int(np.sqrt(sum_outer_src.size))
             cov_src = (sum_outer_src.reshape(embed_dim, embed_dim) / n_src) - np.outer(mean_src, mean_src)
             cov_tgt = (sum_outer_tgt.reshape(embed_dim, embed_dim) / n_tgt) - np.outer(mean_tgt, mean_tgt)
 
+            cov_src += eps * np.eye(embed_dim)
+            cov_tgt += eps * np.eye(embed_dim)
             covmean = sqrtm(cov_src.dot(cov_tgt))
             if np.iscomplexobj(covmean):
                 covmean = covmean.real
@@ -900,7 +984,7 @@ class DomainGapProcessor(DatametricProcessor):
         col: str,
         source: dict[str, pa.Array],
         target: dict[str, pa.Array],
-        debug_data: dict[str, np.ndarray] | None,
+        debug_data: dict[str, np.ndarray] | None = None,
     ) -> tuple[float, dict[str, np.ndarray]] | None:
         """Compute CMD loss for a single embedding layer.
 

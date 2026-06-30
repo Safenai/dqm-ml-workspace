@@ -12,6 +12,8 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from dqm_ml_core.models.global_ import StorageConfig
+from dqm_ml_core.models.outputs import ParquetOutputConfig
 from dqm_ml_job.utils.s3 import get_s3_filesystem
 
 logger = logging.getLogger(__name__)
@@ -37,32 +39,37 @@ class ParquetOutputWriter:
         Raises:
             ValueError: If required config keys are missing.
         """
-        if not config or "path_pattern" not in config:
-            raise ValueError(f"Configuration for ParquetOutputWriter '{name}' must contain 'path_pattern'")
-        if "columns" not in config:
-            raise ValueError(f"Configuration for ParquetOutputWriter '{name}' must contain 'columns'")
+        cfg = ParquetOutputConfig.model_validate(config or {})
 
-        self.path_pattern = config["path_pattern"]
-        self.columns = list(config["columns"])
+        self.path_pattern = cfg.path_pattern
+        self.columns = list(cfg.columns)
+        self.exclude = list(cfg.exclude or [])
         self.name = name
         self.s3_filesystem = None
 
-        self.add_dataloader_column = config.get("add_dataloader_column", False)
-        self.dataloader_column_name = config.get("dataloader_column_name", "dataloader")
+        self.add_dataloader_column = cfg.add_dataloader_column
+        self.dataloader_column_name = cfg.dataloader_column_name
 
         self._accumulate = "{}" not in self.path_pattern
         self._accumulated_features: dict[str, list[pa.Array]] = {}
-        storage_cfg = config.get("storage")
+        storage_cfg = cfg.storage
         if storage_cfg:
-            if storage_cfg is True:
-                self.s3_filesystem = get_s3_filesystem()
-            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
-                self.s3_filesystem = get_s3_filesystem(
-                    access_key=storage_cfg.get("access_key"),
-                    secret_key=storage_cfg.get("secret_key"),
-                    endpoint=storage_cfg.get("endpoint_override"),
-                    region=storage_cfg.get("region"),
-                )
+            storage_config = StorageConfig.model_validate(storage_cfg)
+            if storage_config.type == "s3":
+                self.s3_filesystem = get_s3_filesystem(storage_config)
+
+    @staticmethod
+    def _collect_metric(metric_name: str, metrics_dict: dict[str, dict[str, Any]], keys: list[str]) -> pa.Array | None:
+        values = []
+        for key in keys:
+            val = metrics_dict[key][metric_name]
+            if isinstance(val, pa.FixedSizeListArray):
+                return None
+            if isinstance(val, pa.Array):
+                values.extend(val.to_pylist())
+            else:
+                values.append(val)
+        return pa.array(values)
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """Aggregate and write dataset-level metrics for all selections.
@@ -71,24 +78,19 @@ class ParquetOutputWriter:
             metrics_dict: Map of selection names to their computed
                 metric dictionaries.
         """
-        if len(metrics_dict) > 0:
-            logger.debug(f"Writing metrics for the {len(metrics_dict)} data selections")
-
-            # We get all the selections computed
-            keys = list(metrics_dict.keys())
-            metric_names = list(metrics_dict[keys[0]].keys())
-            metrics_table = {"selection": pa.array(keys)}
-
-            for metric_name in metric_names:
-                values = []
-                for key in keys:
-                    val = metrics_dict[key][metric_name]
-                    if isinstance(val, pa.Array):
-                        values.extend(val.to_pylist())
-                    else:
-                        values.append(val)
-                metrics_table[metric_name] = pa.array(values)
-            self.write_table("", metrics_table)
+        if len(metrics_dict) <= 0:
+            return
+        logger.debug(f"Writing metrics for the {len(metrics_dict)} data selections")
+        keys = list(metrics_dict.keys())
+        metric_names = list(metrics_dict[keys[0]].keys())
+        metrics_table = {"selection": pa.array(keys)}
+        for metric_name in metric_names:
+            if metric_name.startswith("__") and metric_name.endswith("__"):
+                continue
+            col = self._collect_metric(metric_name, metrics_dict, keys)
+            if col is not None:
+                metrics_table[metric_name] = col
+        self.write_table("", metrics_table)
 
     def write_table(
         self,
@@ -133,7 +135,7 @@ class ParquetOutputWriter:
                 logger.info(f"Creating output directory: {output_dir}")
                 Path.mkdir(output_dir, parents=True, exist_ok=True)
 
-            pq.write_table(table, filename)
+            pq.write_table(table, filename)  # type: ignore[no-untyped-call]
             logger.info(f"Wrote output table to {filename}")
 
     def flush(self) -> None:
@@ -152,14 +154,14 @@ class ParquetOutputWriter:
 
         if self.s3_filesystem is not None:
             s3_path = self._get_s3_path(filename)
-            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)  # type: ignore[no-untyped-call]
             logger.info(f"Wrote accumulated output table to S3: {s3_path}")
         else:
             output_dir = Path(filename).parent
             if not Path.exists(output_dir):
                 logger.info(f"Creating output directory: {output_dir}")
                 Path.mkdir(output_dir, parents=True, exist_ok=True)
-            pq.write_table(table, filename)
+            pq.write_table(table, filename)  # type: ignore[no-untyped-call]
             logger.info(f"Wrote accumulated output table to {filename}")
 
         self._accumulated_features.clear()
@@ -185,7 +187,7 @@ class ParquetOutputWriter:
         """
         s3_path = self._get_s3_path(filename)
         try:
-            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
+            pq.write_table(table, s3_path, filesystem=self.s3_filesystem)  # type: ignore[no-untyped-call]
             logger.info(f"Wrote output table to S3: {s3_path}")
         except Exception:
             logger.exception("Failed to write to S3")

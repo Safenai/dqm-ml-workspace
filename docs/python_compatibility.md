@@ -42,6 +42,7 @@ uv run nox -s compatibility-3.13
 ## CI Configuration
 
 The GitHub Actions CI pipeline tests on:
+
 - 3.10
 - 3.11
 - 3.12
@@ -52,11 +53,12 @@ See `.github/workflows/ci.yml` for details.
 ## Package Dependencies
 
 Core packages require:
+
 - `typing_extensions` - For `override` decorator compatibility
 - `pyarrow` - For DataFrame operations, version requirements vary by Python version
 
 ## Related Pages
 
 - [YAML Basics](yaml_basics.md)
-- [Configuration](configuration.md)
+- [Configuration](configuration/overview.md)
 - [CLI Reference](cli.md)

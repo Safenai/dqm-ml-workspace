@@ -1,6 +1,8 @@
 # Contributing to DQM-ML
 
-We welcome contributions! Whether you're fixing a bug, adding a new metric, or improving documentation, your help makes DQM-ML better for everyone.
+We welcome contributions! Whether you're fixing a bug, adding a new **Metric**, or improving documentation, your help makes DQM-ML better for everyone.
+
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Metric**, **Batch Metric**, **Processor**, and related terminology used throughout this page.
 
 This guide walks you through setting up your development environment and adding new features.
 
@@ -48,9 +50,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install git-lfs for large test files
 sudo apt-get install git-lfs
 git lfs pull
-
-# Initialize submodules (for legacy dqm-ml comparison)
-git submodule update --init --recursive
 ```
 
 ### 2. Initialize Workspace
@@ -264,10 +263,10 @@ tests/
 │   ├── core/               # Core API tests (data_processor, metric_runner)
 │   ├── pipeline/           # Pipeline tests (loaders, writers)
 │   └── v2/                 # CLI wrapper tests
-├── integration/             # Integration tests (real data, slow)
+├── integration/             # Integration tests (synthetic data)
 │   ├── fixtures/           # Test fixtures and data
 │   │   ├── config.py      # Configuration fixtures
-│   │   ├── data.py        # Data fixtures (synthetic + real)
+│   │   ├── data.py        # Data fixtures
 │   │   ├── jobs.py        # Job configuration fixtures
 │   │   └── paths.py       # Path fixtures
 │   ├── test_completeness.py
@@ -310,7 +309,7 @@ def test_completeness_with_data(
     """Test completeness metric with uniform distribution."""
     processor = CompletenessProcessor(
         name="test",
-        config={"input_columns": ["feature"]}
+        config={"columns": {"input": ["feature"]}}
     )
     result = processor.compute({})
     assert result is not None

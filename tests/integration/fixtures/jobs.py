@@ -47,6 +47,14 @@ def job_representativeness(
             "parquet": "not_uniform_distribution.parquet",
         },
         {"test_name": "batch", "parquet": "normal_distribution.parquet"},
+        {
+            "test_name": "normal_distribution_custom_interpretations",
+            "parquet": "normal_distribution.parquet",
+        },
+        {
+            "test_name": "normal_distribution_shannon_threshold",
+            "parquet": "normal_distribution.parquet",
+        },
     ]
 
     generate_job(
@@ -59,20 +67,23 @@ def job_representativeness(
 
 
 @pytest.fixture(scope="session")
-def job_completeness(test_path: str) -> None:
+def job_completeness(test_path: str, completeness_data: Any) -> None:
     """Generate test job configurations for completeness tests.
 
     Args:
         test_path: Path to the tests directory.
+        completeness_data: Fixture that generates completeness.parquet.
     """
     test_list = [
         {"test_name": "completeness", "parquet": "completeness.parquet"},
         {"test_name": "completeness_batch", "parquet": "completeness.parquet"},
+        {"test_name": "completeness_no_per_column", "parquet": "completeness.parquet"},
+        {"test_name": "completeness_no_overall", "parquet": "completeness.parquet"},
     ]
 
     generate_job(
         processor_name="completeness",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
         test_list=test_list,
         output_category="metrics",
         test_path=test_path,
@@ -80,11 +91,12 @@ def job_completeness(test_path: str) -> None:
 
 
 @pytest.fixture(scope="session")
-def job_domain_gap(test_path: str) -> None:
+def job_domain_gap(test_path: str, domain_gap_bytes_data: Any) -> None:
     """Generate test job configurations for domain gap tests.
 
     Args:
         test_path: Path to the tests directory.
+        domain_gap_bytes_data: Fixture that generates bytes parquets.
     """
     gen_path = Path(test_path) / _OUTPUT_DATA_DIR
     metrics = ["fid", "klmvn_diag", "mmd_linear", "wasserstein_1d", "mmd_rbf", "mmd_poly", "pad", "cmd"]
@@ -100,9 +112,28 @@ def job_domain_gap(test_path: str) -> None:
             parquet_source_path=Path(gen_path) / "source_1000.parquet",
         )
 
+    # Variant configs for testing summary and distance parameters
+    variants = [
+        "fid_no_sum_outer",
+        "mmd_rbf_no_store",
+        "pad_mae",
+        "mmd_rbf_gamma2",
+        "wasserstein_custom_hist",
+    ]
+    for variant in variants:
+        generate_job(
+            processor_name="domain_gap",
+            parquets_path=gen_path,
+            test_list=[{"test_name": "", "parquet": "target_1000.parquet"}],
+            output_category="delta_metrics",
+            test_path=test_path,
+            metric_name=variant,
+            parquet_source_path=Path(gen_path) / "source_1000.parquet",
+        )
+
     generate_job(
         processor_name="domain_gap",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
         test_list=[
             {
                 "test_name": "wasserstein_bytes",
@@ -112,7 +143,7 @@ def job_domain_gap(test_path: str) -> None:
         output_category="delta_metrics",
         test_path=test_path,
         metric_name="wasserstein_1d",
-        parquet_source_path=Path(test_path) / "data/source_bytes.parquet",
+        parquet_source_path=Path(test_path) / f"{_OUTPUT_DATA_DIR}/source_bytes.parquet",
     )
 
 
@@ -127,6 +158,7 @@ def job_diversity(test_path: str, diversity_data: Any) -> None:
     test_list = [
         {"test_name": "diversity", "parquet": "diversity.parquet"},
         {"test_name": "diversity_batch", "parquet": "diversity.parquet"},
+        {"test_name": "diversity_single_metric", "parquet": "diversity.parquet"},
     ]
 
     generate_job(
@@ -139,11 +171,61 @@ def job_diversity(test_path: str, diversity_data: Any) -> None:
 
 
 @pytest.fixture(scope="session")
-def job_visual_features(test_path: str) -> None:
+def job_features_embeddings(test_path: str, visual_features_data: Any) -> None:
+    """Generate test job configurations for features_embeddings tests.
+
+    Args:
+        test_path: Path to the tests directory.
+        visual_features_data: Fixture that generates visual features parquets.
+    """
+    test_list = [
+        {"test_name": "features_embeddings", "parquet": "visual_features.parquet"},
+        {
+            "test_name": "features_embeddings_batch",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_multi_layer",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_n_layer_0",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_custom_norm",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_prefix",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_suffix",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "features_embeddings_infer_batch_size",
+            "parquet": "visual_features.parquet",
+        },
+    ]
+
+    generate_job(
+        processor_name="features_embeddings",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
+        test_list=test_list,
+        output_category="features",
+        test_path=test_path,
+    )
+
+
+@pytest.fixture(scope="session")
+def job_visual_features(test_path: str, visual_features_data: Any) -> None:
     """Generate test job configurations for visual features tests.
 
     Args:
         test_path: Path to the tests directory.
+        visual_features_data: Fixture that generates visual features parquets.
     """
     test_list = [
         {"test_name": "visual_features", "parquet": "visual_features.parquet"},
@@ -155,11 +237,19 @@ def job_visual_features(test_path: str) -> None:
             "test_name": "visual_features_path",
             "parquet": "visual_features_path.parquet",
         },
+        {
+            "test_name": "visual_features_prefix",
+            "parquet": "visual_features.parquet",
+        },
+        {
+            "test_name": "visual_features_grayscale_false",
+            "parquet": "visual_features.parquet",
+        },
     ]
 
     generate_job(
         processor_name="visual_features",
-        parquets_path=Path(test_path) / "data",
+        parquets_path=Path(test_path) / _OUTPUT_DATA_DIR,
         test_list=test_list,
         output_category="features",
         test_path=test_path,

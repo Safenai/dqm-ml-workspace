@@ -4,6 +4,7 @@ This module contains tests that verify the domain gap metric processor
 correctly computes statistical distances between source and target datasets.
 """
 
+import math
 from pathlib import Path
 import shlex
 from timeit import default_timer as timer
@@ -11,12 +12,33 @@ from typing import Any
 
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.jobs import _parse_domain_gap_test_name
 import yaml
 
 from dqm_ml_job.cli import execute
 
+_DOMAIN_GAP_FEATURES = {
+    "name": "image_embedding",
+    "type": "features_embeddings",
+    "columns": {"input": ["image_path"]},
+    "model": {"arch": "resnet18", "n_layer_feature": -2, "device": "cpu"},
+    "infer": {
+        "batch_size": 10,
+        "width": 64,
+        "height": 64,
+        "norm_mean": [0.485, 0.456, 0.406],
+        "norm_std": [0.229, 0.224, 0.225],
+    },
+}
 
-@pytest.mark.slow
+_DOMAIN_GAP_PROC = {
+    "name": "domain_gap",
+    "type": "domain_gap",
+    "columns": {"input": ["image_path_embedding"]},
+    "distance": {"metric": "mmd_linear"},
+}
+
+
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "test_name",
@@ -30,6 +52,12 @@ from dqm_ml_job.cli import execute
         "mmd_poly",
         "pad",
         "cmd",
+        # Parameter coverage variants
+        "fid_no_sum_outer",
+        "mmd_rbf_no_store",
+        "pad_mae",
+        "mmd_rbf_gamma2",
+        "wasserstein_custom_hist",
     ],
 )
 def test_domain_gap(
@@ -64,21 +92,30 @@ def test_domain_gap(
     table = pq.read_table(Path(output_path) / output_filename)
     df = table.to_pandas()
 
-    metric_key = test_name
-    if test_name == "wasserstein_bytes":
-        metric_key = "wasserstein_1d"
+    base_metric, _ = _parse_domain_gap_test_name(test_name)
+    metric_key = "wasserstein_1d" if test_name == "wasserstein_bytes" else base_metric
 
-    computed_score = df[metric_key].tolist()[0]
     expected_score = expected_scores["value"]
 
-    print(f"computed_score = {computed_score}")
-    assert computed_score == pytest.approx(expected_score, abs=epsilon), (
-        f"For {metric_key}, the distance between computed value : {computed_score}",
-        f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
-    )
+    # NaN-safe assertion: negative tests expect the metric column to be absent or NaN
+    if expected_score is None:
+        assert metric_key not in df.columns or df[metric_key].isna().all(), (
+            f"Expected NaN for '{metric_key}', got a value"
+        )
+        print(f"{metric_key} = NaN (expected)")
+    else:
+        assert metric_key in df.columns, (
+            f"Column '{metric_key}' not found in output. Available columns: {list(df.columns)}"
+        )
+        computed_score = df[metric_key].tolist()[0]
+        assert not math.isnan(computed_score), f"Expected {expected_score} for '{metric_key}', got NaN"
+        print(f"computed_score = {computed_score}")
+        assert computed_score == pytest.approx(expected_score, abs=epsilon), (
+            f"For {metric_key}, the distance between computed value : {computed_score}",
+            f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
+        )
 
 
-@pytest.mark.slow
 @pytest.mark.timeout(600)
 def test_domain_gap_multi_metrics(
     test_path: str,
@@ -101,30 +138,30 @@ def test_domain_gap_multi_metrics(
     output_file = "metrics_domain_gap_multi_fid_wasserstein.parquet"
 
     config = {
-        "config": {
-            "dataloaders": {
-                "source_dataset": {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "source_dataset",
                     "type": "parquet",
                     "path": str(output_path / "source_1000.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
+                    "sample_path": [{"column": "image_path"}],
                 },
-                "target_dataset": {
+                {
+                    "name": "target_dataset",
                     "type": "parquet",
                     "path": str(output_path / "target_1000.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
+                    "sample_path": [{"column": "image_path"}],
                 },
-            },
-            "metrics_processor": {
-                "image_embedding": {
-                    "type": "image_embedding",
-                    "data": {
-                        "image_column": "image_path",
-                        "mode": "path",
-                    },
+            ],
+        },
+        "features": {
+            "processors": [
+                {
+                    "name": "image_embedding",
+                    "type": "features_embeddings",
+                    "columns": {"input": ["image_path"]},
                     "model": {
                         "arch": "resnet18",
                         "n_layer_feature": -2,
@@ -132,32 +169,33 @@ def test_domain_gap_multi_metrics(
                     },
                     "infer": {
                         "batch_size": 8,
-                        "height": 299,
-                        "width": 299,
+                        "height": 64,
+                        "width": 64,
                         "norm_mean": [0.485, 0.456, 0.406],
                         "norm_std": [0.229, 0.224, 0.225],
                     },
                 },
-                "domain_gap_fid": {
-                    "type": "domain_gap",
-                    "input": {"embedding_col": "embedding"},
-                    "delta": {"metric": "fid"},
-                },
-                "domain_gap_wasserstein": {
-                    "type": "domain_gap",
-                    "input": {"embedding_col": "embedding"},
-                    "delta": {"metric": "wasserstein_1d"},
-                },
-            },
-            "compute_delta": True,
+            ],
+        },
+        "gap": {
             "outputs": {
-                "delta_metrics": {
-                    "type": "parquet",
-                    "path_pattern": str(output_path / output_file),
-                    "columns": [],
-                },
+                "path": str(output_path / output_file),
             },
-        }
+            "processors": [
+                {
+                    "name": "domain_gap_fid",
+                    "type": "domain_gap",
+                    "columns": {"input": ["image_path_embedding"]},
+                    "distance": {"metric": "fid"},
+                },
+                {
+                    "name": "domain_gap_wasserstein",
+                    "type": "domain_gap",
+                    "columns": {"input": ["image_path_embedding"]},
+                    "distance": {"metric": "wasserstein_1d"},
+                },
+            ],
+        },
     }
 
     # Write config to generated configs directory
@@ -206,3 +244,147 @@ def test_domain_gap_multi_metrics(
     assert computed_wasserstein == pytest.approx(wasserstein_expected, abs=wasserstein_eps), (
         f"Wasserstein distance {computed_wasserstein} != expected {wasserstein_expected} (tolerance {wasserstein_eps})"
     )
+
+
+@pytest.mark.parametrize("loader_type", ["parquet", "csv"])
+def test_split_by_2classes_computation(
+    test_path: str, coco_data: list[Path], coco_csv: list[Path], loader_type: str
+) -> None:
+    """Test split_by with 2 classes actually computes domain gap."""
+    suffix = "parquet" if loader_type == "parquet" else "csv"
+    paths = coco_csv if loader_type == "csv" else coco_data
+
+    config = {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "coco_classes",
+                    "type": loader_type,
+                    "path": str(paths[0]),
+                    "batch_size": 50,
+                    "sample_path": [{"column": "image_path"}],
+                    "split": {"by": "class", "values": ["bird", "elephant"]},
+                },
+            ],
+        },
+        "features": {"processors": [_DOMAIN_GAP_FEATURES]},
+        "gap": {
+            "outputs": {"path": f"tests/outputs/data/metrics_domain_gap_split_2classes_{suffix}_delta-.parquet"},
+            "processors": [_DOMAIN_GAP_PROC],
+        },
+    }
+
+    config_dir = Path(test_path) / "integration" / "fixtures" / "config" / "generated"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / f"domain_gap_split_2classes_{suffix}.yaml"
+    with config_path.open("w") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+    execute(shlex.split(f"-p {config_path}"))
+
+    table = pq.read_table(f"tests/outputs/data/metrics_domain_gap_split_2classes_{suffix}_delta-.parquet")
+    df = table.to_pandas()
+    assert len(df) == 1, "Should have 1 domain gap result"
+    assert df["selection_source"].iloc[0] == "coco_classes_bird"
+    assert df["selection_target"].iloc[0] == "coco_classes_elephant"
+    print(f"Domain gap (bird vs elephant, {loader_type}): {df['mmd_linear'].iloc[0]:.2f}")
+
+
+@pytest.mark.parametrize("loader_type", ["parquet", "csv"])
+def test_filter_1class_2loaders_computation(
+    test_path: str, coco_data: list[Path], coco_csv: list[Path], loader_type: str
+) -> None:
+    """Test filter 1 class on 2 loaders actually computes domain gap."""
+    suffix = "parquet" if loader_type == "parquet" else "csv"
+    paths = coco_csv if loader_type == "csv" else coco_data
+
+    config = {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "source_zebra",
+                    "type": loader_type,
+                    "path": str(paths[0]),
+                    "batch_size": 50,
+                    "sample_path": [{"column": "image_path"}],
+                    "filters": [{"column": "class", "values": ["zebra"]}],
+                },
+                {
+                    "name": "target_zebra",
+                    "type": loader_type,
+                    "path": str(paths[1]),
+                    "batch_size": 50,
+                    "sample_path": [{"column": "image_path"}],
+                    "filters": [{"column": "class", "values": ["zebra"]}],
+                },
+            ],
+        },
+        "features": {"processors": [_DOMAIN_GAP_FEATURES]},
+        "gap": {
+            "outputs": {
+                "path": f"tests/outputs/data/metrics_domain_gap_filter_1class_2loaders_{suffix}_delta-.parquet"
+            },
+            "processors": [_DOMAIN_GAP_PROC],
+        },
+    }
+
+    config_dir = Path(test_path) / "integration" / "fixtures" / "config" / "generated"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / f"domain_gap_filter_1class_2loaders_{suffix}.yaml"
+    with config_path.open("w") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+    execute(shlex.split(f"-p {config_path}"))
+
+    table = pq.read_table(f"tests/outputs/data/metrics_domain_gap_filter_1class_2loaders_{suffix}_delta-.parquet")
+    df = table.to_pandas()
+    assert len(df) == 1, "Should have 1 domain gap result"
+    assert df["selection_source"].iloc[0] == "source_zebra"
+    assert df["selection_target"].iloc[0] == "target_zebra"
+    print(f"Domain gap (zebra source vs zebra target, {loader_type}): {df['mmd_linear'].iloc[0]:.2f}")
+
+
+@pytest.mark.parametrize("loader_type", ["parquet", "csv"])
+def test_split_by_filter_computation(
+    test_path: str, coco_data: list[Path], coco_csv: list[Path], loader_type: str
+) -> None:
+    """Test split_by class + filter on domain column computes domain gap."""
+    suffix = "parquet" if loader_type == "parquet" else "csv"
+    paths = coco_csv if loader_type == "csv" else coco_data
+
+    config = {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "indoor_bird_elephant",
+                    "type": loader_type,
+                    "path": str(paths[0]),
+                    "batch_size": 50,
+                    "sample_path": [{"column": "image_path"}],
+                    "split": {"by": "class", "values": ["bird", "elephant"]},
+                    "filters": [{"column": "domain", "values": ["indoor"]}],
+                },
+            ],
+        },
+        "features": {"processors": [_DOMAIN_GAP_FEATURES]},
+        "gap": {
+            "outputs": {"path": f"tests/outputs/data/metrics_domain_gap_split_by_filter_{suffix}_delta-.parquet"},
+            "processors": [_DOMAIN_GAP_PROC],
+        },
+    }
+
+    config_dir = Path(test_path) / "integration" / "fixtures" / "config" / "generated"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / f"domain_gap_split_by_filter_{suffix}.yaml"
+    with config_path.open("w") as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+    execute(shlex.split(f"-p {config_path}"))
+
+    table = pq.read_table(f"tests/outputs/data/metrics_domain_gap_split_by_filter_{suffix}_delta-.parquet")
+    df = table.to_pandas()
+    assert len(df) == 1, "Should have 1 domain gap result (bird vs elephant from same loader split by class)"
+    assert df["selection_source"].iloc[0] == "indoor_bird_elephant_bird"
+    assert df["selection_target"].iloc[0] == "indoor_bird_elephant_elephant"
+    assert "mmd_linear" in df.columns, "mmd_linear column missing"
+    print(f"Domain gap (indoor bird vs indoor elephant, {loader_type}): {df['mmd_linear'].iloc[0]:.2f}")

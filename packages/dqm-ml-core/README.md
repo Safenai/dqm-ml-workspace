@@ -8,7 +8,7 @@ Core package for DQM-ML V2 providing the foundational API and standard metrics f
 pip install dqm-ml-core
 ```
 
-> **Note:** `dqm-ml-core` provides metric processors only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-core` provides **Metric** **Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Quick Start
 
@@ -19,7 +19,7 @@ from dqm_ml_core import CompletenessProcessor
 
 processor = CompletenessProcessor(
     name="my_check",
-    config={"input_columns": ["col_a", "col_b"]}
+    config={"columns": {"input": ["col_a", "col_b"]}, "include_per_column": true, "include_overall": true}
 )
 result = processor.compute({})
 print(f"Completeness: {result['overall_completeness']}")
@@ -37,10 +37,9 @@ data = np.random.randn(1000)
 processor = RepresentativenessProcessor(
     name="dist_check",
     config={
-        "input_columns": ["feature"],
+        "columns": {"input": ["feature"]},
         "distribution": "normal",
-        "metrics": ["chi-square", "kolmogorov-smirnov"],
-        "distribution_params": {"mean": 0.0, "std": 1.0}
+        "metrics": ["chi-square", "kolmogorov-smirnov"]
     }
 )
 
@@ -60,30 +59,33 @@ pip install dqm-ml-job dqm-ml-core
 Then use this config:
 
 ```yaml
-dataloaders:
-  train:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [col_a, col_b]
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [feature_x]
+      distribution: "normal"
 
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [col_a, col_b]
-  
-  representativeness:
-    type: representativeness
-    input_columns: [feature_x]
-    distribution: "normal"
+dataloaders:
+  loaders:
+    - name: train
+      type: parquet
+      path: data/train.parquet
 ```
 
-## Key Concepts
+## Core Concepts
 
 ### DatametricProcessor
 
-The base class for all metrics and feature extractors. It supports a streaming architecture by splitting computation into two phases:
+The base class for all **Metrics** and **Feature** extractors. It supports a streaming architecture by splitting computation into two phases:
 
-1. **Batch Level**: `compute_batch_metric()` updates intermediate statistics for a single chunk of data.
-2. **Dataset Level**: `compute()` aggregates these statistics into final scores.
+1. **Batch Level**: `compute_batch_metric()` updates intermediate **Batch Metric** statistics for a single chunk of data.
+2. **Dataset Level**: `compute()` aggregates these statistics into final **Metric** scores.
 
 ## Included Metrics
 
@@ -91,6 +93,7 @@ The base class for all metrics and feature extractors. It supports a streaming a
 |--------|-------------|
 | **Completeness** | Analyzes null/missing values in your dataset |
 | **Representativeness** | Statistical distribution analysis (Chi-Square, KS, Shannon Entropy, GRTE) |
+| **Diversity** | Measures category distribution spread (Simpson, Gini-Simpson, Shannon, Richness) |
 
 ## For Developers
 
@@ -117,5 +120,6 @@ pip install dqm-ml-job dqm-ml-core dqm-ml-images dqm-ml-pytorch
 
 ## See Also
 
+- [Formal and Core Concepts](https://safenai.github.io/dqm-ml-workspace/docs/formal_concepts.md) for definitions of **Sample**, **Metric**, **Data Selection**, **Batch**, and related terminology.
 - [Metrics Documentation](https://safenai.github.io/dqm-ml-workspace/docs/metrics/)
 - [API Reference](https://safenai.github.io/dqm-ml-workspace/reference/)

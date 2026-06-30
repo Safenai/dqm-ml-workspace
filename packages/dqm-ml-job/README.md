@@ -8,7 +8,7 @@ Orchestration engine for DQM-ML V2. Handles data loading, processing, and output
 pip install dqm-ml-job
 ```
 
-> **Note:** `dqm-ml-job` handles data loading and orchestration. To compute metrics, you also need at least one of: `dqm-ml-core`, `dqm-ml-images`, or `dqm-ml-pytorch` (see Dependencies below).
+> **Note:** `dqm-ml-job` handles data loading and orchestration. To compute **Metrics**, you also need at least one of: `dqm-ml-core`, `dqm-ml-images`, or `dqm-ml-pytorch` (see Dependencies below).
 
 ## Quick Start
 
@@ -30,15 +30,18 @@ python -m dqm_ml_job.cli -p config.yaml
 Example `config.yaml`:
 
 ```yaml
-dataloaders:
-  my_data:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [col_a, col_b]
 
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [col_a, col_b]
+dataloaders:
+  loaders:
+    - name: my_data
+      type: parquet
+      path: data/train.parquet
 ```
 
 ## Dependencies
@@ -74,9 +77,9 @@ The main orchestrator that:
 
 | Protocol | Description |
 |----------|-------------|
-| **DataLoader** | Factory for creating data selections (e.g., Parquet, CSV loaders) |
-| **DataSelection** | Represents a specific subset of data and provides an iterator over batches |
-| **OutputWriter** | Persists computed features or metrics to disk |
+| **DataLoader** | Factory for creating **Data Selections** (e.g., Parquet, CSV loaders) |
+| **DataSelection** | Represents a specific **Data Selection** and provides an iterator over **Batches** |
+| **OutputWriter** | Persists computed **Features** or **Metrics** to disk |
 
 ## Built-in Loaders
 
@@ -87,5 +90,6 @@ The main orchestrator that:
 
 ## See Also
 
+- [Formal and Core Concepts](https://safenai.github.io/dqm-ml-workspace/docs/formal_concepts.md) for definitions of **Data Selection**, **Processor**, **Batch**, and related terminology.
 - [Configuration Guide](https://safenai.github.io/dqm-ml-workspace/docs/configuration/)
 - [Architecture Documentation](https://safenai.github.io/dqm-ml-workspace/docs/dqm-ml-v2/)

@@ -1,6 +1,8 @@
 # Metrics Guide
 
-DQM-ML provides several types of metrics to assess different aspects of data quality. This guide helps you choose the right metric for your needs.
+DQM-ML provides several types of **Metrics** to assess different aspects of data quality. This guide helps you choose the right metric for your needs.
+
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Metric**, **Domain Gap**, **Batch Metric**, and related terminology used throughout this page.
 
 ## Quick Decision Guide
 
@@ -50,13 +52,14 @@ For analyzing image datasets:
 
 For comparing datasets using deep learning embeddings:
 
-- **[Domain Gap](metrics/domain_gap.md)** - Measures statistical distance between two datasets (useful for detecting data drift)
+- **[Domain Gap](metrics/domain_gap.md)** - Measures statistical distance between two datasets (useful for comparing dataset distributions)
 
 ## How Metrics are Configured
 
-Each metric is configured in the `metrics_processor` section of your YAML config. See the [Configuration Guide](configuration.md) for details.
+Each metric is configured in the `metrics:` interface of your YAML config. See the [Configuration Guide](configuration/overview.md) for details.
 
 Each metric page has:
+
 - Configuration parameters
 - Example YAML config
 - Output format

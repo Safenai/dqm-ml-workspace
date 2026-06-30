@@ -8,7 +8,7 @@ PyTorch-based metrics for DQM-ML V2. Provides advanced domain gap analysis for c
 pip install dqm-ml-pytorch
 ```
 
-> **Note:** `dqm-ml-pytorch` provides metric processors only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-pytorch` provides **Domain Gap** **Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Usage
 
@@ -26,8 +26,8 @@ target_embeddings = np.random.randn(100, 2048).astype(np.float32)
 processor = DomainGapProcessor(
     name="domain_drift",
     config={
-        "INPUT": {"embedding_col": "embedding"},
-        "DELTA": {"metric": "mmd_linear"}
+        "columns": {"input": ["embedding"]},
+        "distance": {"metric": "mmd_linear"}
     }
 )
 
@@ -51,31 +51,41 @@ pip install dqm-ml-job dqm-ml-pytorch
 Then use this config:
 
 ```yaml
-metrics_processor:
-  domain_drift:
-    type: domain_gap
-    INPUT:
-      embedding_col: "features"
-    DELTA:
-      metric: "mmd_linear"
+gap:
+  processors:
+    - name: domain_drift
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "mmd_linear"
 ```
 
-## Features
+## Gap Metrics
 
 | Metric | Full Name | Best For |
 |--------|-----------|----------|
 | **FID** | Fréchet Inception Distance | Image embeddings |
-| **MMD** | Maximum Mean Discrepancy | General kernel-based comparison |
+| **MMD-Linear** | Maximum Mean Discrepancy (linear kernel) | General-purpose comparison |
+| **MMD-RBF** | MMD with RBF kernel | Detecting non-linear distribution shifts |
+| **MMD-Poly** | MMD with polynomial kernel | Structured / higher-order differences |
 | **Wasserstein** | 1D Earth Mover's Distance | 1D distributions |
 | **KLMVN** | KL-Divergence (Multivariate Normal) | Gaussian distributions |
+| **PAD** | Proxy A-Distance | Classifier-based divergence |
+| **CMD** | Central Moment Discrepancy | Multi-layer feature comparison |
 
 ## Output
 
 Returns statistical distance values:
-- `domain_gap_fid`
-- `domain_gap_mmd_linear`
-- `domain_gap_wasserstein_1d`
-- `domain_gap_klmvn_diag`
+
+- `fid`
+- `mmd_linear`
+- `mmd_rbf`
+- `mmd_poly`
+- `wasserstein_1d`
+- `klmvn_diag`
+- `pad`
+- `cmd`
 
 ## Requirements
 
@@ -100,5 +110,6 @@ pip install dqm-ml-job dqm-ml-core dqm-ml-pytorch
 
 ## See Also
 
+- [Formal and Core Concepts](https://safenai.github.io/dqm-ml-workspace/docs/formal_concepts.md) for definitions of **Domain Gap**, **Embedding**, **Metric**, and related terminology.
 - [Domain Gap Documentation](https://safenai.github.io/dqm-ml-workspace/docs/metrics/domain_gap/)
 - [Configuration Guide](https://safenai.github.io/dqm-ml-workspace/docs/configuration/)

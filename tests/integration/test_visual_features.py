@@ -15,7 +15,16 @@ import pytest
 from dqm_ml_job.cli import execute
 
 
-@pytest.mark.parametrize("test_name", ["visual_features", "visual_features_batch", "visual_features_path"])
+@pytest.mark.parametrize(
+    "test_name",
+    [
+        "visual_features",
+        "visual_features_batch",
+        "visual_features_path",
+        "visual_features_prefix",
+        "visual_features_grayscale_false",
+    ],
+)
 def test_visual_features(
     tests_config: Any,
     test_path: str,
@@ -39,8 +48,8 @@ def test_visual_features(
     end = timer()
     print(f"Execution time: {end - start}")
 
-    expected_scores = tests_config["visual_features"]["expected_scores"]
-    col_names = tests_config["visual_features"]["params"]["columns_names"]
+    expected_scores = tests_config["visual_features"]["expected_scores"][test_name]
+    col_names = tests_config["visual_features"]["columns_names"][test_name]
     epsilon = tests_config["visual_features"]["params"]["tolerance"]
 
     output_filename = f"metrics_{test_name}_source_dataset-0.parquet"

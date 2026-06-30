@@ -26,7 +26,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           lfs: false
 
       - name: Install uv
@@ -58,7 +57,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           lfs: false
 
       - name: Create Git LFS file list
@@ -102,7 +100,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           lfs: false
 
       - name: Create Git LFS file list
@@ -144,7 +141,7 @@ jobs:
       - name: Test with Nox
         # Step with only quick tests, with condition on pushes and pulol request to dev
         if: github.event.pull_request.base.ref == 'dev' || github.ref == 'refs/heads/dev'
-        run: uv run nox -s test-${{ matrix.python-version }} -- -m "not slow"
+        run: uv run nox -s test-${{ matrix.python-version }}
 
       - name: Test with Nox
         # Step with all tests, with condition on pushes and pulol request to main
@@ -188,7 +185,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           lfs: false
 
       - name: Configure Git User

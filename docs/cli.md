@@ -45,5 +45,5 @@ dqm-ml process --help
 ## Related Pages
 
 - [Quick Start](quickstart.md) - Get started with DQM-ML
-- [Configuration](configuration.md) - Write configuration files
+- [Configuration](configuration/overview.md) - Write configuration files
 - [Metrics](metrics.md) - Available metrics

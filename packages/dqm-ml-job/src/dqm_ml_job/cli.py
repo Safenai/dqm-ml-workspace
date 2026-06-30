@@ -7,15 +7,40 @@ data quality assessment jobs from YAML configuration files.
 import argparse
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+import pyarrow as pa
 import yaml
 
 from dqm_ml_core import PluginLoadedRegistry
+from dqm_ml_core.models.config import JobConfig
+from dqm_ml_core.models.global_ import ComputeConfig, ErrorsConfig
+from dqm_ml_core.models.interfaces import FeaturesInterfaceConfig, GapInterfaceConfig, MetricsInterfaceConfig
 from dqm_ml_job.job import DatasetJob
 from dqm_ml_job.outputwriter import OutputWriter
 
 logger = logging.getLogger(__name__)
+
+
+def _merge_errors(global_errors: ErrorsConfig | None, interface_errors: ErrorsConfig | None) -> ErrorsConfig:
+    """Merge global and interface-specific errors, with interface taking precedence."""
+    if interface_errors is None:
+        return global_errors or ErrorsConfig()
+
+    # Start with global defaults
+    merged = global_errors or ErrorsConfig()
+
+    # Override with interface-specific values (only where interface is not None)
+    if interface_errors.default is not None:
+        merged.default = interface_errors.default
+    if interface_errors.images is not None:
+        merged.images = interface_errors.images
+    if interface_errors.tabular is not None:
+        merged.tabular = interface_errors.tabular
+    if interface_errors.max_failure_rate is not None:
+        merged.max_failure_rate = interface_errors.max_failure_rate
+
+    return merged
 
 
 def parse_args(arg_list: list[str] | None) -> Any:
@@ -85,133 +110,224 @@ def execute(arg_list: list[str] | None = None) -> None:
         with Path(args.save_config).open("w") as stream:
             yaml.safe_dump(config, stream)
 
-    if "config" in config:
-        run(config["config"])
-    elif "pipeline_config" in config:
-        logger.warning("'pipeline_config' is deprecated, please use 'config' instead.")
-        run(config["pipeline_config"])
-    else:
-        logger.error("No 'config' found in configuration.")
+    run(config)
 
 
-def _init_components(config_dict: dict[str, Any], registry: dict[str, Any], component_name: str) -> dict[str, Any]:
-    """
-    Initialize job components (loaders, metrics, writers) from their respective registries.
+def _init_components_from_list(
+    processor_list: list[dict[str, Any]], registry: dict[str, Any], component_name: str
+) -> dict[str, Any]:
+    """Initialize components from a list of processor configs (new format).
+
+    Each item in the list must have a 'name' and 'type' field.
 
     Args:
-        config_dict: Dictionary of component configurations from YAML.
+        processor_list: List of component configuration dicts.
         registry: The registry containing the component classes.
         component_name: The name of the component type (for error messages).
 
     Returns:
-        A dictionary of initialized component instances.
+        A dictionary mapping component names to initialized instances.
     """
     components = {}
-    for key, comp_config in config_dict.items():
+    for comp_config in processor_list:
+        proc_name = comp_config.get("name")
+        if not proc_name:
+            raise ValueError(f"Configuration for {component_name} must contain 'name'")
         if "type" not in comp_config:
-            raise ValueError(f"Configuration for {component_name} '{key}' must contain 'type'")
+            raise ValueError(f"Configuration for {component_name} '{proc_name}' must contain 'type'")
         comp_type = comp_config["type"]
         if comp_type not in registry:
-            raise ValueError(f"{component_name.capitalize()} '{key}' has invalid type '{comp_type}'")
-        components[key] = registry[comp_type](name=key, config=comp_config)
+            raise ValueError(f"{component_name.capitalize()} '{proc_name}' has invalid type '{comp_type}'")
+        components[proc_name] = registry[comp_type](name=proc_name, config=comp_config)
     return components
 
 
-def _validate_config_key(config: dict[str, Any], key: str, label: str) -> None:
-    """Validate that a config key exists and is a dictionary.
+def _init_output_writer(
+    name: str,
+    path: str,
+    columns: list[str] | None,
+    outputs_registry: dict[str, Any],
+    exclude: list[str] | None = None,
+) -> OutputWriter | None:
+    """Initialize a single output writer from interface outputs config.
 
     Args:
-        config: Configuration dictionary.
-        key: Key name to validate.
-        label: Human-readable label for error messages.
-
-    Raises:
-        ValueError: If the key is missing or not a dict.
-    """
-    if key not in config or not isinstance(config[key], dict):
-        raise ValueError(f"'{key}' must be provided as a dictionary")
-    if label == "metrics_processor" and "compute_delta" in config:
-        logger.warning("compute_delta' is deprecated and will be removed in future versions.")
-
-
-def _init_output_writers(
-    outputs_config: dict[str, Any], outputs_registry: dict[str, Any]
-) -> tuple[OutputWriter | None, OutputWriter | None, OutputWriter | None]:
-    """Initialize output writers from configuration.
-
-    Args:
-        outputs_config: Outputs configuration dict.
+        name: Name for the writer instance.
+        path: Output path from the interface outputs config.
+        columns: Optional list of columns to include.
         outputs_registry: Registry of available writer types.
+        exclude: Optional list of columns to exclude.
 
     Returns:
-        Tuple of (metrics_output, features_output, delta_output).
+        An initialized OutputWriter instance, or None if no writer type is available.
     """
-    metrics_output: OutputWriter | None = None
-    features_output: OutputWriter | None = None
-    delta_output: OutputWriter | None = None
+    writer_type = "parquet"
+    if writer_type not in outputs_registry:
+        logger.warning("Output writer type '%s' not found in registry", writer_type)
+        return None
+    writer_config: dict[str, Any] = {"path_pattern": path, "columns": columns or [], "exclude": exclude or []}
+    return cast(OutputWriter, outputs_registry[writer_type](name=name, config=writer_config))
 
-    for key, output_config in outputs_config.items():
-        if output_config["type"] not in outputs_registry:
-            raise ValueError(f"Output '{key}' must have a valid 'type' in {list(outputs_registry.keys())}")
-        writer = outputs_registry[output_config["type"]](name=key, config=output_config)
-        if key == "metrics":
-            metrics_output = writer
-        elif key == "delta_metrics":
-            delta_output = writer
-        elif key == "features":
-            features_output = writer
-        else:
-            raise ValueError(
-                f"Unsupported output key '{key}'. Only 'features', delta_metrics' and 'metrics' are allowed."
-            )
 
-    return metrics_output, features_output, delta_output
+def _init_interface_outputs(
+    interface_config: FeaturesInterfaceConfig | MetricsInterfaceConfig | GapInterfaceConfig | None,
+    outputs_registry: dict[str, Any],
+    kind: str,
+) -> OutputWriter | None:
+    """Initialize the output writer for a given interface.
+
+    Args:
+        interface_config: The validated interface configuration.
+        outputs_registry: Registry of available writer types.
+        kind: The kind of interface ('features', 'metrics', or 'gap').
+
+    Returns:
+        An initialized OutputWriter instance, or None.
+    """
+    if interface_config is None or interface_config.outputs is None:
+        return None
+    path = interface_config.outputs.path
+    columns: list[str] | None = None
+    if hasattr(interface_config.outputs, "include") and interface_config.outputs.include:
+        columns = interface_config.outputs.include
+    exclude: list[str] | None = None
+    if hasattr(interface_config.outputs, "exclude") and interface_config.outputs.exclude:
+        exclude = interface_config.outputs.exclude
+    return _init_output_writer(kind, path, columns, outputs_registry, exclude)
+
+
+def _resolve_compute_config(validated: JobConfig) -> ComputeConfig:
+    """Resolve the compute config, providing defaults if not specified."""
+    if validated.compute:
+        return validated.compute
+    return ComputeConfig(
+        seed=42,
+        log_level="warning",
+        max_memory=None,
+        device="auto",
+        progress_bar=True,
+        threads=4,
+    )
+
+
+def _init_processors_from_interface(interface: Any, registry: dict[str, Any]) -> dict[str, Any]:
+    """Initialize processors from an optional interface config.
+
+    Args:
+        interface: The validated interface config (or None).
+        registry: The component registry.
+
+    Returns:
+        A dict of name-to-processor instances (empty if interface is None).
+    """
+    if interface is None:
+        return {}
+    proc_dicts = [p.model_dump() for p in interface.processors]
+    return _init_components_from_list(proc_dicts, registry, "processor")
+
+
+def _safe_flush(writer: Any) -> None:
+    """Flush a writer if it has a flush method."""
+    if writer and hasattr(writer, "flush"):
+        writer.flush()
+
+
+def _build_errors_by_interface(validated: JobConfig) -> dict[str, ErrorsConfig]:
+    """Build per-interface error configs by merging global and interface-specific errors.
+
+    Returns:
+        Dict mapping interface name to merged ErrorsConfig.
+    """
+    errors_by_interface: dict[str, ErrorsConfig] = {}
+    for name in ("features", "metrics", "gap"):
+        interface = getattr(validated, name, None)
+        interface_errors = interface.errors if interface else None
+        errors_by_interface[name] = _merge_errors(validated.errors, interface_errors)
+    return errors_by_interface
+
+
+def _enrich_delta_with_pairwise(
+    validated: JobConfig,
+    delta_data: dict[str, Any],
+    delta_metrics_table: pa.Table,
+) -> None:
+    """Add a ``source_target`` column to delta data if pairwise output is configured."""
+    if not (validated.gap and validated.gap.outputs and getattr(validated.gap.outputs, "pairwise", False)):
+        return
+    source_target_values = [
+        f"{delta_metrics_table.column('selection_source')[i].as_py()}"
+        f"_{delta_metrics_table.column('selection_target')[i].as_py()}"
+        for i in range(delta_metrics_table.num_rows)
+    ]
+    delta_data["source_target"] = pa.array(source_target_values)
 
 
 def run(config: dict[str, Any]) -> None:
     """
     Execute a job from a validated configuration dictionary.
 
-    The config must contain:
-    - dataloaders: Map of configurations for data sources.
-    - metrics_processor: Map of configurations for quality metrics.
-    - outputs: Map of configurations for results storage.
+    The config is validated against JobConfig and must follow the v2 structure:
+    - dataloaders: Contains loaders list and optional storage.
+    - features: Optional interface with outputs and processors list.
+    - metrics: Optional interface with outputs and processors list.
+    - gap: Optional interface with outputs and processors list.
     """
     if not config:
         raise ValueError("Job requires a configuration dictionary.")
+
+    validated = JobConfig.model_validate(config)
 
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
 
-    _validate_config_key(config, "dataloaders", "dataloaders")
-    dataloaders = _init_components(config["dataloaders"], dataloaders_registry, "dataloader")
+    # Initialize dataloaders from list format
+    dataloader_dicts = [loader.model_dump() for loader in validated.dataloaders.loaders]
+    compute = _resolve_compute_config(validated)
+    for dl in dataloader_dicts:
+        dl["threads"] = compute.threads
+    dataloaders = _init_components_from_list(dataloader_dicts, dataloaders_registry, "dataloader")
 
-    _validate_config_key(config, "metrics_processor", "metrics_processor")
-    metrics = _init_components(config["metrics_processor"], metrics_registry, "metric")
+    # Initialize processors from all interfaces
+    all_processors: dict[str, Any] = {}
+    for interface_name in ("features", "metrics", "gap"):
+        interface = getattr(validated, interface_name, None)
+        all_processors.update(_init_processors_from_interface(interface, metrics_registry))
 
-    _validate_config_key(config, "outputs", "outputs")
-    metrics_output, features_output, delta_output = _init_output_writers(config["outputs"], outputs_registry)
+    # Initialize output writers from interfaces
+    features_output = _init_interface_outputs(validated.features, outputs_registry, "features")
+    metrics_output = _init_interface_outputs(validated.metrics, outputs_registry, "metrics")
+    delta_output = _init_interface_outputs(validated.gap, outputs_registry, "delta")
+
+    # Configure logging based on compute.log_level
+    if compute.log_level:
+        log_level = compute.log_level.upper()
+        level = getattr(logging, log_level)
+        logging.basicConfig(level=level)
 
     job = DatasetJob(
         dataloaders=dataloaders,
-        metrics=metrics,
+        metrics=all_processors,
         features_output=features_output,
-        progress_bar=config.get("progress_bar", True),
+        progress_bar=compute.progress_bar,
+        threads=compute.threads,
+        errors_by_interface=_build_errors_by_interface(validated),
+        compute_seed=compute.seed,
+        compute_device=compute.device,
+        compute_max_memory=compute.max_memory,
     )
 
     dataselection_metrics_list, delta_metrics_table = job.run()
 
     if metrics_output:
         metrics_output.write_metrics_dict(dataselection_metrics_list)
-        if hasattr(metrics_output, "flush"):
-            metrics_output.flush()
+        _safe_flush(metrics_output)
 
     if delta_output and delta_metrics_table:
         delta_data = {col: delta_metrics_table.column(col) for col in delta_metrics_table.column_names}
+        _enrich_delta_with_pairwise(validated, delta_data, delta_metrics_table)
         delta_output.write_table("delta", delta_data)
-        if hasattr(delta_output, "flush"):
-            delta_output.flush()
+        _safe_flush(delta_output)
 
 
 if __name__ == "__main__":

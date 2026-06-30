@@ -15,7 +15,7 @@ import pytest
 from dqm_ml_job.cli import execute
 
 
-@pytest.mark.parametrize("test_name", ["diversity", "diversity_batch"])
+@pytest.mark.parametrize("test_name", ["diversity", "diversity_batch", "diversity_single_metric"])
 def test_diversity(
     tests_config: Any,
     test_path: Path,
@@ -39,10 +39,12 @@ def test_diversity(
     end = timer()
     print(f"Execution time: {end - start}")
 
-    expected = tests_config["diversity"]["expected_scores"]
-    epsilon = tests_config["diversity"]["params"]["tolerance"]
-    col_names = tests_config["diversity"]["params"]["columns_names"]
-    metrics = tests_config["diversity"]["params"]["metrics"]
+    test_config = tests_config["diversity"]
+    test_params = test_config.get(test_name, test_config)
+    expected = test_params["expected_scores"]
+    epsilon = test_params["params"]["tolerance"]
+    col_names = test_params["params"]["columns_names"]
+    metrics = test_params["params"]["metrics"]
 
     output_filename = f"metrics_{test_name}_-.parquet"
     table = pq.read_table(Path(output_path) / output_filename)

@@ -11,16 +11,6 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-def fixtures_dir() -> Path:
-    """Return path to getting started fixtures directory.
-
-    Returns:
-        Path to tests/fixtures/getting_started.
-    """
-    return Path(__file__).parent / "getting_started"
-
-
-@pytest.fixture(scope="session")
 def coco_data_dir() -> Path:
     """Return path to test output data directory.
 
@@ -57,17 +47,6 @@ def all_classes(coco_parquet_path: Path, coco_data: Any) -> list[str]:
     table = pq.read_table(coco_parquet_path)
     df = table.to_pandas()
     classes = sorted(df["class"].unique().tolist())
+    assert len(all_classes) > 0, "No classes found in parquet"
+    print(f"Found {len(all_classes)}")
     return classes
-
-
-@pytest.fixture(scope="session")
-def split_by_config_path(fixtures_dir: Path) -> Path:
-    """Return path to split_by config for top 10 classes.
-
-    Args:
-        fixtures_dir: Path to fixtures directory.
-
-    Returns:
-        Path to domain_gap_split_top10.yaml.
-    """
-    return fixtures_dir / "domain_gap_split_top10.yaml"

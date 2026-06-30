@@ -4,22 +4,38 @@
 completeness:
 
     params:
-        tolerance: 0.1
-        columns_names: [
+        tolerance: 0.01
+    columns_names:
+        completeness: [
             "completeness_column_1",
             "completeness_column_3",
             "completeness_column_6",
             "completeness_column_9",
-            "completeness_overall"
-
+            "completeness_overall",
+        ]
+        completeness_batch: [
+            "completeness_column_1",
+            "completeness_column_3",
+            "completeness_column_6",
+            "completeness_column_9",
+            "completeness_overall",
+        ]
+        completeness_no_per_column: [
+            "completeness_overall",
+        ]
+        completeness_no_overall: [
+            "completeness_column_1",
+            "completeness_column_3",
+            "completeness_column_6",
+            "completeness_column_9",
         ]
 
     expected_scores:
-        completeness_column_1: 1
-        completeness_column_3: 0.78
-        completeness_column_6: 0.48
-        completeness_column_9: 0.211
-        completeness_overall: 0.618
+        completeness_column_1: 0.939
+        completeness_column_3: 0.920
+        completeness_column_6: 0.927
+        completeness_column_9: 1.0
+        completeness_overall: 0.947
 
 representativeness_not_normal_distribution:
     params:
@@ -243,6 +259,116 @@ representativeness_uniform_distribution:
             data_2: 0.9
             data_3: 0.9
 
+representativeness_normal_distribution_custom_interpretations:
+    params:
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: normal
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            2.0,
+            0.05
+        ]
+        interpretations: [
+            ["matches expected", "deviates from expected"],
+            ["well represented", "poorly represented"],
+            ["diverse", "uniform values"],
+            ["matches expected", "deviates from expected"],
+        ]
+    expected_scores:
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
+
+        grte:
+            data_1: 0.9
+            data_2: 0.9
+            data_3: 0.9
+
+representativeness_normal_distribution_shannon_threshold:
+    params:
+        tolerances: [
+            None,
+            0.1,
+            0.1,
+            None
+        ]
+        distribution: normal
+        columns_names: ["data_1", "data_2", "data_3"]
+        metrics: [
+            "chi-square",
+            "grte",
+            "shannon-entropy",
+            "kolmogorov-smirnov"
+        ]
+        value_names: [
+            "p_value",
+            "grte_value",
+            "entropy",
+            "p_value"
+        ]
+        thresholds: [
+            0.05,
+            0.5,
+            100.0,
+            0.05
+        ]
+        interpretations: [
+            ["follows_distribution", "does_not_follow_distribution"],
+            ["high_representativeness", "low_representativeness"],
+            ["high_diversity", "low_diversity"],
+            ["follows_distribution", "does_not_follow_distribution"],
+        ]
+    expected_scores:
+        chi-square:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        kolmogorov-smirnov:
+            data_1: None
+            data_2: None
+            data_3: None
+
+        shannon-entropy:
+            data_1: 2.3
+            data_2: 2.3
+            data_3: 2.3
+
+        grte:
+            data_1: 0.9
+            data_2: 0.9
+            data_3: 0.9
+
 diversity:
     params:
         tolerance: 0.0005
@@ -266,153 +392,760 @@ diversity:
             column_4: 20
             column_6: 8
 
+    diversity_single_metric:
+        params:
+            tolerance: 0.0005
+            columns_names: ["column_2", "column_4", "column_6"]
+            metrics: ["simpson"]
+        expected_scores:
+            simpson:
+                column_2: 0.9733
+                column_4: 0.9522
+                column_6: 0.8766
+
 visual_features:
     params:
         tolerance: 0.0001
-        columns_names: [
-            "m_luminosity",
-            "m_contrast",
-            "m_blur_level",
-            "m_entropy",
-
+    columns_names:
+        visual_features: [
+            "image_bytes_luminosity",
+            "image_bytes_contrast",
+            "image_bytes_blur",
+            "image_bytes_entropy",
+        ]
+        visual_features_batch: [
+            "image_bytes_luminosity",
+            "image_bytes_contrast",
+            "image_bytes_blur",
+            "image_bytes_entropy",
+        ]
+        visual_features_path: [
+            "image_path_luminosity",
+            "image_path_contrast",
+            "image_path_blur",
+            "image_path_entropy",
+        ]
+        visual_features_prefix: [
+            "vf_image_bytes_luminosity",
+            "vf_image_bytes_contrast",
+            "vf_image_bytes_blur",
+            "vf_image_bytes_entropy",
+        ]
+        visual_features_grayscale_false: [
+            "image_bytes_luminosity",
+            "image_bytes_contrast",
+            "image_bytes_blur",
+            "image_bytes_entropy",
         ]
 
     expected_scores:
-        m_luminosity: [
-            0.4169,
-            0.5386,
-            0.2706,
-            0.2192,
-            0.5364,
-            0.4098,
-            0.2483,
-            0.5060,
-            0.6001,
-            0.5671,
-            0.6101,
-            0.7546,
-            0.4019,
-            0.5260,
-            0.3026,
-            0.6828,
-            0.3888,
-            0.4022,
-            0.5383,
-            0.3225,
-            0.7164,
-            0.5917,
-            0.3375,
-            0.4891,
-            0.7582,
-            0.4976,
-            0.6145,
-            0.2787,
-            0.5457,
-            0.1811,
+        visual_features:
+            image_bytes_luminosity: [
+                0.2033,
+                0.4193,
+                0.2629,
+                0.3391,
+                0.1637,
+                0.3395,
+                0.2674,
+                0.2730,
+                0.3549,
+                0.3843,
+                0.2173,
+                0.4032,
+                0.2684,
+                0.3560,
+                0.4494,
+                0.1483,
+                0.5213,
+                0.1598,
+                0.3351,
+                0.5359,
+                0.2191,
+                0.2444,
+                0.3425,
+                0.3958,
+                0.3816,
+                0.6058,
+                0.4029,
+                0.4575,
+                0.4706,
+                0.3289,
+            ]
+            image_bytes_contrast: [
+                0.3380,
+                0.4591,
+                0.3510,
+                0.4217,
+                0.3117,
+                0.3918,
+                0.3888,
+                0.3857,
+                0.3783,
+                0.3895,
+                0.3764,
+                0.4474,
+                0.3755,
+                0.4424,
+                0.4381,
+                0.2996,
+                0.4443,
+                0.2847,
+                0.4154,
+                0.4419,
+                0.3727,
+                0.3266,
+                0.4241,
+                0.3905,
+                0.3989,
+                0.4257,
+                0.4799,
+                0.3947,
+                0.4279,
+                0.4192,
+            ]
+            image_bytes_blur: [
+                0.0433,
+                0.0462,
+                0.0382,
+                0.0427,
+                0.0383,
+                0.0527,
+                0.0681,
+                0.0305,
+                0.0586,
+                0.0380,
+                0.0323,
+                0.0498,
+                0.0522,
+                0.0504,
+                0.0483,
+                0.0425,
+                0.0600,
+                0.0154,
+                0.0771,
+                0.0469,
+                0.0593,
+                0.0137,
+                0.0366,
+                0.0631,
+                0.0585,
+                0.0515,
+                0.0536,
+                0.0494,
+                0.0408,
+                0.0350,
+            ]
+            image_bytes_entropy: [
+                1.5743,
+                1.2723,
+                1.8704,
+                1.4932,
+                1.3965,
+                1.9692,
+                1.7136,
+                1.5086,
+                2.0093,
+                2.1598,
+                1.2983,
+                1.2787,
+                1.8476,
+                1.4828,
+                1.5790,
+                1.3435,
+                1.3844,
+                1.5799,
+                2.1497,
+                1.6073,
+                1.6788,
+                1.5951,
+                1.2404,
+                1.9684,
+                2.1114,
+                1.6364,
+                1.4722,
+                1.7561,
+                1.6977,
+                1.7325,
+            ]
+
+        visual_features_batch:
+            image_bytes_luminosity: [
+                0.2033,
+                0.4193,
+                0.2629,
+                0.3391,
+                0.1637,
+                0.3395,
+                0.2674,
+                0.2730,
+                0.3549,
+                0.3843,
+                0.2173,
+                0.4032,
+                0.2684,
+                0.3560,
+                0.4494,
+                0.1483,
+                0.5213,
+                0.1598,
+                0.3351,
+                0.5359,
+                0.2191,
+                0.2444,
+                0.3425,
+                0.3958,
+                0.3816,
+                0.6058,
+                0.4029,
+                0.4575,
+                0.4706,
+                0.3289,
+            ]
+            image_bytes_contrast: [
+                0.3380,
+                0.4591,
+                0.3510,
+                0.4217,
+                0.3117,
+                0.3918,
+                0.3888,
+                0.3857,
+                0.3783,
+                0.3895,
+                0.3764,
+                0.4474,
+                0.3755,
+                0.4424,
+                0.4381,
+                0.2996,
+                0.4443,
+                0.2847,
+                0.4154,
+                0.4419,
+                0.3727,
+                0.3266,
+                0.4241,
+                0.3905,
+                0.3989,
+                0.4257,
+                0.4799,
+                0.3947,
+                0.4279,
+                0.4192,
+            ]
+            image_bytes_blur: [
+                0.0433,
+                0.0462,
+                0.0382,
+                0.0427,
+                0.0383,
+                0.0527,
+                0.0681,
+                0.0305,
+                0.0586,
+                0.0380,
+                0.0323,
+                0.0498,
+                0.0522,
+                0.0504,
+                0.0483,
+                0.0425,
+                0.0600,
+                0.0154,
+                0.0771,
+                0.0469,
+                0.0593,
+                0.0137,
+                0.0366,
+                0.0631,
+                0.0585,
+                0.0515,
+                0.0536,
+                0.0494,
+                0.0408,
+                0.0350,
+            ]
+            image_bytes_entropy: [
+                1.5743,
+                1.2723,
+                1.8704,
+                1.4932,
+                1.3965,
+                1.9692,
+                1.7136,
+                1.5086,
+                2.0093,
+                2.1598,
+                1.2983,
+                1.2787,
+                1.8476,
+                1.4828,
+                1.5790,
+                1.3435,
+                1.3844,
+                1.5799,
+                2.1497,
+                1.6073,
+                1.6788,
+                1.5951,
+                1.2404,
+                1.9684,
+                2.1114,
+                1.6364,
+                1.4722,
+                1.7561,
+                1.6977,
+                1.7325,
+            ]
+
+        visual_features_path:
+            image_path_luminosity: [
+                0.2033,
+                0.4193,
+                0.2629,
+                0.3391,
+                0.1637,
+                0.3395,
+                0.2674,
+                0.2730,
+                0.3549,
+                0.3843,
+                0.2173,
+                0.4032,
+                0.2684,
+                0.3560,
+                0.4494,
+                0.1483,
+                0.5213,
+                0.1598,
+                0.3351,
+                0.5359,
+                0.2191,
+                0.2444,
+                0.3425,
+                0.3958,
+                0.3816,
+                0.6058,
+                0.4029,
+                0.4575,
+                0.4706,
+                0.3289,
+            ]
+            image_path_contrast: [
+                0.3380,
+                0.4591,
+                0.3510,
+                0.4217,
+                0.3117,
+                0.3918,
+                0.3888,
+                0.3857,
+                0.3783,
+                0.3895,
+                0.3764,
+                0.4474,
+                0.3755,
+                0.4424,
+                0.4381,
+                0.2996,
+                0.4443,
+                0.2847,
+                0.4154,
+                0.4419,
+                0.3727,
+                0.3266,
+                0.4241,
+                0.3905,
+                0.3989,
+                0.4257,
+                0.4799,
+                0.3947,
+                0.4279,
+                0.4192,
+            ]
+            image_path_blur: [
+                0.0433,
+                0.0462,
+                0.0382,
+                0.0427,
+                0.0383,
+                0.0527,
+                0.0681,
+                0.0305,
+                0.0586,
+                0.0380,
+                0.0323,
+                0.0498,
+                0.0522,
+                0.0504,
+                0.0483,
+                0.0425,
+                0.0600,
+                0.0154,
+                0.0771,
+                0.0469,
+                0.0593,
+                0.0137,
+                0.0366,
+                0.0631,
+                0.0585,
+                0.0515,
+                0.0536,
+                0.0494,
+                0.0408,
+                0.0350,
+            ]
+            image_path_entropy: [
+                1.5743,
+                1.2723,
+                1.8704,
+                1.4932,
+                1.3965,
+                1.9692,
+                1.7136,
+                1.5086,
+                2.0093,
+                2.1598,
+                1.2983,
+                1.2787,
+                1.8476,
+                1.4828,
+                1.5790,
+                1.3435,
+                1.3844,
+                1.5799,
+                2.1497,
+                1.6073,
+                1.6788,
+                1.5951,
+                1.2404,
+                1.9684,
+                2.1114,
+                1.6364,
+                1.4722,
+                1.7561,
+                1.6977,
+                1.7325,
+            ]
+
+        visual_features_prefix:
+            vf_image_bytes_luminosity: [
+                0.2033,
+                0.4193,
+                0.2629,
+                0.3391,
+                0.1637,
+                0.3395,
+                0.2674,
+                0.2730,
+                0.3549,
+                0.3843,
+                0.2173,
+                0.4032,
+                0.2684,
+                0.3560,
+                0.4494,
+                0.1483,
+                0.5213,
+                0.1598,
+                0.3351,
+                0.5359,
+                0.2191,
+                0.2444,
+                0.3425,
+                0.3958,
+                0.3816,
+                0.6058,
+                0.4029,
+                0.4575,
+                0.4706,
+                0.3289,
+            ]
+            vf_image_bytes_contrast: [
+                0.3380,
+                0.4591,
+                0.3510,
+                0.4217,
+                0.3117,
+                0.3918,
+                0.3888,
+                0.3857,
+                0.3783,
+                0.3895,
+                0.3764,
+                0.4474,
+                0.3755,
+                0.4424,
+                0.4381,
+                0.2996,
+                0.4443,
+                0.2847,
+                0.4154,
+                0.4419,
+                0.3727,
+                0.3266,
+                0.4241,
+                0.3905,
+                0.3989,
+                0.4257,
+                0.4799,
+                0.3947,
+                0.4279,
+                0.4192,
+            ]
+            vf_image_bytes_blur: [
+                0.0433,
+                0.0462,
+                0.0382,
+                0.0427,
+                0.0383,
+                0.0527,
+                0.0681,
+                0.0305,
+                0.0586,
+                0.0380,
+                0.0323,
+                0.0498,
+                0.0522,
+                0.0504,
+                0.0483,
+                0.0425,
+                0.0600,
+                0.0154,
+                0.0771,
+                0.0469,
+                0.0593,
+                0.0137,
+                0.0366,
+                0.0631,
+                0.0585,
+                0.0515,
+                0.0536,
+                0.0494,
+                0.0408,
+                0.0350,
+            ]
+            vf_image_bytes_entropy: [
+                1.5743,
+                1.2723,
+                1.8704,
+                1.4932,
+                1.3965,
+                1.9692,
+                1.7136,
+                1.5086,
+                2.0093,
+                2.1598,
+                1.2983,
+                1.2787,
+                1.8476,
+                1.4828,
+                1.5790,
+                1.3435,
+                1.3844,
+                1.5799,
+                2.1497,
+                1.6073,
+                1.6788,
+                1.5951,
+                1.2404,
+                1.9684,
+                2.1114,
+                1.6364,
+                1.4722,
+                1.7561,
+                1.6977,
+                1.7325,
+            ]
+
+        visual_features_grayscale_false:
+            image_bytes_luminosity: [
+                0.2076,
+                0.3796,
+                0.2451,
+                0.3375,
+                0.1640,
+                0.3490,
+                0.2676,
+                0.2511,
+                0.3452,
+                0.3513,
+                0.2136,
+                0.4100,
+                0.2733,
+                0.3560,
+                0.4452,
+                0.1512,
+                0.5256,
+                0.1469,
+                0.3337,
+                0.4962,
+                0.2165,
+                0.2224,
+                0.3004,
+                0.3947,
+                0.3615,
+                0.6163,
+                0.3961,
+                0.4293,
+                0.4410,
+                0.3354,
+            ]
+            image_bytes_contrast: [
+                0.3462,
+                0.4139,
+                0.3254,
+                0.4216,
+                0.3136,
+                0.4037,
+                0.3891,
+                0.3534,
+                0.3682,
+                0.3556,
+                0.3725,
+                0.4548,
+                0.3831,
+                0.4424,
+                0.4347,
+                0.3057,
+                0.4480,
+                0.2546,
+                0.4145,
+                0.4092,
+                0.3690,
+                0.2874,
+                0.3712,
+                0.3901,
+                0.3783,
+                0.4334,
+                0.4724,
+                0.3737,
+                0.4021,
+                0.4289,
+            ]
+            image_bytes_blur: [
+                0.0394,
+                0.0477,
+                0.0468,
+                0.0437,
+                0.0369,
+                0.0498,
+                0.0669,
+                0.0337,
+                0.0631,
+                0.0441,
+                0.0347,
+                0.0499,
+                0.0491,
+                0.0504,
+                0.0493,
+                0.0422,
+                0.0601,
+                0.0202,
+                0.0761,
+                0.0492,
+                0.0616,
+                0.0175,
+                0.0367,
+                0.0623,
+                0.0619,
+                0.0478,
+                0.0455,
+                0.0535,
+                0.0434,
+                0.0321,
+            ]
+            image_bytes_entropy: [
+                1.8449,
+                2.4013,
+                2.5905,
+                1.7196,
+                1.6766,
+                2.4576,
+                1.9242,
+                2.1587,
+                2.4777,
+                3.1145,
+                1.5616,
+                1.5702,
+                2.2505,
+                1.6348,
+                2.0069,
+                1.5288,
+                2.0732,
+                2.3202,
+                2.3258,
+                2.1430,
+                1.7693,
+                2.8176,
+                1.6418,
+                2.5837,
+                2.6222,
+                2.2428,
+                2.1303,
+                2.9343,
+                2.3537,
+                2.2328,
+            ]
+
+
+
+features_embeddings:
+    params:
+        tolerance: 0.01
+    columns_names:
+        features_embeddings: [
+            "image_bytes_embedding",
         ]
-        m_contrast: [
-            0.3456,
-            0.2808,
-            0.2917,
-            0.1727,
-            0.3004,
-            0.1970,
-            0.2795,
-            0.2614,
-            0.2437,
-            0.2811,
-            0.3113,
-            0.2855,
-            0.1665,
-            0.3126,
-            0.1797,
-            0.3770,
-            0.2618,
-            0.2471,
-            0.2472,
-            0.1541,
-            0.2143,
-            0.2038,
-            0.3183,
-            0.2788,
-            0.1656,
-            0.2492,
-            0.1533,
-            0.1460,
-            0.2733,
-            0.1760,
+        features_embeddings_batch: [
+            "image_bytes_embedding",
         ]
-        m_blur_level: [
-            0.0942,
-            0.0266,
-            0.0590,
-            0.0064,
-            0.0722,
-            0.0424,
-            0.0564,
-            0.0154,
-            0.0185,
-            0.0359,
-            0.0282,
-            0.0379,
-            0.0539,
-            0.0130,
-            0.0414,
-            0.0265,
-            0.0401,
-            0.0628,
-            0.0274,
-            0.0457,
-            0.0639,
-            0.0305,
-            0.1136,
-            0.0317,
-            0.0261,
-            0.0586,
-            0.0180,
-            0.0559,
-            0.0203,
-            0.0432,
+        features_embeddings_multi_layer: [
+            "image_bytes_emb_maxpool",
+            "image_bytes_emb_maxpool_channels",
+            "image_bytes_emb_layer4_1_relu_1",
+            "image_bytes_emb_layer4_1_relu_1_channels",
         ]
-        m_entropy: [
-            5.2827,
-            5.1235,
-            4.9170,
-            4.7150,
-            5.2457,
-            5.2070,
-            4.4730,
-            5.0446,
-            4.9573,
-            5.0288,
-            5.2301,
-            4.6578,
-            5.0516,
-            4.9958,
-            4.8758,
-            3.8651,
-            5.0739,
-            5.4151,
-            5.0273,
-            4.6504,
-            5.0101,
-            5.2637,
-            5.0293,
-            5.2703,
-            4.8459,
-            5.2385,
-            5.0063,
-            4.2253,
-            5.1738,
-            4.3631,
+        features_embeddings_n_layer_0: [
+            "image_bytes_embedding",
+        ]
+        features_embeddings_custom_norm: [
+            "image_bytes_embedding",
+        ]
+        features_embeddings_prefix: [
+            "pfx_image_bytes_embedding",
+        ]
+        features_embeddings_suffix: [
+            "image_bytes_embedding_sfx",
+        ]
+        features_embeddings_infer_batch_size: [
+            "image_bytes_embedding",
         ]
 
+    expected_scores:
+        features_embeddings:
+            first_element: -1.055341362953186
+        features_embeddings_batch:
+            first_element: -1.055341362953186
+        features_embeddings_multi_layer:
+            first_element: null
+        features_embeddings_n_layer_0:
+            first_element: null
+        features_embeddings_custom_norm:
+            first_element: null
+        features_embeddings_prefix:
+            first_element: null
+        features_embeddings_suffix:
+            first_element: null
+        features_embeddings_infer_batch_size:
+            first_element: null
 
 
 domain_gap:
     wasserstein_bytes:
         params:
-            tolerance: 0.01
+            tolerance: 0.001
             columns_names: [
                 "metric",
                 "value",
@@ -420,7 +1153,7 @@ domain_gap:
 
         expected_scores:
             metric: "wasserstein_1d"
-            value: 0.418
+            value: 0.40322420634920636
 
     wasserstein_1d:
         params:
@@ -432,11 +1165,11 @@ domain_gap:
 
         expected_scores:
             metric: "wasserstein_1d"
-            value: 0.0245
+            value: 0.24404662658549175
 
     fid:
         params:
-            tolerance: 0.01
+            tolerance: 0.001
             columns_names: [
                 "metric",
                 "value",
@@ -444,11 +1177,11 @@ domain_gap:
 
         expected_scores:
             metric: "fid"
-            value: 15.618246686560326
+            value: 429.54561987310296
 
     klmvn_diag:
         params:
-            tolerance: 0.02
+            tolerance: 100.0
             columns_names: [
                 "metric",
                 "value",
@@ -456,7 +1189,7 @@ domain_gap:
 
         expected_scores:
             metric: "klmvn_diag"
-            value: 7.221
+            value: 52641745.94957027
 
     mmd_linear:
         params:
@@ -468,7 +1201,7 @@ domain_gap:
 
         expected_scores:
             metric: "mmd_linear"
-            value: 0.76
+            value: 254.5589993403182
 
     mmd_rbf:
         params:
@@ -492,11 +1225,11 @@ domain_gap:
 
         expected_scores:
             metric: "mmd_poly"
-            value: 1183710.708908081
+            value: 766149334.4894876
 
     pad:
         params:
-            tolerance: 0.03
+            tolerance: 0.001
             columns_names: [
                 "metric",
                 "value",
@@ -504,7 +1237,7 @@ domain_gap:
 
         expected_scores:
             metric: "pad"
-            value: 1.002610461038195
+            value: 1.9997904754257876
 
     cmd:
         params:
@@ -516,7 +1249,67 @@ domain_gap:
 
         expected_scores:
             metric: "cmd"
-            value: 0.006330182681670129
+            value: 0.10683683447688161
+
+    fid_no_sum_outer:
+        params:
+            tolerance: 0.01
+            columns_names: [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric: "fid"
+            value: null
+
+    mmd_rbf_no_store:
+        params:
+            tolerance: 0.01
+            columns_names: [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric: "mmd_rbf"
+            value: null
+
+    pad_mae:
+        params:
+            tolerance: 0.001
+            columns_names: [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric: "pad"
+            value: 1.982192229581225
+
+    mmd_rbf_gamma2:
+        params:
+            tolerance: 0.01
+            columns_names: [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric: "mmd_rbf"
+            value: 0.0
+
+    wasserstein_custom_hist:
+        params:
+            tolerance: 0.001
+            columns_names: [
+                "metric",
+                "value",
+            ]
+
+        expected_scores:
+            metric: "wasserstein_1d"
+            value: 0.16429958476885043
 
 
 pandas_welding:

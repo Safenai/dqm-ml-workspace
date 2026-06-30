@@ -34,7 +34,7 @@ Repository = "https://github.com/IRT-SystemX/dqm-ml"
 # Registry of exported metrics
 [project.entry-points."dqm_ml.metrics"]
 domain_gap = "dqm_ml_pytorch.domain_gap:DomainGapProcessor"
-image_embedding = "dqm_ml_pytorch.image_embedding:ImageEmbeddingProcessor"
+features_embeddings = "dqm_ml_pytorch.image_embedding:ImageEmbeddingProcessor"
 
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]

@@ -14,6 +14,7 @@ import pyarrow as pa
 from typing_extensions import override
 
 from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.models.processors import DiversityProcessorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +55,9 @@ class DiversityProcessor(DatametricProcessor):
         """
         super().__init__(name, config)
 
-        cfg = config or {}
-        self.metrics: list[str] = list(cfg.get("metrics", ["simpson", "gini", "shannon", "richness"]))
+        cfg = DiversityProcessorConfig.model_validate({**self.config, "name": self.name})
 
-        if not self.input_columns:
-            raise ValueError(f"[{self.name}] 'input_columns' must be provided")
-        if any(m not in self.SUPPORTED_METRICS for m in self.metrics):
-            raise ValueError(f"[{self.name}] unsupported metric; supported: {self.SUPPORTED_METRICS}")
+        self.metrics: list[str] = list(cfg.metrics)
 
     @override
     def generated_metrics(self) -> list[str]:
@@ -191,5 +188,6 @@ class DiversityProcessor(DatametricProcessor):
 
         return {f"{col}_{metric_name}": value for metric_name, value in col_res.items()}
 
+    @override
     def reset(self) -> None:
         """Reset processor state for new processing run."""

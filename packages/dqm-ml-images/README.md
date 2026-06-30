@@ -27,7 +27,7 @@ images = [Image.open("path/to/image1.jpg"), Image.open("path/to/image2.jpg")]
 processor = VisualFeaturesProcessor(
     name="image_quality",
     config={
-        "input_columns": ["image_bytes"],
+        "columns": {"input": ["image_bytes"]},
         "grayscale": True
     }
 )
@@ -35,10 +35,10 @@ processor = VisualFeaturesProcessor(
 # Process images to extract features
 batch = {"image_bytes": images}
 features = processor.compute_features(batch)
-print(f"Luminosity: {features['m_luminosity']}")
-print(f"Contrast: {features['m_contrast']}")
-print(f"Blur: {features['m_blur_level']}")
-print(f"Entropy: {features['m_entropy']}")
+print(f"Luminosity: {features['luminosity']}")
+print(f"Contrast: {features['contrast']}")
+print(f"Blur: {features['blur']}")
+print(f"Entropy: {features['entropy']}")
 ```
 
 ### With dqm-ml-job
@@ -52,11 +52,13 @@ pip install dqm-ml-job dqm-ml-images
 Then use this config:
 
 ```yaml
-metrics_processor:
-  image_quality:
-    type: visual_metric
-    input_columns: ["image_data"]
-    grayscale: true
+features:
+  processors:
+    - name: image_quality
+      type: image_features
+      columns:
+        input: ["image_data"]
+      grayscale: true
 ```
 
 ## Features
@@ -71,10 +73,11 @@ metrics_processor:
 ## Output
 
 The processor adds these columns to your data:
-- `m_luminosity`
-- `m_contrast`
-- `m_blur_level`
-- `m_entropy`
+
+- `luminosity`
+- `contrast`
+- `blur_level`
+- `entropy`
 
 ## Requirements
 

@@ -13,12 +13,6 @@ from dqm_ml_core.api.data_processor import DatametricProcessor
 from dqm_ml_core.utils.metric_runner import MetricRunner
 
 
-def test_metric_runner_init():
-    """Test that MetricRunner initializes correctly."""
-    runner = MetricRunner(config={})
-    assert isinstance(runner, MetricRunner)
-
-
 def test_metric_runner_run_empty_df():
     """Test that MetricRunner returns empty dict for empty DataFrame."""
     runner = MetricRunner()
@@ -29,7 +23,11 @@ def test_metric_runner_run_empty_df():
 
 
 def test_metric_runner_run_with_mock_metric(sample_dataframe):
-    """Test that MetricRunner correctly runs metrics on DataFrame."""
+    """Test that MetricRunner correctly runs metrics on DataFrame.
+
+    Args:
+        sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
+    """
     runner = MetricRunner()
 
     mock_metric = MagicMock(spec=DatametricProcessor)
@@ -46,7 +44,11 @@ def test_metric_runner_run_with_mock_metric(sample_dataframe):
 
 
 def test_metric_runner_overwrite_behavior(sample_dataframe):
-    """Test that later metrics overwrite earlier ones when sharing keys."""
+    """Test that later metrics overwrite earlier ones when sharing keys.
+
+    Args:
+        sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
+    """
     runner = MetricRunner()
 
     metric1 = MagicMock(spec=DatametricProcessor)

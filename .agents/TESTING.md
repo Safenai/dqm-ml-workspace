@@ -4,34 +4,36 @@
 
 Two nox test sessions are available:
 
-**test_dev** — Runs all tests without coverage:
-```bash
-uv run nox -s test_dev
-```
-- Runs ALL tests in `tests/` (including slow tests)
-- No coverage reporting
-
-**test** — Runs tests with coverage (for PRs):
+**test** — Runs all tests with coverage:
 ```bash
 uv run nox -s test
 ```
-- Runs only non-slow tests (`-m "not slow"`)
+- Runs all tests in `tests/`
 - Includes coverage reporting
 
-**Running a single test:**
+**test_custom** — Runs specific tests without coverage (for iteration):
+```bash
+uv run nox -s test_custom -- <pytest args>
+```
+- No coverage — faster for iteration
+- Passes all arguments through to pytest
+
+**Examples:**
 ```bash
 # Run a specific test file
-uv run nox -s test_dev -- tests/cli/test_quickstart.py
+uv run nox -s test_custom -- tests/cli/test_quickstart.py
 
 # Run a specific test
-uv run nox -s test_dev -- -v "tests/cli/test_quickstart.py::TestQuickstartCLI::test_completeness_cli_with_config"
-```
+uv run nox -s test_custom -- -v "tests/cli/test_quickstart.py::TestQuickstartCLI::test_completeness_cli_with_config"
 
-**Adding extra pytest arguments:**
-```bash
-uv run nox -s test_dev -- -v           # verbose output
-uv run nox -s test_dev -- -k "pattern" # filter by name
-uv run nox -s test_dev -- -q           # quiet mode
+# Verbose output
+uv run nox -s test_custom -- -v
+
+# Filter by name
+uv run nox -s test_custom -- -k "pattern"
+
+# Quiet mode
+uv run nox -s test_custom -- -q
 ```
 
 ## Test Configuration

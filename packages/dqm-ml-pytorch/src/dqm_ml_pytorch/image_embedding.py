@@ -26,6 +26,9 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from typing_extensions import override
 
 from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.models.columns import ColumnsConfig
+from dqm_ml_core.models.processors import FeaturesEmbeddingsProcessorConfig
+from dqm_ml_core.utils.matching import resolve_include_exclude
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +59,6 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         Args:
             name: Unique name of the processor instance.
             config: Configuration dictionary containing:
-                - data:
-                    - image_column: Column name containing image data (default: "image_bytes").
-                    - mode: Source type, "bytes" or "path" (default: "bytes").
                 - infer:
                     - width, height: Input resolution for the model (default: 224x224).
                     - batch_size: Number of images per inference pass (default: 32).
@@ -69,59 +69,29 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                     - device: Execution device, "cpu" or "cuda" (default: "cpu").
         """
         super().__init__(name, config)
-        self._checked = False
 
-    # ---------------- API ----------------
-    def check_config(self) -> None:
-        """Validate and initialize model/transforms from configuration.
+        self.columns_config: ColumnsConfig | None = None
+        raw_columns = self.config.get("columns")
+        if isinstance(raw_columns, dict):
+            self.columns_config = ColumnsConfig.model_validate(raw_columns)
 
-        This method parses the configuration dictionary and initializes:
-        - Image loading parameters (column name, mode, dataset root path)
-        - Inference parameters (image size, batch size, normalization)
-        - Model parameters (architecture, feature extraction layer, device)
-        - Loads the pre-trained model and creates the feature extractor.
-        """
-        cfg = self.config or {}
-
-        data_cfg = cfg.get("data", {})
-        self.image_column: str = data_cfg.get("image_column", "image_bytes")
-        self.mode: str = data_cfg.get("mode", "bytes")  # "bytes" or "path"
-        if self.mode not in {"bytes", "path"}:
-            raise ValueError(f"[{self.name}] data.mode must be 'bytes' or 'path'")
-
-        # handle relative paths in parquet to a dataset located at dataset_root_path
-        self.dataset_root_path = cfg.get("dataset_root_path", None)
-        logger.info(f"[ImageEmbeddingProcessor] dataset_root_path = '{self.dataset_root_path}'")
+        cfg = FeaturesEmbeddingsProcessorConfig.model_validate({**self.config, "name": self.name})
 
         # Storage filesystem support
         self.s3_fs = None
-        storage_cfg = cfg.get("storage")
+        storage_cfg = self.config.get("storage")
         if storage_cfg:
+            from dqm_ml_core.models.global_ import StorageConfig
             from dqm_ml_job.utils import get_s3_filesystem
 
-            if storage_cfg is True:
-                self.s3_fs = get_s3_filesystem()
-            elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
-                self.s3_fs = get_s3_filesystem(
-                    access_key=storage_cfg.get("access_key"),
-                    secret_key=storage_cfg.get("secret_key"),
-                    endpoint=storage_cfg.get("endpoint_override"),
-                    region=storage_cfg.get("region"),
-                )
+            storage_config = StorageConfig.model_validate(storage_cfg)
+            if storage_config.type == "s3":
+                self.s3_fs = get_s3_filesystem(storage_config)
 
-        infer_cfg = cfg.get("infer", {})
-        self.size: tuple[int, int] = (
-            int(infer_cfg.get("width", 224)),
-            int(infer_cfg.get("height", 224)),
-        )
-        mean = infer_cfg.get("norm_mean", [0.485, 0.456, 0.406])
-        std = infer_cfg.get("norm_std", [0.229, 0.224, 0.225])
-        self.batch_size: int = int(infer_cfg.get("batch_size", 32))
-
-        model_cfg = cfg.get("model", {})
-        self.arch: str = model_cfg.get("arch", "resnet18")
-        n_layer_feature = model_cfg.get("n_layer_feature", "avgpool")
-        self.device: str = model_cfg.get("device", "cpu")
+        self.size: tuple[int, int] = (cfg.infer.width, cfg.infer.height)
+        self.batch_size: int = cfg.infer.batch_size
+        self.arch: str = cfg.model.arch
+        n_layer_feature = cfg.model.n_layer_feature
 
         # Multi-layer support for CMD: n_layer_feature can be a list
         if isinstance(n_layer_feature, list):
@@ -134,82 +104,157 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             self.target_layer = n_layer_feature
             self._embed_dim: int | None = None
 
-        # Build once
+        # Build transform (fast, no model needed)
+        safe_std = [s if s != 0 else 1e-12 for s in cfg.infer.norm_std]
         self.transform = transforms.Compose(
             [
                 transforms.Resize(self.size),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std),
+                transforms.Normalize(mean=cfg.infer.norm_mean, std=safe_std),
             ]
         )
+
+        # Model and extractor — loaded lazily by _ensure_model_loaded()
+        self.model: Any = None
+        self.feature_extractor: Any = None
+        self.device = "cpu"
+        self._model_loaded = False
+
+    def _ensure_model_loaded(self) -> None:
+        """Load the PyTorch model and create the feature extractor.
+
+        This is deferred from ``__init__`` because:
+        - Model loading is expensive (download + GPU allocation).
+        - ``compute_device`` is injected by DatasetJob after __init__.
+        """
+        if self._model_loaded:
+            return
+        cfg = FeaturesEmbeddingsProcessorConfig.model_validate({**self.config, "name": self.name})
+        compute_device = getattr(self, "compute_device", None)
+        self.device = self._resolve_device(compute_device) if compute_device else self._resolve_device(cfg.model.device)
         self.model = self._load_model(self.arch, self.device)
         self.feature_extractor = self._make_extractor(self.model, self.target_layer)
-        self._checked = True
+        self._model_loaded = True
+
+    def check_config(self) -> None:
+        """Validate configuration and load model.
+
+        Kept for backward compatibility. Delegates to ``_ensure_model_loaded``.
+        """
+        self._ensure_model_loaded()
 
     @override
     def needed_columns(self) -> list[str]:
         """Return the list of columns required for image embedding extraction.
 
         Returns:
-            List containing the image column name.
+            List of input column names.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-        return [self.image_column]
+        return self.input_columns
+
+    def _output_column_name(self, col: str, base: str) -> str:
+        """Generate output column name with prefix and suffix.
+
+        Args:
+            col: Input column name.
+            base: Base feature name (e.g., "embedding", "emb_layer1").
+
+        Returns:
+            Fully qualified output column name with prefix and suffix applied.
+        """
+        p = self.columns_config.prefix or "" if self.columns_config else ""
+        s = self.columns_config.suffix or "" if self.columns_config else ""
+        return f"{p}{col}_{base}{s}"
 
     def generated_columns(self) -> list[str]:
         """Return the list of columns generated by this processor.
 
-        For multi-layer mode, returns one column per layer prefixed with ``emb_``.
-        For single-layer mode, returns ``['embedding']``.
+        For multi-layer mode, returns one column per layer per input column.
+        For single-layer mode, returns one embedding column per input column.
 
         Returns:
             A list of column names.
         """
-        if getattr(self, "multi_layer", False):
-            return [f"emb_{layer.replace('.', '_')}" for layer in self.target_layers]
-        return ["embedding"]
+        if not self.input_columns:
+            return []
+        cols: list[str] = []
+        for col in self.input_columns:
+            if getattr(self, "multi_layer", False):
+                for layer in self.target_layers:
+                    layer_base = f"emb_{layer.replace('.', '_')}"
+                    cols.append(self._output_column_name(col, layer_base))
+                    cols.append(self._output_column_name(col, f"{layer_base}_channels"))
+            else:
+                cols.append(self._output_column_name(col, "embedding"))
+        return cols
 
-    def _load_image_tensors(self, image_values: list[Any]) -> list[torch.Tensor | None]:
+    def _open_image(self, image_data: Any, column: str) -> Image.Image:
+        """Open a PIL Image from bytes, S3 path, or local filesystem path."""
+        if isinstance(image_data, (bytes, bytearray)):
+            return Image.open(io.BytesIO(image_data)).convert("RGB")
+        return self._open_image_from_path(image_data, column)
+
+    def _open_image_from_path(self, path: str, column: str) -> Image.Image:
+        """Open a PIL Image from an S3 or local filesystem path."""
+        prefix = self._current_image_prefix(column)
+        if prefix is not None and self.s3_fs:
+            return self._open_s3_image(prefix, path)
+        full_path = Path(prefix) / path if prefix else Path(path)
+        return Image.open(full_path).convert("RGB")
+
+    def _open_s3_image(self, prefix: str, path: str) -> Image.Image:
+        """Open a PIL Image from S3, reading into memory and copying."""
+        bucket = os.getenv("S3_BUCKET_NAME", "")
+        s3_path = f"{bucket}/{prefix}/{path}"
+        with self.s3_fs.open_input_stream(s3_path) as f:  # type: ignore[union-attr]
+            img = Image.open(io.BytesIO(f.read())).convert("RGB")
+            return img.copy()
+
+    def _handle_load_error(self, exc: Exception, idx: int) -> None:
+        """Check error config and either raise or record the failure."""
+        self._check_image_fail_fast(exc, "on_decode_failure", "on_transform_error")
+        self._failure_count += 1
+        self._total_count += 1
+        self._check_failure_rate()
+        logger.warning(f"[ImageEmbeddingProcessor] failed to load image: {exc}")
+
+    def _load_single_tensor(self, image_data: Any, column: str, idx: int) -> torch.Tensor | None:
+        """Load, transform, and return a single image tensor (or None on failure)."""
+        if image_data is None:
+            return None
+        try:
+            pil_image = self._open_image(image_data, column)
+            return self.transform(pil_image)  # type: ignore[no-any-return]
+        except Exception as e:
+            self._handle_load_error(e, idx)
+            return None
+
+    def _load_image_tensors(
+        self,
+        image_values: list[Any],
+        column: str = "",
+    ) -> list[torch.Tensor | None]:
         """Load and transform images from a list of raw image values.
 
-        Supports three modes:
-        - ``bytes``: Image stored as raw bytes.
-        - ``path`` with S3 filesystem: Image stored as a relative path on S3.
-        - ``path`` with local filesystem: Image stored as a local file path.
+        Auto-detects between bytes and path based on Python type.
 
         Args:
             image_values: List of raw image column values.
+            column: The input column name (used to resolve path prefix).
 
         Returns:
             List of preprocessed image tensors (or None for failed loads).
         """
-        image_tensors: list[torch.Tensor | None] = []
-        for image_data in image_values:
-            if image_data is None:
-                image_tensors.append(None)
-                continue
-            try:
-                if self.mode == "bytes":
-                    img = Image.open(io.BytesIO(image_data)).convert("RGB")
-                elif self.dataset_root_path is not None and self.s3_fs:
-                    s3_path = f"{self.dataset_root_path}/{image_data}"
-                    bucket_name = os.getenv("S3_BUCKET_NAME", "")
-                    with self.s3_fs.open_input_stream(f"{bucket_name}/{s3_path}") as f:
-                        img = Image.open(io.BytesIO(f.read())).convert("RGB")
-                        img = img.copy()
-                else:
-                    img_path = (
-                        Path(self.dataset_root_path) / image_data
-                        if self.dataset_root_path is not None
-                        else Path(image_data)
-                    )
-                    img = Image.open(img_path).convert("RGB")
-                image_tensors.append(self.transform(img))
-            except Exception as e:
-                logger.warning(f"[ImageEmbeddingProcessor] failed to load image: {e}")
-                image_tensors.append(None)
-        return image_tensors
+        return [self._load_single_tensor(v, column, idx) for idx, v in enumerate(image_values)]
+
+    def _current_image_prefix(self, column: str) -> str | None:
+        """Return the path prefix for the given column.
+
+        Reads from ``self.current_path_prefix``, a dict set by the job
+        mapping column names to path prefixes.
+        """
+        prefix_map: dict[str, str] = getattr(self, "current_path_prefix", {})
+        return prefix_map.get(column)
 
     @override
     def compute_features(self, batch: pa.RecordBatch, prev_features: pa.Array = None) -> dict[str, pa.Array]:
@@ -225,23 +270,39 @@ class ImageEmbeddingProcessor(DatametricProcessor):
             prev_features: Pre-computed features (not used).
 
         Returns:
-            Dictionary mapping 'embedding' to the calculated feature vectors.
+            Dictionary mapping column-prefixed embedding names to arrays.
         """
-        if not getattr(self, "_checked", False):
-            self.check_config()
-        if self.image_column not in batch.schema.names:
-            logger.warning(f"[ImageEmbeddingProcessor] missing column '{self.image_column}'")
+        self._ensure_model_loaded()
+
+        available = batch.schema.names
+        cols = resolve_include_exclude(
+            self.input_columns or None,
+            self.exclude_columns or None,
+            available,
+        )
+        if not cols:
+            logger.warning(f"[{self.name}] no input columns matched in batch")
             return {}
 
-        image_values = batch.column(self.image_column).to_pylist()
-        image_tensors = self._load_image_tensors(image_values)
+        result: dict[str, pa.Array] = {}
+        for col in cols:
+            if col not in available:
+                logger.warning(f"[ImageEmbeddingProcessor] missing column '{col}'")
+                continue
 
-        self.feature_extractor.eval()
-        with torch.no_grad():
-            if self.multi_layer:
-                result = self._compute_features_multi_layer(image_tensors)
-            else:
-                result = self._compute_features_single_layer(image_tensors)
+            image_values = batch.column(col).to_pylist()
+            image_tensors = self._load_image_tensors(image_values, column=col)
+
+            self.feature_extractor.eval()
+            with torch.no_grad():
+                if self.multi_layer:
+                    raw = self._compute_features_multi_layer(image_tensors)
+                else:
+                    raw = self._compute_features_single_layer(image_tensors)
+
+            for k, v in raw.items():
+                result[self._output_column_name(col, k)] = v
+
         return result
 
     def _build_fixed_array(self, embs: list[np.ndarray | None], embed_dim: int) -> pa.FixedSizeListArray:
@@ -254,6 +315,8 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         Returns:
             A FixedSizeListArray of float32.
         """
+        if embed_dim <= 0:
+            raise ValueError(f"embed_dim must be positive, got {embed_dim}")
         flat: list[float] = []
         for emb in embs:
             if emb is None:
@@ -285,7 +348,7 @@ class ImageEmbeddingProcessor(DatametricProcessor):
                 self._process_batch_single(batch_slice, embs)
 
         embed_dim = self._infer_embed_dim(embs)
-        if embed_dim is None:
+        if embed_dim is None or embed_dim <= 0:
             return {}
         return {"embedding": self._build_fixed_array(embs, embed_dim)}
 
@@ -544,6 +607,13 @@ class ImageEmbeddingProcessor(DatametricProcessor):
         return {}
 
     # utils functions
+    @staticmethod
+    def _resolve_device(device: str) -> str:
+        """Resolve ``"auto"`` to CUDA if available, else CPU."""
+        if device == "auto":
+            return "cuda" if torch.cuda.is_available() else "cpu"
+        return device
+
     def _load_model(self, arch: str, device: str) -> Any:
         """Load a pre-trained torchvision model.
 

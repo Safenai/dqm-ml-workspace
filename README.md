@@ -27,7 +27,7 @@
 
 
 
-## Origins - who create first the DQM-ML
+## Origins - who created DQM-ML
 
 The library was originally developed in the program:
 
@@ -79,13 +79,13 @@ Install individual packages based on your needs:
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
 * **[Project Overview](./docs/dqm-ml-overview.md)** — Package structure and development conventions
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.
-* **[Configuration Guide](./docs/configuration.md)**: How to write pipeline configuration files.
+* **[Configuration Guide](./docs/configuration/overview.md)**: How to write pipeline configuration files.
 * **[Roadmap & Limitations](./docs/ROADMAP.md)**: Known issues and planned evolutions.
 * **[Contributing](./docs/contributing.md)**: How to set up the development environment and contribute.
 
 ## What is DQM-ML?
 
-DQM-ML (Data Quality Metrics for Machine Learning) is an open-source Python library that helps you assess and quantify the quality of your datasets. Whether you're building ML models, training neural networks, or preparing data for analysis, DQM-ML provides a suite of metrics to measure data completeness, representativeness, and distribution gaps.
+DQM-ML (Data Quality Metrics for Machine Learning) is an open-source Python library that helps you assess and quantify the quality of your datasets. Whether you're building ML models, training neural networks, or preparing data for analysis, DQM-ML provides a suite of **Metrics** to measure data completeness, representativeness, and distribution gaps.
 
 Think of it as a **health check for your data** — DQM-ML checks your dataset's vital signs before you feed it to your models.
 
@@ -110,60 +110,101 @@ DQM-ML gives you concrete numbers to work with, so you can make informed decisio
 - **Easy to Use** — Simple CLI for quick checks, powerful Python API for integration
 - **Extensible** — Add your own metrics or data loaders with the plugin system
 
+> **See also:** [Formal and Core Concepts](docs/formal_concepts.md) for definitions of **Sample**, **Feature**, **Metric**, **Domain Gap**, **Embedding**, **Data Selection**, and related terminology.
+
 ## Which metrics are available
 
-Metric computed on **data selection** rely on several approches are developped as described in the figure below. and associated publications
+Metric computed on **data selection** rely on several approches as described in the figure below and associated publications
 
 <img src="docs/static/library_view.png" width="1024"/>
 
-In the current version, the available metrics are:
+In the current version, the available capabilities are grouped by interface:
 
-* Representativeness:
-  * $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
-  * Kolmogorov Smirnov test for Uniform and Normal Distributions
-  * Granular and Relative Theorithecal Entropy GRTE proposed and developed in the Confiance.ai Research Program
-* Diversity:
-  * Relative Diversity developed and implemented in Confiance.ai Research Program (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
-  * Gini-Simpson and Simposon indices (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
-* Completeness:
-  * Ratio of filled information
-* Domain Gap:
-  * MMD 
-  * CMD (only in dqm-ml legacy v1 https://github.com/IRT-SystemX/dqm-ml)
-  * Wasserstein
-  * H-Divergence
-  * FID
-  * Kullback-Leiblur MultiVariate Normal Distribution
+**Features** (per-**Sample** enrichment — adds columns that feed into **Metrics**):
 
-**Missing metrics will be integrate during the process to convert 2.0.0-rc into 2.0.0**
+- **Visual Features** — Extract image quality indicators (luminosity, contrast, blur, entropy). These **Features** can feed into tabular **Metrics** (Completeness, Representativeness, Diversity) as input columns.
+- **Embedding Features** — Generate vector **Embeddings** from images (e.g., ResNet). These **Embeddings** feed into **Domain Gap**.
+
+**Metrics** (aggregated over a **Data Selection**):
+
+- **Completeness** — Ratio of non-null values in scalar columns.
+- **Representativeness** — Statistical tests against a target distribution:
+  - $\chi^2$ Goodness of fit test for Uniform and Normal Distributions
+  - Kolmogorov Smirnov test for Uniform and Normal Distributions
+  - Granular and Relative Theoretical Entropy (GRTE)
+- **Diversity** — Category distribution spread:
+  - Simpson and Gini-Simpson indices
+  - Shannon Entropy
+  - Richness (category count)
+
+**Domain Gap** (pairwise comparison between two **Data Selections**):
+
+- **MMD** — Maximum Mean Discrepancy (Linear, RBF, and Polynomial kernels)
+- **CMD** — Central Moment Discrepancy
+- **Wasserstein** — 1D Earth Mover's Distance
+- **FID** — Fréchet Inception Distance
+- **PAD** — Proxy A-Distance
+- **KLMVN** — KL-Divergence (Multivariate Normal Distribution)
+- **H-Divergence** — (to be ported from V1)
+
+> **Note:** Relative Diversity (from V1) is not yet ported to V2.
 
 # Installation
 
 > [!IMPORTANT]
 > This current version is in release candidate so you might explicitly install version >=2.0.0rc1, installing without defining version will install legacy dqm-ml
 
-Install the DQM-ML framework with all available metrics and helpers using pip:
+Choose the method that fits your workflow:
+
+### Using uv (recommended for working with this repository)
 
 ```bash
-pip install --pre "dqm-ml[all]" 
+# Install uv if not already available
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync the development environment (creates .venv + installs all dependencies)
+uv sync
 ```
 
-Install the DQM-ML framework by passing only needed optional dependency:
+### Using pip
 
 ```bash
-pip install --pre "dqm-ml[notebooks, pytorch, job, images]" 
+pip install "dqm-ml[all]"
 ```
 
-Manually install all packages:
-> :warning: for version <v2.0.0> the dqm-ml version installed is the legacy version, you have access to the **process** command
+Select only the optional dependencies you need:
 
 ```bash
-pip install dqm-ml, dqm-ml-job, dqm-ml-pytorch, dqm-ml-images" 
+pip install "dqm-ml[notebooks, pytorch, job, images]"
 ```
+
+### Using conda
+
+```bash
+conda create -n dqm-ml python=3.12
+conda activate dqm-ml
+pip install "dqm-ml[all]"
+```
+
+> The configuration files and example scripts referenced below are part of this repository.
+> Make sure you have it cloned before running the examples.
 
 ## Execution with cli provided **dqm-ml**
 
-Run a metric processing job using a configuration file:
+> **uv users:** If you installed with `uv sync`, prefix commands below with `uv run`
+> (e.g., `uv run python examples/script/generate_data.py`).
+>
+> **pip / conda users:** Activate your environment first
+> (`source .venv/bin/activate` or `conda activate dqm-ml`),
+> then run the commands directly.
+
+Generate the example data (do this once before running the metrics):
+
+```bash
+python examples/script/generate_data.py
+```
+
+Run metric processing jobs using a configuration file:
 
 ```bash
 dqm-ml process -p examples/config/completeness.yaml
@@ -195,15 +236,15 @@ if __name__ == "__main__":
     compute_metric()
 ```
 
+this example can be found in `examples/script/completeness.py'` and executed with:
+
 ```bash
 python examples/script/completeness.py
 ```
 
-this example can be found in `examples/script/completeness.py'` and executed with
-
 ## Direct usage of metrics from your python code on data
 
-* [jupyter notebook](examples/multiple_metrics_tests_v2.ipynb)
+* [jupyter notebook](examples/notebooks/multiple_metrics_tests_v2.ipynb)
 
 ## Workspace Structure
 
@@ -223,7 +264,7 @@ DQM-ML V2 is built from dqm-ml implementation performed during the confiance.ai 
 }
 ```
 
-DQM-ML V2 is is references as an ETAIA Asset  
+DQM-ML V2 is referenced as an ETAIA Asset  
 ``` ref
 @software{etaia_2026_asset,
   title   = {dqm-ml},

@@ -39,26 +39,49 @@ class DatametricProcessor:
 
         self.name = name
         self.config = config or {}
+        self.errors_config = None  # Will be set by DatasetJob
+        # Compute config, set by DatasetJob
+        self.compute_device: str = "cpu"
+        self.compute_seed: int | None = None
+        self.current_path_prefix: dict[str, str] = {}
+        # Failure rate tracking
+        self._failure_count = 0
+        self._total_count = 0
 
-        # Validate input_columns if present
-        if "input_columns" in self.config:
-            if not isinstance(self.config["input_columns"], list):
-                raise ValueError(
-                    f"Metric {name} configuration needs 'input_columns', got {type(self.config['input_columns'])}"
-                )
-            self.input_columns = self.config["input_columns"]
-        else:
-            self.input_columns = []
+        self.input_columns: list[str] = []
+        self.exclude_columns: list[str] = []
+        if "columns" in self.config and isinstance(self.config["columns"], dict):
+            from dqm_ml_core.models.columns import ColumnsConfig
 
-        # Validate output_columns if present
-        if "output_columns" in self.config:
-            if not isinstance(self.config["output_columns"], dict):
-                raise ValueError(
-                    f"Metric {name} configuration needs 'output_columns', got {type(self.config['output_columns'])}"
+            cols_config = ColumnsConfig.model_validate(self.config["columns"])
+            if cols_config.input is not None:
+                self.input_columns = cols_config.input
+            if cols_config.exclude is not None:
+                self.exclude_columns = cols_config.exclude
+
+    def _check_failure_rate(self) -> None:
+        """Check if failure rate exceeds max_failure_rate and raise error if so."""
+        if self.errors_config and self.errors_config.max_failure_rate is not None and self._total_count > 0:
+            failure_rate = self._failure_count / self._total_count
+            if failure_rate > self.errors_config.max_failure_rate:
+                raise RuntimeError(
+                    f"Failure rate {failure_rate:.1%} exceeds max {self.errors_config.max_failure_rate:.1%}"
                 )
-            self.outputs_columns = self.config["output_columns"]
-        else:
-            self.outputs_columns = {}
+
+    def _check_image_fail_fast(self, exc: Exception, *error_attrs: str) -> None:
+        """Re-raise *exc* if any of the given image error config attributes is ``"fail_fast"``.
+
+        Args:
+            exc: The exception to re-raise.
+            error_attrs: Image error attribute names to check (e.g.
+                ``"on_transform_error"``, ``"on_unsupported_format"``).
+        """
+        if not (self.errors_config and self.errors_config.images):
+            return
+        image_errors = self.errors_config.images
+        for attr in error_attrs:
+            if getattr(image_errors, attr, None) == "fail_fast":
+                raise exc
 
     def needed_columns(self) -> list[str]:
         """
@@ -104,12 +127,26 @@ class DatametricProcessor:
         """
         features = {}
 
-        for col in self.needed_columns():
+        from dqm_ml_core.utils.matching import resolve_include_exclude
+
+        available = batch.schema.names
+        cols = resolve_include_exclude(
+            self.input_columns or None,
+            self.exclude_columns or None,
+            available,
+        )
+
+        for col in cols:
             if col in prev_features:
-                # feature already computed no need to add it again
                 continue
 
-            if col not in batch.schema.names:
+            if col not in available:
+                if (
+                    self.errors_config
+                    and self.errors_config.tabular
+                    and self.errors_config.tabular.on_missing_column == "fail_fast"
+                ):  # noqa: E501
+                    raise KeyError(f"Column '{col}' not found in batch")
                 logger.warning(f"[{self.name}] column '{col}' not found in batch")
                 continue
             features[col] = batch.column(col)
@@ -143,6 +180,15 @@ class DatametricProcessor:
             A dictionary containing the final metrics.
         """
         return {}
+
+    def reset(self) -> None:
+        """Reset per-selection state between dataselections.
+
+        Processors that cache per-selection state (e.g. histogram bin
+        edges in RepresentativenessProcessor) MUST override this to
+        clear that state.  Called by DatasetJob after each selection.
+        """
+        return
 
     def compute_delta(self, source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
         """Compare metrics between two different dataselections.

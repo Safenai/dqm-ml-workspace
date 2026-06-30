@@ -1,41 +1,34 @@
-## Example pipeline configuration with completeness metric
+# yaml-language-server: $schema=../../docs/schema/config.json
+## Completeness — check every sample for missing values
+##
+## Scenario: we have quality-score columns (brightness, contrast, etc.)
+## generated with ~5 % nulls. Completeness tells us which columns are
+## complete and flags potential data-acquisition issues.
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/completeness.yaml
+##
+## See also: docs/metrics/completeness.md
 
 ---
-config: 
 
-  # Configuration for the data loader
-  dataloaders:
-    source_dataset:
+dataloaders:
+  loaders:
+    - name: source_dataset
       type: parquet
-      path: data/large_test_2m.parquet
+      path: examples/data/large_test_2m.parquet
       batch_size: 10000
-      memory_limit: 1GB
-      threads: 2
 
-  metrics_processor:
-    completeness:
-      type: completeness
-      #Columns to analyze for completeness : take numerical and categorical columns
-      input_columns: [sample_id, blur_score, contrast, quality_score]
-      
-      # configuration options
-      include_per_column: true    # column completeness scores
-      include_overall: true       # overall dataset completeness score
-      include_metadata: true       # include meta for tests
-
-      # custom output column mappings 
-      output_metrics:
-        overall_completeness: completeness_overall
-        completeness_sample_id: completeness_sample_id
-        completeness_blur_score: completeness_blur_score 
-        completeness_contrast: completeness_contrast
-        completeness_quality_score: completeness_quality_score
-
-
+metrics:
   outputs:
-    # output dataset-level completeness metrics only
-    metrics:
-      type: parquet
-      path_pattern: tests/outputs/metrics_completeness.parquet
-      columns: []
-      compression: snappy
+    path: examples/outputs/completeness.parquet
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [sample_id, blur_score, contrast, quality_score]
+      include_per_column: true
+      include_overall: true

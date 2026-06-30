@@ -50,7 +50,7 @@ def _build_domain_gap_config(
         config_dir: Directory to write the generated config.
         metric: Domain-gap metric name.
         n_layer_feature: Layer specification for ImageEmbeddingProcessor.
-        embedding_cols: Override input.embedding_cols (for CMD multi-layer).
+        embedding_cols: Override input column list (for CMD multi-layer).
         feature_weights: Per-layer weights (CMD only).
         cmd_k: Number of moments (CMD only).
 
@@ -59,31 +59,30 @@ def _build_domain_gap_config(
     """
     infer = _INFER_PARAMS[metric]
 
+    input_cols = embedding_cols if embedding_cols is not None else ["image_bytes_embedding"]
+
     config: dict = {
-        "config": {
-            "dataloaders": {
-                "source_dataset": {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "source_dataset",
                     "type": "parquet",
                     "path": str(output_path / "source_500.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
                 },
-                "target_dataset": {
+                {
+                    "name": "target_dataset",
                     "type": "parquet",
                     "path": str(output_path / "target_500.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
                 },
-            },
-            "metrics_processor": {
-                "image_embedding": {
-                    "type": "image_embedding",
-                    "data": {
-                        "image_column": "image_path",
-                        "mode": "path",
-                    },
+            ],
+        },
+        "features": {
+            "processors": [
+                {
+                    "name": "image_embedding",
+                    "type": "features_embeddings",
                     "model": {
                         "arch": _MODEL_ARCH.get(metric, "resnet18"),
                         "n_layer_feature": n_layer_feature,
@@ -97,46 +96,36 @@ def _build_domain_gap_config(
                         "norm_std": [0.229, 0.224, 0.225],
                     },
                 },
-                "domain_gap": {
-                    "type": "domain_gap",
-                    "input": {
-                        "embedding_col": "embedding",
-                    },
-                    "summary": {
-                        "store_embeddings": True,
-                    },
-                    "delta": {
-                        "metric": metric,
-                    },
-                },
-            },
-            "compute_delta": True,
+            ],
+        },
+        "gap": {
             "outputs": {
-                "delta_metrics": {
-                    "type": "parquet",
-                    "path_pattern": str(output_path / f"metrics_benchmark_{metric}_") + "{}-{}.parquet",
-                    "columns": [],
-                },
+                "path": str(output_path / f"metrics_benchmark_{metric}_" / "{}-{}.parquet"),
             },
-        }
+            "processors": [
+                {
+                    "name": "domain_gap",
+                    "type": "domain_gap",
+                    "columns": {"input": input_cols},
+                    "distance": {"metric": metric},
+                },
+            ],
+        },
     }
-
-    # Multi-layer for CMD
-    if embedding_cols is not None:
-        config["config"]["metrics_processor"]["domain_gap"]["input"]["embedding_cols"] = embedding_cols
-        config["config"]["metrics_processor"]["domain_gap"]["input"].pop("embedding_col", None)
-    if feature_weights is not None:
-        config["config"]["metrics_processor"]["domain_gap"]["delta"]["feature_weights"] = feature_weights
-    if cmd_k is not None:
-        config["config"]["metrics_processor"]["domain_gap"]["delta"]["k"] = cmd_k
 
     # Kernel params for MMD-RBF / MMD-Poly
     if metric in _KERNEL_PARAMS:
-        config["config"]["metrics_processor"]["domain_gap"]["delta"]["kernel_params"] = _KERNEL_PARAMS[metric]
+        config["gap"]["processors"][0]["distance"]["kernel_params"] = _KERNEL_PARAMS[metric]
+
+    # Feature weights and k for CMD
+    if feature_weights is not None:
+        config["gap"]["processors"][0]["distance"]["feature_weights"] = feature_weights
+    if cmd_k is not None:
+        config["gap"]["processors"][0]["distance"]["k"] = cmd_k
 
     # PAD evaluator
     if metric == "pad":
-        config["config"]["metrics_processor"]["domain_gap"]["method"] = {"evaluator": "mse"}
+        config["gap"]["processors"][0]["distance"]["evaluator"] = "mse"
 
     # Write config
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -146,7 +135,6 @@ def _build_domain_gap_config(
     return config_path
 
 
-@pytest.mark.slow
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "metric",
@@ -193,7 +181,6 @@ def test_domain_gap_benchmark(
     print(f"[BENCHMARK] {metric} = {value}  |  time = {elapsed:.2f}s")
 
 
-@pytest.mark.slow
 @pytest.mark.timeout(600)
 def test_domain_gap_benchmark_cmd(
     test_path: str,
@@ -244,7 +231,6 @@ def test_domain_gap_benchmark_cmd(
     print(f"[BENCHMARK] cmd = {value}  |  time = {elapsed:.2f}s")
 
 
-@pytest.mark.slow
 @pytest.mark.timeout(1200)
 def test_domain_gap_benchmark_all_metrics(
     test_path: str,
@@ -275,30 +261,27 @@ def test_domain_gap_benchmark_all_metrics(
     config_dir.mkdir(parents=True, exist_ok=True)
 
     config = {
-        "config": {
-            "dataloaders": {
-                "source_dataset": {
+        "dataloaders": {
+            "loaders": [
+                {
+                    "name": "source_dataset",
                     "type": "parquet",
                     "path": str(output_path / "source_500.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
                 },
-                "target_dataset": {
+                {
+                    "name": "target_dataset",
                     "type": "parquet",
                     "path": str(output_path / "target_500.parquet"),
                     "batch_size": 50,
-                    "memory_limit": "2GB",
-                    "threads": 4,
                 },
-            },
-            "metrics_processor": {
-                "image_embedding": {
-                    "type": "image_embedding",
-                    "data": {
-                        "image_column": "image_path",
-                        "mode": "path",
-                    },
+            ],
+        },
+        "features": {
+            "processors": [
+                {
+                    "name": "image_embedding",
+                    "type": "features_embeddings",
                     "model": {
                         "arch": "resnet18",
                         "n_layer_feature": -2,
@@ -315,12 +298,9 @@ def test_domain_gap_benchmark_all_metrics(
                 # Second ImageEmbeddingProcessor for CMD multi-layer features.
                 # CMD needs 5 ResNet-18 layer columns; the shared processor only
                 # produces a single avgpool embedding for other metrics.
-                "image_embedding_cmd": {
-                    "type": "image_embedding",
-                    "data": {
-                        "image_column": "image_path",
-                        "mode": "path",
-                    },
+                {
+                    "name": "image_embedding_cmd",
+                    "type": "features_embeddings",
                     "model": {
                         "arch": "resnet18",
                         "n_layer_feature": [
@@ -340,16 +320,14 @@ def test_domain_gap_benchmark_all_metrics(
                         "norm_std": [0.229, 0.224, 0.225],
                     },
                 },
-            },
-            "compute_delta": True,
+            ],
+        },
+        "gap": {
             "outputs": {
-                "delta_metrics": {
-                    "type": "parquet",
-                    "path_pattern": str(output_path / "metrics_benchmark_all.parquet"),
-                    "columns": [],
-                },
+                "path": str(output_path / "metrics_benchmark_all.parquet"),
             },
-        }
+            "processors": [],
+        },
     }
 
     # We'll add a domain_gap processor for each metric
@@ -366,26 +344,18 @@ def test_domain_gap_benchmark_all_metrics(
 
     for _i, metric in enumerate(metrics):
         # Use a unique name for each domain_gap processor
-        processor_name = f"domain_gap_{metric}"
-        config["config"]["metrics_processor"][processor_name] = {
+        proc = {
+            "name": f"domain_gap_{metric}",
             "type": "domain_gap",
-            "input": {
-                "embedding_col": "embedding",
-            },
-            "summary": {
-                # We'll set store_embeddings based on the metric
-                "store_embeddings": metric in {"mmd_rbf", "mmd_poly", "pad", "cmd"},
-            },
-            "delta": {
-                "metric": metric,
-            },
+            "columns": {"input": ["embedding"]},
+            "distance": {"metric": metric},
         }
         # Add kernel parameters if needed
         if metric in _KERNEL_PARAMS:
-            config["config"]["metrics_processor"][processor_name]["delta"]["kernel_params"] = _KERNEL_PARAMS[metric]
+            proc["distance"]["kernel_params"] = _KERNEL_PARAMS[metric]
         # Add CMD-specific parameters
         if metric == "cmd":
-            # We need to specify the embedding_cols for CMD (multi-layer)
+            # We need to specify the input columns for CMD (multi-layer)
             # We'll use the same five layers as in the individual CMD benchmark
             layers = [
                 "maxpool",
@@ -395,19 +365,13 @@ def test_domain_gap_benchmark_all_metrics(
                 "layer4.1.relu_1",
             ]
             emb_cols = [f"emb_{layer.replace('.', '_')}" for layer in layers]
-            config["config"]["metrics_processor"][processor_name]["input"]["embedding_cols"] = emb_cols
-            config["config"]["metrics_processor"][processor_name]["input"].pop("embedding_col", None)
-            config["config"]["metrics_processor"][processor_name]["delta"]["feature_weights"] = [
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-            ]
-            config["config"]["metrics_processor"][processor_name]["delta"]["k"] = 5
+            proc["columns"]["input"] = emb_cols
+            proc["distance"]["feature_weights"] = [1.0, 1.0, 1.0, 1.0, 1.0]
+            proc["distance"]["k"] = 5
         # Add PAD evaluator
         if metric == "pad":
-            config["config"]["metrics_processor"][processor_name]["method"] = {"evaluator": "mse"}
+            proc["distance"]["evaluator"] = "mse"
+        config["gap"]["processors"].append(proc)
 
     # Write the config
     config_path = config_dir / "benchmark_all_metrics.yaml"

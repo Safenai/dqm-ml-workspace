@@ -20,11 +20,45 @@ def update_readme_relative_links():
         f.write(updated_md)
 
 
-def copy_example():
-    Path("docs/examples").mkdir(exist_ok=True)
+def copy_examples():
+    src_root = Path("examples")
+    dst_root = Path("docs/examples")
+    dst_root.mkdir(exist_ok=True)
+
+    # Copy overview.md from root
+    overview = src_root / "overview.md"
+    if overview.exists():
+        shutil.copy(overview, dst_root / "overview.md")
+
+    # Copy scenario markdowns
+    scenario_src = src_root / "scenario"
+    if scenario_src.exists():
+        scenario_dst = dst_root / "scenario"
+        scenario_dst.mkdir(exist_ok=True)
+        for md_file in scenario_src.glob("*.md"):
+            shutil.copy(md_file, scenario_dst / md_file.name)
+
+    # Copy notebooks
+    notebooks_src = src_root / "notebooks"
+    if notebooks_src.exists():
+        notebooks_dst = dst_root / "notebooks"
+        notebooks_dst.mkdir(exist_ok=True)
+        for nb_file in notebooks_src.glob("*.ipynb"):
+            shutil.copy(nb_file, notebooks_dst / nb_file.name)
+
+    # Copy configs
+    config_dst = dst_root / "config"
+    config_dst.mkdir(exist_ok=True)
+    for yaml_file in (src_root / "config").glob("*.yaml"):
+        if yaml_file.name != "config_v2.yaml":
+            shutil.copy(yaml_file, config_dst / yaml_file.name)
+
+    # Copy scripts
+    script_dst = dst_root / "script"
+    script_dst.mkdir(exist_ok=True)
     shutil.copy(
-        "examples/multiple_metrics_tests_v2.ipynb",
-        "docs/examples/multiple_metrics_tests_v2.ipynb",
+        src_root / "script" / "completeness.py",
+        script_dst / "completeness.py",
     )
 
 
@@ -76,8 +110,51 @@ def add_repository_link():
             f.write(updated_md)
 
 
+def fix_example_links():
+    """Rewrite relative links in copied examples so they work under docs/examples/.
+
+    Source examples/ files use ../docs/... or ../../docs/... links that work
+    locally and on GitHub/GitLab. After being copied to docs/examples/, the
+    links need adjusting based on directory depth:
+      - docs/examples/ (depth 0):  ../docs/metrics/  -> ../metrics/
+      - docs/examples/scenario/ (depth 1): ../../docs/metrics/ -> ../../metrics/
+    """
+    examples_dir = Path("docs/examples")
+    for md_file in examples_dir.rglob("*.md"):
+        rel = md_file.relative_to(examples_dir)
+        depth = len(rel.parent.parts)
+
+        with md_file.open() as f:
+            md = f.read()
+
+        if depth == 0:
+            updated_md = md.replace("../docs/metrics/", "../metrics/")
+        elif depth == 1:
+            updated_md = md.replace("../../docs/metrics/", "../../metrics/")
+        else:
+            updated_md = md
+
+        if updated_md != md:
+            with md_file.open("w") as f:
+                f.write(updated_md)
+
+
+def page_markdown(markdown, page, config, files):
+    """Rewrite ../examples/ links to examples/ for mkdocs.
+
+    Source docs/configuration.md uses ../examples/... links that work
+    locally and on GitHub/GitLab (pointing to examples/ at repo root).
+    On mkdocs the examples are at docs/examples/, so rewrite the links
+    to examples/... (without the ../ prefix) at build time.
+    """
+    if page.file.src_path == "configuration.md":
+        markdown = markdown.replace("../examples/", "examples/")
+    return markdown
+
+
 def pre_build(*args, **kwargs):
-    copy_example()
+    copy_examples()
+    fix_example_links()
     copy_readme()
     add_repository_link()
     copy_package_readmes()

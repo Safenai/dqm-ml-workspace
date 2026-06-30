@@ -2,6 +2,8 @@
 
 This page is for developers who want to understand how DQM-ML is structured and how to work with the codebase. For a general introduction to what DQM-ML does, check out the [Home](index.md) page.
 
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Metric**, **Batch Metric**, **Data Selection**, **Processor**, and related terminology used throughout this page.
+
 ## Package Architecture
 
 The project is organized as a Python monorepo using [uv workspace](https://github.com/astral-sh/uv).
@@ -97,7 +99,7 @@ If you want to add a new metric (awesome!), here's how it works:
 
 ### The Metric Processor Pattern
 
-All metrics inherit from `DatametricProcessor` and implement these methods:
+All **Metrics** inherit from `DatametricProcessor` and implement these methods:
 
 ```mermaid
 flowchart TB
@@ -117,8 +119,8 @@ flowchart TB
 
 Data loaders work in two tiers:
 
-1. **`DataLoader`**: Factory that discovers what data is available
-2. **`DataSelection`**: Handles iterating through a specific data subset in batches
+1. **`DataLoader`**: Factory that discovers what **Data Selections** are available
+2. **`DataSelection`**: Handles iterating through a specific **Data Selection** in **Batches**
 
 ## Coding Standards
 
