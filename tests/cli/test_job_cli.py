@@ -20,7 +20,12 @@ test_cases = [
 
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
-def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output: str) -> None:
+def test_main(
+    ensure_example_data: None,
+    capsys: pytest.CaptureFixture[str],
+    command: str,
+    expected_output: str,
+) -> None:
     """Test that the CLI execute function runs without errors."""
     # Create output dir if it doesn't exist
     path = Path("tests/outputs/data")
@@ -32,7 +37,7 @@ def test_main(capsys: pytest.CaptureFixture[str], command: str, expected_output:
 
 
 @pytest.mark.parametrize(("command", "expected_output"), test_cases)
-def test_app(command: str, expected_output: str) -> None:
+def test_app(ensure_example_data: None, command: str, expected_output: str) -> None:
     """Test that the CLI can be invoked as a subprocess."""
     full_command = ["python", "hello.py"] + shlex.split(command)
     result = subprocess.run(full_command, capture_output=True, text=True)

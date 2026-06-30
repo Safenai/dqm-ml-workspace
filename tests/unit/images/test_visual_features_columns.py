@@ -278,4 +278,4 @@ class TestVisualFeaturesExtremeValues:
         """Verify _to_float01 returns zeros for constant input image."""
         gray = np.full((4, 4), 100, dtype=np.uint8)
         result = VisualFeaturesProcessor._to_float01(gray)
-        assert (result == pytest.approx(0.0)).all()
+        assert np.allclose(result, 0.0, atol=1e-8)
