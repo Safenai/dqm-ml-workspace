@@ -1,3 +1,5 @@
+# Workspace meta-package that ties together the dqm-ml sub-packages (core, images,
+# job, pytorch) and defines shared dev tooling, dependency groups, and CI tasks.
 [project]
 name = "dqm-workspace"
 dynamic = ["version"]
@@ -19,18 +21,20 @@ Homepage = "https://github.com/Safenai/dqm-ml-workspace"
 Documentation = "https://safenai.github.io/dqm-ml-workspace"
 Repository = "https://github.com/Safenai/dqm-ml-workspace"
 
+# Build with setuptools; version is derived dynamically from git tags via setuptools-scm.
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
 build-backend = "setuptools.build_meta"
 
+# Discover packages under the src/ directory (src-layout convention).
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Auto-generate the version file from the latest git tag.
 [tool.setuptools_scm]
 version_file = "src/dqm_ml_workspace/_version_.py"
 
-# UV Configuration workspace
-# - dependency groups, repository packages to includes, etc.
+# UV workspace: configure member packages and how they resolve each other.
 [tool.uv.sources]
 dqm-ml-core = { workspace = true }
 dqm-ml-job = { workspace = true }
@@ -38,19 +42,23 @@ dqm-ml-images = { workspace = true }
 dqm-ml-pytorch = { workspace = true }
 dqm-ml = { workspace = true }
 
+# Groups installed by default when running `uv sync` (dev essentials).
 [tool.uv]
 default-groups = ["nox", "lint", "type_check"]
 
+# All packages inside packages/ are part of this monorepo workspace.
 [tool.uv.workspace]
 members = ["packages/*"]
 
 # Dependency groups of the workspace depending actions performed in the workspace
 [dependency-groups]
 
+# Session runner for all CI/dev tasks defined in noxfile.py.
 nox = [
     "nox-uv",
 ]
 
+# Run tests with pytest, coverage, and reporting plugins.
 test = [
     "pytest",
     "pytest-cov",
@@ -72,10 +80,12 @@ type_check = [
     "types-PyYAML",
 ]
 
+# Lint and auto-format Python code.
 lint = [
     "ruff",
 ]
 
+# Spell-check source and documentation files.
 spell = [
     "cspell"
 ]
@@ -96,10 +106,12 @@ docs = [
     "mkdocs-mermaid2-plugin"
 ]
 
+# Report third-party package licenses.
 licenses = [
     "pip-licenses-cli",
 ]
 
+# Measure code complexity (cyclomatic, cognitive).
 complexity = [
     "complexipy>=5.5.0",
 ]
@@ -107,6 +119,8 @@ complexity = [
 ####################################################################################
 # Dev tools configurations
 
+# Type checking: strict mode with extra error codes; overrides below handle
+# untyped third-party sub-packages that we don't control.
 [tool.mypy]
 ignore_missing_imports = true
 strict = true
@@ -131,6 +145,8 @@ src = ["src", "packages", "tests"]
 # To exclude additional folders, use extend-exclude.
 extend-exclude = ["examples/*.ipynb", "examples/script/"]
 
+# Ruleset: correctness (F, B), style (E, N), modernisation (UP), safety (SIM, PIE),
+# pytest idioms (PT), pathlib usage (PTH), and import hygiene (I, TID, ISC).
 [tool.ruff.lint]
 select = [
     "F", # pyflakes
@@ -149,10 +165,10 @@ select = [
     "TID", # flake8-tidy-imports
 ]
 extend-ignore = [
-    "RUF005",
-    "RUF100",
-    "RUF012",
-    "I001"
+    "RUF005",  # Allow `list + [item]` over `[*list, item]` when clearer
+    "RUF100",  # Permit unused noqa directives during development
+    "RUF012",  # Allow mutable default values (e.g. `x=[]`) where practical
+    "I001",    # Handled by formatter; skip lint-level sorting check
 ]
 unfixable = [
     # Disable removing unused imports by default and only enable within nox so editors don't delete
@@ -160,6 +176,7 @@ unfixable = [
     "F401",
 ]
 
+# Sort imports within each section; don't force trailing commas for multi-line imports.
 [tool.ruff.lint.isort]
 force-sort-within-sections = true
 split-on-trailing-comma = false
@@ -199,11 +216,12 @@ markers = [
     "slow: Marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
+# Measure branch coverage in addition to line coverage.
 [tool.coverage.run]
 branch = true
 
-# To globally exclude additional code blocks from code coverage reporting, see:
-# https://coverage.readthedocs.io/en/latest/excluding.html#advanced-exclusion
+# Patterns to exclude from coverage reporting (e.g. unreachable branches, TYPE_CHECKING blocks).
+# See: https://coverage.readthedocs.io/en/latest/excluding.html#advanced-exclusion
 [tool.coverage.report]
 exclude_also = [
     "case _ as unreachable",
@@ -212,5 +230,6 @@ exclude_also = [
     "@abstractmethod",
 ]
 
+# Spell-check all tracked files in the repository.
 [tool.cspell]
 files = ["**/*"]

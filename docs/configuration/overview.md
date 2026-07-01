@@ -2,21 +2,6 @@
 
 DQM-ML pipelines are configured using **YAML** files. This guide explains how to write configuration files that tell DQM-ML where to find data, which metrics to compute, and where to save results.
 
-> **See also:** [Concepts](../formal_concepts.md) for definitions of **Sample**, **Feature**, **Metric**, **Batch**, and related terminology used throughout this page.
-
-## Quick Links
-
-- [Formal and Core Concepts](../formal_concepts.md) for definitions of **Sample**, **Metric**, **Data Selection**, **Batch**, and related terminology.
-- [YAML Basics](../yaml_basics.md) — Quick reference for YAML syntax
-- [Data Selection](data_selection.md) — Detailed data source configuration
-- [Interfaces](interfaces.md) — Interface configuration and outputs
-- [Processors](processors.md) — Common processor structure and columns
-- [Features](features.md) — Features processors
-- [Metrics](metrics.md) — Metrics processors
-- [Gap](gap.md) — Gap processors
-- [Global Configuration](global.md) — Storage, compute, and error settings
-- [CLI Reference](../cli.md) — Command-line interface
-
 ## Configuration Structure Overview
 
 ```mermaid
@@ -52,6 +37,14 @@ Configuration has 4 main sections, documented here in order of concern:
 
 The pipeline execution order is different from the authoring order: data loaders feed batches into each interface's processors. The sections below are ordered by **what you need to decide first** when writing a config.
 
+- [Interfaces](interfaces.md) — Interface configuration and outputs
+- [Processors](processors.md) — Common processor structure and columns
+- [Features](features.md) — Features processors
+- [Metrics](metrics.md) — Metrics processors
+- [Gap](gap.md) — Gap processors
+- [Data Selection](data_selection.md) — Detailed data source configuration
+- [Global Configuration](global.md) — Storage, compute, and error settings
+
 > **Tip:** For a complete working example with every section populated, see `examples/config/config_v2.yaml`.
 
 ## Schema Validation
@@ -63,3 +56,9 @@ The configuration follows a [JSON Schema](../schema/config.json) defined at `doc
 
 your_key: value
 ```
+
+## Quick Links
+
+- [CLI Reference](../cli.md) — Command-line interface
+- [YAML Basics](../yaml_basics.md) — Quick reference for YAML syntax
+- [Formal and Core Concepts](../formal_concepts.md) for definitions of **Sample**, **Metric**, **Data Selection**, **Batch**, and related terminology.

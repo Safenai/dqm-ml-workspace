@@ -66,15 +66,50 @@ uv run pre-commit install
 Before submitting a PR, please ensure all checks pass:
 
 ```bash
-# Run all quality checks
-uv run nox
+mise code_quality   # Lint (ruff) + type check (pyright)
+mise spell          # Spell check (cspell)
+mise test           # Test with coverage
+mise complexity     # Code complexity (complexipy, max McCabe 15)
+mise mkdocs_offline
+```
 
-# Or run individual checks:
-uv run nox -s test       # Run tests
-uv run nox -s lint       # Check code style
-uv run nox -s lint_fix   # Auto-fix style issues
-uv run nox -s type_check # Type checking
-uv run nox -s docs       # Build documentation
+All checks run via [mise](https://mise.jdx.dev/).
+Tasks are defined in `.mise.toml`.
+
+You can select tests with pytest options:
+
+```bash
+mise test_custom -- <args>   # Run specific tests with custom args
+# Example to run only 1 test
+mise test_custom -- -k test_representativeness
+```
+
+### Spell check
+
+**Prerequisite** &mdash; `cspell` depends on the `hunspell` C extension:
+
+```bash
+sudo apt install libhunspell-dev
+```
+
+Then run:
+
+```bash
+mise spell
+```
+
+### Complexity
+
+Uses [complexipy](https://pypi.org/project/complexipy/) to enforce max McCabe complexity of 15 across `packages/`:
+
+```bash
+mise complexity
+```
+
+And tests complexity:
+
+```bash
+mise test_complexity
 ```
 
 ## Adding a New Metric
@@ -375,9 +410,6 @@ After running tests, reports are generated:
 |--------|----------|-------------|
 | Coverage HTML | `docs/reports/htmlcov/index.html` | Line-by-line coverage |
 | Test Results HTML | `docs/reports/pytest/pytest_report.html` | Test execution report |
-| Live Coverage | [GitHub Pages](https://safenai.github.io/dqm-ml-workspace/reports/htmlcov/) | Published coverage |
-
-> **Tip**: Build the docs to generate these reports: `uv run nox -s docs_offline`
 
 ### CI/CD Testing
 

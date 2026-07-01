@@ -11,6 +11,8 @@ options.sessions = ["lint", "spell", "test", "type_check"]
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
+    """Run core unit tests and CLI tests across Python
+    3.10-3.13 to verify cross-version compatibility."""
     s.run(
         "pytest",
         "tests/unit/core",
@@ -29,6 +31,8 @@ def compatibility(s: Session) -> None:
     uv_groups=["test"],
 )
 def test(s: Session) -> None:
+    """Run full test suite (unit, integration, CLI)
+    with coverage reporting for all 5 packages. Fails if coverage < 90%."""
     s.run(
         "pytest",
         "--cov=packages/dqm-ml-job/src",
@@ -53,6 +57,7 @@ def test(s: Session) -> None:
     uv_groups=["test"],
 )
 def test_custom(s: Session) -> None:
+    """Run pytest with arbitrary positional arguments — passthrough for ad-hoc test execution."""
     s.run(
         "pytest",
         *s.posargs,
@@ -64,6 +69,7 @@ def test_custom(s: Session) -> None:
     uv_groups=["test"],
 )
 def benchmark(s: Session) -> None:
+    """Run performance benchmark tests from tests/benchmark."""
     s.run(
         "pytest",
         "tests/benchmark",
@@ -109,11 +115,13 @@ def benchmark(s: Session) -> None:
     ],
 )
 def fmt(s: Session, command: list[str]) -> None:
+    """Auto-format code: (1) sort imports (I, F401), (2) format via ruff. Runs in the outer venv for speed."""
     s.run(*command)
 
 
 @session(uv_groups=["lint"])
 def lint(s: Session) -> None:
+    """Check code quality — ruff lint + format --check on packages and tests (read-only, no fixes)."""
     s.run("ruff", "check", "packages")
     s.run("ruff", "format", "--check", "packages")
     s.run("ruff", "check", "tests")
@@ -122,49 +130,11 @@ def lint(s: Session) -> None:
 
 @session(venv_backend="none")
 def lint_fix(s: Session) -> None:
+    """Auto-remove unused imports (F401) in packages and tests using ruff --fix. Runs in the outer venv."""
     s.run(
         "ruff",
         "check",
-        "packages/dqm-ml-job",
-        "--extend-fixable",
-        "F401",
-        "--fix",
-    )
-    s.run(
-        "ruff",
-        "check",
-        "packages/dqm-ml-core",
-        "--extend-fixable",
-        "F401",
-        "--fix",
-    )
-    s.run(
-        "ruff",
-        "check",
-        "packages/dqm-ml-images",
-        "--extend-fixable",
-        "F401",
-        "--fix",
-    )
-    s.run(
-        "ruff",
-        "check",
-        "packages/dqm-ml-pytorch",
-        "--extend-fixable",
-        "F401",
-        "--fix",
-    )
-    s.run(
-        "ruff",
-        "check",
-        "packages/dqm-ml",
-        "--extend-fixable",
-        "F401",
-        "--fix",
-    )
-    s.run(
-        "ruff",
-        "check",
+        "packages",
         "tests",
         "--extend-fixable",
         "F401",
@@ -174,6 +144,7 @@ def lint_fix(s: Session) -> None:
 
 @session(uv_groups=["type_check"])
 def type_check(s: Session) -> None:
+    """Run mypy static type checking on all 5 sub-packages."""
     s.run("mypy", "packages/dqm-ml-job")
     s.run("mypy", "packages/dqm-ml-core")
     s.run("mypy", "packages/dqm-ml-images")
@@ -190,6 +161,7 @@ doc_env = {"PYTHONPATH": "packages"}
     uv_groups=["docs"],
 )
 def docs(s: Session) -> None:
+    """Build mkdocs documentation site in strict mode (warnings become errors)."""
     s.run(
         "mkdocs",
         "build",
@@ -203,6 +175,7 @@ def docs(s: Session) -> None:
     uv_groups=["docs"],
 )
 def docs_serve(s: Session) -> None:
+    """Serve mkdocs documentation locally for development preview."""
     s.run(
         "mkdocs",
         "serve",
@@ -215,6 +188,7 @@ def docs_serve(s: Session) -> None:
     uv_groups=["docs"],
 )
 def docs_offline(s: Session) -> None:
+    """Build docs in non-strict mode with MKDOCS_MATERIAL_OFFLINE for offline/material distribution."""
     s.run(
         "mkdocs",
         "build",
@@ -228,6 +202,7 @@ def docs_offline(s: Session) -> None:
     uv_groups=["docs"],
 )
 def docs_gitlab_pages(s: Session) -> None:
+    """Build mkdocs site into public/ directory for GitLab Pages deployment."""
     s.run(
         "mkdocs",
         "build",
@@ -242,25 +217,30 @@ def docs_gitlab_pages(s: Session) -> None:
     uv_groups=["docs"],
 )
 def docs_github_pages(s: Session) -> None:
+    """Deploy mkdocs site to GitHub Pages via gh-deploy."""
     s.run("mkdocs", "gh-deploy", "--force", env=doc_env)
 
 
 # Install only main dependencies for the license report.
 @session(uv_groups=["licenses"], uv_no_install_project=True)
 def licenses(s: Session) -> None:
+    """Generate a third-party license report via pip-licenses. Installs only main dependencies."""
     s.run("pip-licenses", *s.posargs)
 
 
 @session(uv_groups=["complexity"])
 def complexity(s: Session) -> None:
+    """Check cyclomatic complexity of source code (packages/). Fails if any function exceeds 15."""
     s.run("complexipy", "packages", "--max-complexity-allowed", "15")
 
 
 @session(uv_groups=["complexity"])
 def test_complexity(s: Session) -> None:
+    """Check cyclomatic complexity of test code (tests/). Fails if any function exceeds 15."""
     s.run("complexipy", "tests", "--max-complexity-allowed", "15")
 
 
 @session(uv_groups=["spell"])
 def spell(s: Session) -> None:
+    """Spell-check the entire repository using cspell."""
     s.run("cspell", "lint", ".", *s.posargs)

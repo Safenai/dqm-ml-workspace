@@ -7,8 +7,8 @@
 ![Repo Size][size-badge]
 
 [![CI][github-actions-badge]](https://github.com/Safenai/dqm-ml-workspace/actions)
-[![Ruff][ruff-badge]](https://github.com/astral-sh/ruff)
-[![uv][uv-badge]](https://github.com/astral-sh/uv)
+[![Ruff][ruff-badge]](https://docs.astral.sh/ruff/)
+[![uv][uv-badge]](https://docs.astral.sh/uv/)
 [![Nox][nox-badge]](https://nox.thea.codes/en/stable/)
 [![Checked with mypy][mypy-badge]](https://mypy-lang.org/)
 
@@ -48,7 +48,7 @@ For more technical and scientific details, refer to:
 
 - **[HAL Publication](https://hal.science/hal-04719346v1)** — Academic paper describing the methodology
 - **[ETAIA Asset](https://catalog.trustworthy-ai-association.eu/records/968fj-fk177)**
-- **[Scientific Deliverable](https://catalog.confiance.ai/records/p46p6-1wt83/files/Scientific_Contribution_For_Data_quality_assessment_metrics_for_Machine_learning_process-v2.pdf)** — Detailed technical documentation
+- **[Scientific Deliverable](https://catalog.trustworthy-ai-association.eu/records/691nt-76a55)** — Detailed technical documentation
 - **[Why creating DQM-ML-V2](./docs/dqm-ml-v2.md)** — Evolution need in dqm-ml
 
 
@@ -145,18 +145,20 @@ In the current version, the available capabilities are grouped by interface:
 - **FID** — Fréchet Inception Distance
 - **PAD** — Proxy A-Distance
 - **KLMVN** — KL-Divergence (Multivariate Normal Distribution)
-- **H-Divergence** — (to be ported from V1)
-
-> **Note:** Relative Diversity (from V1) is not yet ported to V2.
 
 # Installation
 
-> [!IMPORTANT]
-> This current version is in release candidate so you might explicitly install version >=2.0.0rc1, installing without defining version will install legacy dqm-ml
-
 Choose the method that fits your workflow:
 
-### Using uv (recommended for working with this repository)
+### Using uv
+
+Recommended for working with this repository
+
+```bash
+# Clone the repo
+git clone https://github.com/Safenai/dqm-ml-workspace.git
+cd dqm-ml-workspace
+```
 
 ```bash
 # Install uv if not already available
@@ -167,6 +169,8 @@ uv sync
 ```
 
 ### Using pip
+
+Recommended for testing or using the libs in a [virtual environment](https://docs.python.org/3.12/library/venv.html)
 
 ```bash
 pip install "dqm-ml[all]"

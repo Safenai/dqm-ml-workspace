@@ -149,10 +149,18 @@ key: value
 ## Tools for Writing YAML
 
 - [YAML Validator](https://www.yamllint.com/) - Check syntax
-- [YAML to JSON](https://www.convertjson.com/yaml-to-json.php) - Convert between formats
+- Visual Studio Code: extension YAML by Red Hat
+
+## Yaml validation
+
+Add on top of your configuration:
+```yaml
+# yaml-language-server: $schema=docs/schema/config.json
+```
+
+You might need to update the link to the schema, relative to your configuration file, or absolute.
 
 ## Related Pages
 
 - [Configuration](configuration/overview.md) - Full configuration guide
-- [Data Selection](configuration/data_selection.md) - Data source configuration
 - [CLI Reference](cli.md) - Command-line usage
