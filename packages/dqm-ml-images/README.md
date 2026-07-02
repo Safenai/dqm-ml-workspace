@@ -8,7 +8,7 @@ Image feature extraction package for DQM-ML V2. Provides metrics for assessing i
 pip install dqm-ml-images
 ```
 
-> **Note:** `dqm-ml-images` provides metric processors only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-images` provides **Features Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Usage
 

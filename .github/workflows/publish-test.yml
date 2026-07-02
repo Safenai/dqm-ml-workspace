@@ -1,4 +1,4 @@
-name: Publish
+name: Publish (Test PyPI)
 
 on:
   push:
@@ -10,29 +10,29 @@ permissions:
   id-token: write
 
 jobs:
-  check-main:
+  check-dev:
     runs-on: ubuntu-24.04
     outputs:
-      is_on_main: ${{ steps.check.outputs.is_on_main }}
+      is_on_dev: ${{ steps.check.outputs.is_on_dev }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Check if tag commit is on main
+      - name: Check if tag commit is on dev
         id: check
         run: |
-          git fetch origin +refs/heads/main:refs/remotes/origin/main --depth=1
-          if git merge-base --is-ancestor "${{ github.sha }}" origin/main; then
-            echo "is_on_main=true" >> "$GITHUB_OUTPUT"
+          git fetch origin +refs/heads/dev:refs/remotes/origin/dev --depth=1
+          if git merge-base --is-ancestor "${{ github.sha }}" origin/dev; then
+            echo "is_on_dev=true" >> "$GITHUB_OUTPUT"
           else
-            echo "is_on_main=false" >> "$GITHUB_OUTPUT"
+            echo "is_on_dev=false" >> "$GITHUB_OUTPUT"
           fi
 
-  publish-pypi:
-    needs: check-main
-    if: needs.check-main.outputs.is_on_main == 'true'
+  publish-test-pypi:
+    needs: check-dev
+    if: needs.check-dev.outputs.is_on_dev == 'true'
     runs-on: ubuntu-24.04
-    environment: release
+    environment: test-pypi
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,16 +59,16 @@ jobs:
           uv build packages/dqm-ml
 
       - name: Publish dqm-ml-core
-        run: uv publish packages/dqm-ml-core/dist/*
+        run: uv publish packages/dqm-ml-core/dist/* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-images
-        run: uv publish packages/dqm-ml-images/dist/*
+        run: uv publish packages/dqm-ml-images/dist/* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-job
-        run: uv publish packages/dqm-ml-job/dist/*
+        run: uv publish packages/dqm-ml-job/dist/* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-pytorch
-        run: uv publish packages/dqm-ml-pytorch/dist/*
+        run: uv publish packages/dqm-ml-pytorch/dist/* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml
-        run: uv publish packages/dqm-ml/dist/*
+        run: uv publish packages/dqm-ml/dist/* --publish-url https://test.pypi.org/legacy/

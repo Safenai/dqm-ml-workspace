@@ -92,6 +92,21 @@ class ParquetOutputWriter:
                 metrics_table[metric_name] = col
         self.write_table("", metrics_table)
 
+    def _format_filename(self, path_pattern: str, part: int | None = None) -> str:
+        """Format the output filename from the path pattern and optional part."""
+        if part is None:
+            return self.path_pattern.format(path_pattern, "")
+        return self.path_pattern.format(path_pattern, part)
+
+    def _write_local(self, table: pa.Table, filename: str) -> None:
+        """Write a table to a local file, creating the parent directory if needed."""
+        output_dir = Path(filename).parent
+        if not Path.exists(output_dir):
+            logger.info(f"Creating output directory: {output_dir}")
+            Path.mkdir(output_dir, parents=True, exist_ok=True)
+        pq.write_table(table, filename)
+        logger.info(f"Wrote output table to {filename}")
+
     def write_table(
         self,
         path_pattern: str,
@@ -122,21 +137,11 @@ class ParquetOutputWriter:
             return
 
         table = pa.table(features_array)
-        if part is None:
-            filename = self.path_pattern.format(path_pattern, "")
-        else:
-            filename = self.path_pattern.format(path_pattern, part)
-
+        filename = self._format_filename(path_pattern, part)
         if self.s3_filesystem is not None:
             self._write_to_s3(table, filename)
         else:
-            output_dir = Path(filename).parent
-            if not Path.exists(output_dir):
-                logger.info(f"Creating output directory: {output_dir}")
-                Path.mkdir(output_dir, parents=True, exist_ok=True)
-
-            pq.write_table(table, filename)
-            logger.info(f"Wrote output table to {filename}")
+            self._write_local(table, filename)
 
     def flush(self) -> None:
         """Write all accumulated features to the output file.
@@ -157,12 +162,7 @@ class ParquetOutputWriter:
             pq.write_table(table, s3_path, filesystem=self.s3_filesystem)
             logger.info(f"Wrote accumulated output table to S3: {s3_path}")
         else:
-            output_dir = Path(filename).parent
-            if not Path.exists(output_dir):
-                logger.info(f"Creating output directory: {output_dir}")
-                Path.mkdir(output_dir, parents=True, exist_ok=True)
-            pq.write_table(table, filename)
-            logger.info(f"Wrote accumulated output table to {filename}")
+            self._write_local(table, filename)
 
         self._accumulated_features.clear()
 

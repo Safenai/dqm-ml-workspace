@@ -14,13 +14,13 @@ import pyarrow as pa
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.models.processors import CompletenessProcessorConfig
 
 logger = logging.getLogger(__name__)
 
 
-class CompletenessProcessor(DatametricProcessor):
+class CompletenessProcessor(MetricsProcessor):
     """
     Data completeness processor that evaluates the completeness of tabular data.
 
@@ -73,14 +73,14 @@ class CompletenessProcessor(DatametricProcessor):
             metrics.append(overall_key)
 
         if self.include_per_column:
-            for col in self.input_columns:
+            for col in self.input_columns or []:
                 col_key = self.output_metrics.get(f"completeness_{col}", f"completeness_{col}")
                 metrics.append(col_key)
 
         return metrics
 
     @override
-    def compute_features(
+    def extract_columns(
         self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array] | None = None
     ) -> dict[str, pa.Array]:
         """

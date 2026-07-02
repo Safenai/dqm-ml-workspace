@@ -7,7 +7,7 @@ functionality for metrics, dataloaders, and output writers.
 from importlib.metadata import EntryPoint
 from unittest.mock import MagicMock, patch
 
-from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.utils.registry import PluginLoadedRegistry, load_registered_plugins
 
 
@@ -21,7 +21,7 @@ class TestLoadRegisteredPlugins:
     def test_old_python_version(self):
         """Verify load_registered_plugins returns empty dict on TypeError (old Python)."""
         with patch("dqm_ml_core.utils.registry.entry_points", side_effect=TypeError("old version")):
-            result = load_registered_plugins("dqm_ml.metrics", DatametricProcessor)
+            result = load_registered_plugins("dqm_ml.metrics", MetricsProcessor)
         assert result == {}
 
     def test_entry_point_not_subclass_ignored(self, caplog):
@@ -56,8 +56,12 @@ class TestPluginLoadedRegistry:
     """
 
     def teardown_method(self):
-        """Reset the singleton registry after each test to ensure isolation."""
+        """Reset the singleton registries after each test to ensure isolation."""
         PluginLoadedRegistry._metrics_registry = None
+        PluginLoadedRegistry._features_registry = None
+        PluginLoadedRegistry._gap_registry = None
+        PluginLoadedRegistry._dataloaders_registry = None
+        PluginLoadedRegistry._outputwriter_registry = None
 
     def test_get_metrics_registry_lazy_load(self):
         """Verify metrics registry loads built-in processors on first access."""
@@ -65,6 +69,17 @@ class TestPluginLoadedRegistry:
         assert "completeness" in registry
         assert "diversity" in registry
         assert "representativeness" in registry
+
+    def test_get_features_registry_lazy_load(self):
+        """Verify features registry loads built-in processors on first access."""
+        registry = PluginLoadedRegistry.get_features_registry()
+        assert "image_features" in registry or "visual_features" in registry
+        assert "features_embeddings" in registry or "image_embedding" in registry
+
+    def test_get_gap_registry_lazy_load(self):
+        """Verify gap registry loads built-in processors on first access."""
+        registry = PluginLoadedRegistry.get_gap_registry()
+        assert "domain_gap" in registry
 
     def test_get_dataloaders_registry_lazy_load(self):
         """Verify dataloaders registry loads built-in loaders on first access."""

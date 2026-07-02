@@ -12,8 +12,8 @@ import pyarrow as pa
 import pytest
 
 
-def test_compute_features_column_not_in_batch(caplog):
-    """Verify compute_features skips missing columns and logs a warning.
+def test_extract_columns_column_not_in_batch(caplog):
+    """Verify extract_columns skips missing columns and logs a warning.
 
     Args:
         caplog: Pytest fixture to capture log output.
@@ -22,7 +22,7 @@ def test_compute_features_column_not_in_batch(caplog):
     batch = pa.RecordBatch.from_arrays([pa.array([1, 2]), pa.array([3, 4])], names=["col1", "col2"])
 
     with caplog.at_level(logging.WARNING):
-        features = proc.compute_features(batch)
+        features = proc.extract_columns(batch)
 
     assert "col1" in features
     assert "missing" not in features

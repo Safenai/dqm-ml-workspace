@@ -73,7 +73,13 @@ uv run nox -s test
 
 [tasks.mkdocs_offline]
 description = "Build MkDocs documentation site for local use"
-run = "uv run nox -s docs_offline"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/mkdocs_offline_${timestamp}.log") 2>&1
+uv run nox -s docs_offline
+"""
 
 [tasks.docs]
 description = "Build doc"

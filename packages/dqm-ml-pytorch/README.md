@@ -8,7 +8,7 @@ PyTorch-based metrics for DQM-ML V2. Provides advanced domain gap analysis for c
 pip install dqm-ml-pytorch
 ```
 
-> **Note:** `dqm-ml-pytorch` provides **Domain Gap** **Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-pytorch` provides **Gap Processors** (Domain Gap) and **Features Processors** (Image Embeddings) — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Usage
 
@@ -61,6 +61,50 @@ gap:
         metric: "mmd_linear"
 ```
 
+## Features Processors
+
+### ImageEmbeddingProcessor
+
+Extracts image embeddings using a pre-trained model (default: ResNet-50 from torchvision). Outputs fixed-size float32 arrays suitable for domain gap analysis or downstream ML tasks.
+
+```python
+from dqm_ml_pytorch import ImageEmbeddingProcessor
+import numpy as np
+
+# Sample image data (batch of images as bytes or arrays)
+images = np.random.randint(0, 255, (10, 224, 224, 3), dtype=np.uint8)
+
+processor = ImageEmbeddingProcessor(
+    name="img_embed",
+    config={
+        "columns": {"input": ["image"]},
+        "model": "resnet50",
+        "batch_size": 32,
+        "output_dim": 2048
+    }
+)
+
+# Extract embeddings
+result = processor.compute_features({"image": images}, {})
+print(f"Embeddings shape: {result['image_embedding'].shape}")  # (10, 2048)
+```
+
+### YAML Config (Features Interface)
+
+```yaml
+features:
+  processors:
+    - name: img_embeddings
+      type: features_embeddings
+      columns:
+        input: ["image"]
+      model: "resnet50"
+      batch_size: 32
+      output_dim: 2048
+```
+
+Output column: `image_embedding` (pa.FixedSizeListArray<float32, 2048>)
+
 ## Gap Metrics
 
 | Metric | Full Name | Best For |
@@ -95,7 +139,7 @@ Returns statistical distance values:
 
 ## Dependencies
 
-DQM-ML is modular. For domain gap metrics:
+DQM-ML is modular. For domain gap and embedding features:
 
 ```bash
 # Minimal: use as library only
@@ -105,8 +149,13 @@ pip install dqm-ml-pytorch
 pip install dqm-ml-job dqm-ml-pytorch
 
 # Full stack with all metrics
-pip install dqm-ml-job dqm-ml-core dqm-ml-pytorch
+pip install dqm-ml-job dqm-ml-core dqm-ml-images dqm-ml-pytorch
 ```
+
+| Interface | Entry Point Group |
+|-----------|-------------------|
+| **Features (Embeddings)** | `dqm_ml.features` |
+| **Gap** | `dqm_ml.gap` |
 
 ## See Also
 

@@ -44,8 +44,8 @@ class TestMmdFunctions:
         assert _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0]]), 2.0, 1.0, 0.0) == pytest.approx(0.0)
 
 
-class TestDomainGapComputeFeatures:
-    """Tests for compute_features method."""
+class TestDomainGapExtractFeatures:
+    """Tests for extract_features method."""
 
     def test_column_missing_in_batch_logs_warning(self, caplog):
         """Verify empty result and warning when input column missing from batch."""
@@ -55,7 +55,7 @@ class TestDomainGapComputeFeatures:
         )
         batch = pa.RecordBatch.from_pydict({"other_col": pa.array([1.0])})
         with caplog.at_level(logging.WARNING):
-            result = proc.compute_features(batch, {})
+            result = proc.extract_features(batch, {})
         assert result == {}
 
 

@@ -30,12 +30,29 @@ python -m dqm_ml_job.cli -p config.yaml
 Example `config.yaml`:
 
 ```yaml
+features:
+  processors:
+    - name: image_quality
+      type: image_features
+      columns:
+        input: ["image_data"]
+      grayscale: true
+
 metrics:
   processors:
     - name: completeness
       type: completeness
       columns:
         input: [col_a, col_b]
+
+gap:
+  processors:
+    - name: domain_drift
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "mmd_linear"
 
 dataloaders:
   loaders:
@@ -48,14 +65,21 @@ dataloaders:
 
 DQM-ML is modular — `dqm-ml-job` provides the orchestration, but you need additional packages to compute actual metrics:
 
+| Interface | Package | Entry Point Group |
+|-----------|---------|-------------------|
+| **Features** | `dqm-ml-images` | `dqm_ml.features` |
+| **Features (Embeddings)** | `dqm-ml-pytorch` | `dqm_ml.features` |
+| **Metrics** | `dqm-ml-core` | `dqm_ml.metrics` |
+| **Gap** | `dqm-ml-pytorch` | `dqm_ml.gap` |
+
 ```bash
-# For Completeness and Representativeness
+# For Metrics (Completeness, Representativeness, Diversity)
 pip install dqm-ml-job dqm-ml-core
 
 # For Visual Features
 pip install dqm-ml-job dqm-ml-images
 
-# For Domain Gap
+# For Image Embeddings + Domain Gap
 pip install dqm-ml-job dqm-ml-pytorch
 
 # All metrics

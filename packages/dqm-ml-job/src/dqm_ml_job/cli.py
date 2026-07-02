@@ -278,7 +278,9 @@ def run(config: dict[str, Any]) -> None:
     validated = JobConfig.model_validate(config)
 
     dataloaders_registry = PluginLoadedRegistry.get_dataloaders_registry()
+    features_registry = PluginLoadedRegistry.get_features_registry()
     metrics_registry = PluginLoadedRegistry.get_metrics_registry()
+    gap_registry = PluginLoadedRegistry.get_gap_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
 
     # Initialize dataloaders from list format
@@ -289,10 +291,9 @@ def run(config: dict[str, Any]) -> None:
     dataloaders = _init_components_from_list(dataloader_dicts, dataloaders_registry, "dataloader")
 
     # Initialize processors from all interfaces
-    all_processors: dict[str, Any] = {}
-    for interface_name in ("features", "metrics", "gap"):
-        interface = getattr(validated, interface_name, None)
-        all_processors.update(_init_processors_from_interface(interface, metrics_registry))
+    features_processors = _init_processors_from_interface(validated.features, features_registry)
+    metrics_processors = _init_processors_from_interface(validated.metrics, metrics_registry)
+    gap_processors = _init_processors_from_interface(validated.gap, gap_registry)
 
     # Initialize output writers from interfaces
     features_output = _init_interface_outputs(validated.features, outputs_registry, "features")
@@ -307,7 +308,9 @@ def run(config: dict[str, Any]) -> None:
 
     job = DatasetJob(
         dataloaders=dataloaders,
-        metrics=all_processors,
+        features_processors=features_processors,
+        metrics_processors=metrics_processors,
+        gap_processors=gap_processors,
         features_output=features_output,
         progress_bar=compute.progress_bar,
         threads=compute.threads,

@@ -252,16 +252,9 @@ wass = DomainGapProcessor(
     },
 )
 
-processors = {
-    "vf": vf,
-    "emb": emb,
-    "comp": comp,
-    "div": div,
-    "rep": rep,
-    "fid": fid,
-    "mmd": mmd,
-    "wass": wass,
-}
+feature_processors = {"vf": vf, "emb": emb}
+metric_processors = {"comp": comp, "div": div, "rep": rep}
+gap_processors = {"fid": fid, "mmd": mmd, "wass": wass}
 
 # ── 4. OutputWriters ───────────────────────────────────────────────────────
 print("Creating output writers ...")
@@ -291,7 +284,9 @@ gap_writer = ParquetOutputWriter(
 print("Assembling DatasetJob ...")
 job = DatasetJob(
     dataloaders=dataloaders,
-    metrics=processors,
+    features_processors=feature_processors,
+    metrics_processors=metric_processors,
+    gap_processors=gap_processors,
     features_output=feat_writer,
     progress_bar=True,
     threads=4,

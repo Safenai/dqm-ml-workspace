@@ -5,12 +5,17 @@ function for discovering and loading metric processors, data loaders,
 and output writers via Python entry points.
 """
 
+from __future__ import annotations
+
 from importlib.metadata import EntryPoints, entry_points
 import logging
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.api.processor import Processor
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -55,26 +60,58 @@ class PluginLoadedRegistry:
     Singleton registry that provides lazy access to all registered DQM components.
 
     Components include:
-    - Metrics (DatametricProcessor)
+    - Metrics (Processor)
     - DataLoaders
     - OutputWriters
     """
 
-    _metrics_registry: dict[str, type[DatametricProcessor]] | None = None
+    _metrics_registry: dict[str, type[Processor]] | None = None
+    _features_registry: dict[str, type[Processor]] | None = None
+    _gap_registry: dict[str, type[Processor]] | None = None
     _dataloaders_registry: dict[str, Any] | None = None
     _outputwriter_registry: dict[str, Any] | None = None
 
     @classmethod
-    def get_metrics_registry(cls) -> dict[str, type[DatametricProcessor]]:
+    def get_metrics_registry(cls) -> dict[str, type[Processor]]:
         """Return the registry of available metric processors.
 
         Returns:
             A dictionary mapping metric processor names to their classes.
         """
         if not cls._metrics_registry:
-            cls._metrics_registry = load_registered_plugins("dqm_ml.metrics", DatametricProcessor)
+            from dqm_ml_core.api.metrics_processor import MetricsProcessor
+
+            cls._metrics_registry = load_registered_plugins("dqm_ml.metrics", MetricsProcessor)
 
         return cls._metrics_registry
+
+    @classmethod
+    def get_features_registry(cls) -> dict[str, type[Processor]]:
+        """Return the registry of available feature extraction processors.
+
+        Returns:
+            A dictionary mapping feature processor names to their classes.
+        """
+        if not cls._features_registry:
+            from dqm_ml_core.api.features_processor import FeaturesProcessor
+
+            cls._features_registry = load_registered_plugins("dqm_ml.features", FeaturesProcessor)
+
+        return cls._features_registry
+
+    @classmethod
+    def get_gap_registry(cls) -> dict[str, type[Processor]]:
+        """Return the registry of available gap processors.
+
+        Returns:
+            A dictionary mapping gap processor names to their classes.
+        """
+        if not cls._gap_registry:
+            from dqm_ml_core.api.gap_processor import GapProcessor
+
+            cls._gap_registry = load_registered_plugins("dqm_ml.gap", GapProcessor)
+
+        return cls._gap_registry
 
     @classmethod
     def get_dataloaders_registry(cls) -> dict[str, Any]:

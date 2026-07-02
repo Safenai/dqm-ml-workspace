@@ -9,6 +9,10 @@ processor column analysis, path prefix injection, and feature flushing.
 import logging
 from unittest.mock import MagicMock
 
+from dqm_ml_core.api.features_processor import FeaturesProcessor
+from dqm_ml_core.api.gap_processor import GapProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
+from dqm_ml_core.api.processor import Processor
 from dqm_ml_job.job import DatasetJob
 import numpy as np
 import pyarrow as pa
@@ -20,26 +24,23 @@ class TestGetInterfaceForProcessor:
 
     def test_known_features(self):
         """Verify feature processors map to 'features' interface."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
-        assert job._get_interface_for_processor("visual_features") == "features"
-        assert job._get_interface_for_processor("image_embedding") == "features"
+        mock_proc = MagicMock(spec=FeaturesProcessor)
+        assert DatasetJob._get_interface_for_processor(mock_proc) == "features"
 
     def test_known_metrics(self):
         """Verify metric processors map to 'metrics' interface."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
-        assert job._get_interface_for_processor("completeness") == "metrics"
-        assert job._get_interface_for_processor("diversity") == "metrics"
-        assert job._get_interface_for_processor("representativeness") == "metrics"
+        mock_proc = MagicMock(spec=MetricsProcessor)
+        assert DatasetJob._get_interface_for_processor(mock_proc) == "metrics"
 
     def test_known_gap(self):
         """Verify gap processors map to 'gap' interface."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
-        assert job._get_interface_for_processor("domain_gap") == "gap"
+        mock_proc = MagicMock(spec=GapProcessor)
+        assert DatasetJob._get_interface_for_processor(mock_proc) == "gap"
 
     def test_unknown(self):
         """Verify unknown processor returns None."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
-        assert job._get_interface_for_processor("unknown_processor") is None
+        mock_proc = MagicMock(spec=Processor)
+        assert DatasetJob._get_interface_for_processor(mock_proc) is None
 
 
 class TestTopologicalSort:
@@ -106,32 +107,32 @@ class TestParseMemoryString:
 
     def test_gb(self):
         """Verify GB suffix parses correctly."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("2GB") == 2 * 1024 * 1024 * 1024
 
     def test_mb(self):
         """Verify MB suffix parses correctly."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("500MB") == 500 * 1024 * 1024
 
     def test_kb(self):
         """Verify KB suffix parses correctly."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("128KB") == 128 * 1024
 
     def test_bytes(self):
         """Verify B suffix parses correctly."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("1024B") == 1024
 
     def test_raw_bytes(self):
         """Verify raw number parses as bytes."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("4096") == 4096
 
     def test_lowercase(self):
         """Verify case-insensitive parsing."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         assert job._parse_memory_string("1gb") == 1024 * 1024 * 1024
 
 
@@ -140,7 +141,7 @@ class TestInjectDataloaderColumn:
 
     def test_no_features_output(self):
         """Verify no column added when features_output is None."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         features = {"col1": pa.array([1, 2])}
         job._inject_dataloader_column("selection", features)
         assert "dataloader" not in features
@@ -149,7 +150,7 @@ class TestInjectDataloaderColumn:
         """Verify no column added when add_dataloader_column is False."""
         writer = MagicMock()
         writer.add_dataloader_column = False
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=writer)
+        job = DatasetJob(dataloaders={}, features_output=writer)
         features = {"col1": pa.array([1, 2])}
         job._inject_dataloader_column("selection", features)
         assert "dataloader" not in features
@@ -158,7 +159,7 @@ class TestInjectDataloaderColumn:
         """Verify no column added when features dict is empty."""
         writer = MagicMock()
         writer.add_dataloader_column = True
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=writer)
+        job = DatasetJob(dataloaders={}, features_output=writer)
         features = {}
         job._inject_dataloader_column("selection", features)
         assert features == {}
@@ -168,7 +169,7 @@ class TestInjectDataloaderColumn:
         writer = MagicMock()
         writer.add_dataloader_column = True
         writer.dataloader_column_name = "dataloader"
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=writer)
+        job = DatasetJob(dataloaders={}, features_output=writer)
         features = {"col1": pa.array([1, 2])}
         job._inject_dataloader_column("selection", features)
         assert "dataloader" in features
@@ -217,7 +218,7 @@ class TestDebugLogging:
         Args:
             caplog: Pytest fixture to capture log output.
         """
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         mock_metric = MagicMock()
         mock_metric.__class__.__name__ = "MockMetric"
         mock_metric.compute.return_value = {"mock": pa.array([1.0])}
@@ -232,13 +233,13 @@ class TestDebugLogging:
         Args:
             caplog: Pytest fixture to capture log output.
         """
-        mock_metric = MagicMock()
+        mock_metric = MagicMock(spec=MetricsProcessor)
         mock_metric.name = "test_metric"
-        mock_metric.compute_features.return_value = {"feat": pa.array([1.0])}
+        mock_metric.extract_columns.return_value = {"feat": pa.array([1.0])}
         mock_metric.compute_batch_metric.return_value = {"bm": pa.array([1.0])}
         batch = pa.RecordBatch.from_pydict({"col": pa.array([1.0])})
         with caplog.at_level(logging.DEBUG):
-            DatasetJob._process_batch(batch, [mock_metric])
+            DatasetJob._process_batch(batch, [mock_metric], [mock_metric], [])
         assert "Available batch_metrics" in caplog.text
         assert "features" in caplog.text
 
@@ -248,14 +249,12 @@ class TestAnalyzeProcessorColumns:
 
     def test_wildcard_columns_resets_needed_input(self):
         """Verify wildcard column resets needed_input_columns to empty."""
-        mock_metric = MagicMock()
+        mock_metric = MagicMock(spec=MetricsProcessor)
         mock_metric.needed_columns.return_value = ["*"]
-        mock_metric.generated_features.return_value = []
         mock_metric.generated_metrics.return_value = []
         job = DatasetJob(
             dataloaders={},
-            metrics={"mock": mock_metric},
-            features_output=None,
+            metrics_processors={"mock": mock_metric},
         )
         job._analyze_processor_columns()
         assert job.needed_input_columns == []
@@ -268,7 +267,7 @@ class TestMaybeFlushFeatures:
         """Verify flush occurs when feature array size exceeds threshold."""
         writer = MagicMock()
         writer.add_dataloader_column = False
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=writer)
+        job = DatasetJob(dataloaders={}, features_output=writer)
         features_accumulator = {"col1": [pa.array([1.0]), pa.array([2.0])]}
         result = job._maybe_flush_features(
             "sel1",
@@ -282,7 +281,7 @@ class TestMaybeFlushFeatures:
 
     def test_no_flush_when_threshold_not_exceeded(self):
         """Verify no flush when feature array size is below threshold."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         features_accumulator = {"col1": [pa.array([1.0])]}
         result = job._maybe_flush_features(
             "sel1",

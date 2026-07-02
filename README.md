@@ -58,10 +58,10 @@ Install individual packages based on your needs:
 
 | Package | Description | PyPI |
 |---------|-------------|------|
-| **dqm-ml-core** | Core API & standard metrics (Completeness, Representativeness) | [![][pypi-core-badge]](https://pypi.org/project/dqm-ml-core/) |
+| **dqm-ml-core** | Core API & **Metrics Processors** (Completeness, Representativeness, Diversity) | [![][pypi-core-badge]](https://pypi.org/project/dqm-ml-core/) |
 | **dqm-ml-job** | Orchestration, streaming data loaders, and output writers | [![][pypi-pipeline-badge]](https://pypi.org/project/dqm-ml-job/) |
-| **dqm-ml-images** | Visual feature extraction from images | [![][pypi-images-badge]](https://pypi.org/project/dqm-ml-images/) |
-| **dqm-ml-pytorch** | PyTorch-based metrics (Domain Gap) | [![][pypi-pytorch-badge]](https://pypi.org/project/dqm-ml-pytorch/) |
+| **dqm-ml-images** | **Features Processors** (Visual feature extraction from images) | [![][pypi-images-badge]](https://pypi.org/project/dqm-ml-images/) |
+| **dqm-ml-pytorch** | **Gap Processors** (Domain Gap) + **Features Processors** (Image Embeddings) | [![][pypi-pytorch-badge]](https://pypi.org/project/dqm-ml-pytorch/) |
 
 > **Note:** The `dqm-ml` package is the CLI wrapper.
 

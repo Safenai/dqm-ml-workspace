@@ -13,13 +13,13 @@ import numpy as np
 import pyarrow as pa
 from typing_extensions import override
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.models.processors import DiversityProcessorConfig
 
 logger = logging.getLogger(__name__)
 
 
-class DiversityProcessor(DatametricProcessor):
+class DiversityProcessor(MetricsProcessor):
     """Computes diversity indices for categorical data columns.
 
     Simpson Index (1 - Σn(n-1) / N(N-1)):
@@ -67,7 +67,7 @@ class DiversityProcessor(DatametricProcessor):
             List of output metric column names.
         """
         metrics = []
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             if "simpson" in self.metrics:
                 metrics.append(f"{col}_simpson")
             if "gini" in self.metrics:
@@ -90,7 +90,7 @@ class DiversityProcessor(DatametricProcessor):
         """
         batch_metrics: dict[str, pa.Array] = {}
 
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             if col not in features:
                 logger.warning("[%s] column '%s' not found in batch", self.name, col)
                 continue
@@ -126,7 +126,7 @@ class DiversityProcessor(DatametricProcessor):
             return {"_metadata": {"error": "No batch metrics provided"}}
 
         results: dict[str, Any] = {}
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             col_res = self._compute_column_diversity(col, batch_metrics)
             results.update(col_res)
         return results

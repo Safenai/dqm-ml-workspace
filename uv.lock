@@ -1445,7 +1445,10 @@ all = [
     { name = "dqm-ml-images" },
     { name = "dqm-ml-job" },
     { name = "jupyter" },
+    { name = "matplotlib" },
+    { name = "matplotlib-inline" },
     { name = "plotly" },
+    { name = "tabulate" },
 ]
 images = [
     { name = "dqm-ml-images" },
@@ -1455,7 +1458,10 @@ job = [
 ]
 notebooks = [
     { name = "jupyter" },
+    { name = "matplotlib" },
+    { name = "matplotlib-inline" },
     { name = "plotly" },
+    { name = "tabulate" },
 ]
 pytorch = [
     { name = "dqm-ml-images" },
@@ -1469,7 +1475,10 @@ requires-dist = [
     { name = "dqm-ml-images", marker = "extra == 'pytorch'", editable = "packages/dqm-ml-images" },
     { name = "dqm-ml-job", marker = "extra == 'job'", editable = "packages/dqm-ml-job" },
     { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
+    { name = "matplotlib", marker = "extra == 'notebooks'", specifier = ">=3.10.9" },
+    { name = "matplotlib-inline", marker = "extra == 'notebooks'", specifier = ">=0.2.2" },
     { name = "plotly", marker = "extra == 'notebooks'", specifier = ">=5.0.0" },
+    { name = "tabulate", marker = "extra == 'notebooks'", specifier = ">=0.10.0" },
 ]
 provides-extras = ["notebooks", "job", "pytorch", "images", "all"]
 

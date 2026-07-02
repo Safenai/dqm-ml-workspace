@@ -1,62 +1,62 @@
-"""Unit tests for the MetricRunner utility.
+"""Unit tests for the ProcessorRunner utility.
 
-This module contains unit tests that verify the MetricRunner
+This module contains unit tests that verify the ProcessorRunner
 correctly orchestrates metric computation on DataFrames.
 """
 
 from unittest.mock import MagicMock
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
-from dqm_ml_core.utils.metric_runner import MetricRunner
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
+from dqm_ml_core.utils.processor_runner import ProcessorRunner
 import pandas as pd
 import pyarrow as pa
 
 
-def test_metric_runner_run_empty_df():
-    """Test that MetricRunner returns empty dict for empty DataFrame."""
-    runner = MetricRunner()
+def test_processor_runner_run_empty_df():
+    """Test that ProcessorRunner returns empty dict for empty DataFrame."""
+    runner = ProcessorRunner()
     df = pd.DataFrame(columns=["a", "b"])
     metrics = []
     result = runner.run(df, metrics)
     assert result == {}
 
 
-def test_metric_runner_run_with_mock_metric(sample_dataframe):
-    """Test that MetricRunner correctly runs metrics on DataFrame.
+def test_processor_runner_run_with_mock_metric(sample_dataframe):
+    """Test that ProcessorRunner correctly runs metrics on DataFrame.
 
     Args:
         sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
     """
-    runner = MetricRunner()
+    runner = ProcessorRunner()
 
-    mock_metric = MagicMock(spec=DatametricProcessor)
-    mock_metric.compute_features.return_value = {"feat1": pa.array([1, 1, 1])}
+    mock_metric = MagicMock(spec=MetricsProcessor)
+    mock_metric.extract_columns.return_value = {"feat1": pa.array([1, 1, 1])}
     mock_metric.compute_batch_metric.return_value = {"metric1": pa.array([10])}
     mock_metric.compute.return_value = {"final_metric1": 0.95}
 
     result = runner.run(sample_dataframe, [mock_metric])
 
     assert result == {"final_metric1": 0.95}
-    mock_metric.compute_features.assert_called_once()
+    mock_metric.extract_columns.assert_called_once()
     mock_metric.compute_batch_metric.assert_called_once()
     mock_metric.compute.assert_called_once()
 
 
-def test_metric_runner_overwrite_behavior(sample_dataframe):
+def test_processor_runner_overwrite_behavior(sample_dataframe):
     """Test that later metrics overwrite earlier ones when sharing keys.
 
     Args:
         sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
     """
-    runner = MetricRunner()
+    runner = ProcessorRunner()
 
-    metric1 = MagicMock(spec=DatametricProcessor)
-    metric1.compute_features.return_value = {}
+    metric1 = MagicMock(spec=MetricsProcessor)
+    metric1.extract_columns.return_value = {}
     metric1.compute_batch_metric.return_value = {"shared": pa.array([1])}
     metric1.compute.return_value = {}
 
-    metric2 = MagicMock(spec=DatametricProcessor)
-    metric2.compute_features.return_value = {}
+    metric2 = MagicMock(spec=MetricsProcessor)
+    metric2.extract_columns.return_value = {}
     metric2.compute_batch_metric.return_value = {"shared": pa.array([2])}
     metric2.compute.return_value = {"final": 1}
 

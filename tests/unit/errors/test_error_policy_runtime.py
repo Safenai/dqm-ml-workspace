@@ -6,7 +6,7 @@ max_failure_rate) is correctly consumed at runtime by the processors.
 
 import logging
 
-from dqm_ml_core import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig, TabularErrorsConfig
 from dqm_ml_images import VisualFeaturesProcessor
 from dqm_ml_pytorch import ImageEmbeddingProcessor
@@ -21,14 +21,14 @@ class TestOnMissingColumn:
 
     def test_fail_fast_raises_key_error(self) -> None:
         """Verify fail_fast raises KeyError for missing column."""
-        proc = DatametricProcessor(name="test", config={"columns": {"input": ["missing"]}})
+        proc = MetricsProcessor(name="test", config={"columns": {"input": ["missing"]}})
         proc.errors_config = ErrorsConfig(
             tabular=TabularErrorsConfig(on_missing_column="fail_fast"),
         )
         batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
         with pytest.raises(KeyError, match="'missing' not found"):
-            proc.compute_features(batch, {})
+            proc.extract_columns(batch, {})
 
     def test_silent_fail_logs_and_skips(self, caplog: pytest.LogCaptureFixture) -> None:
         """Verify silent_fail logs warning and skips missing column.
@@ -36,14 +36,14 @@ class TestOnMissingColumn:
         Args:
             caplog: Pytest fixture to capture log output.
         """
-        proc = DatametricProcessor(name="test", config={"columns": {"input": ["a", "missing"]}})
+        proc = MetricsProcessor(name="test", config={"columns": {"input": ["a", "missing"]}})
         proc.errors_config = ErrorsConfig(
             tabular=TabularErrorsConfig(on_missing_column="silent_fail"),
         )
         batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
         with caplog.at_level(logging.WARNING):
-            features = proc.compute_features(batch, {})
+            features = proc.extract_columns(batch, {})
 
         assert "a" in features
         assert "missing" not in features
@@ -207,7 +207,7 @@ class TestMaxFailureRate:
 
     def test_exceeded_raises_runtime_error(self) -> None:
         """Verify exceeded failure rate raises RuntimeError."""
-        proc = DatametricProcessor(name="test", config={})
+        proc = MetricsProcessor(name="test", config={})
         proc.errors_config = ErrorsConfig(max_failure_rate=0.05)
         proc._failure_count = 6
         proc._total_count = 100
@@ -217,7 +217,7 @@ class TestMaxFailureRate:
 
     def test_zero_tolerance_any_failure_raises(self) -> None:
         """Verify zero tolerance raises RuntimeError on any failure."""
-        proc = DatametricProcessor(name="test", config={})
+        proc = MetricsProcessor(name="test", config={})
         proc.errors_config = ErrorsConfig(max_failure_rate=0.0)
         proc._failure_count = 1
         proc._total_count = 1

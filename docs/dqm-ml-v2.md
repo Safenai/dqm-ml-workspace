@@ -112,7 +112,7 @@ V2 shows significant improvements over V1:
 | Data handling | Load into memory | Stream in batches |
 | New metrics | Modify core | Plugin system |
 | Dependencies | All or nothing | Install only what you need |
-| API | ad-hoc | Unified `DatametricProcessor` |
+| API | ad-hoc | **Three interfaces: FeaturesProcessor / MetricsProcessor / GapProcessor** |
 | Image features | Separate tool | Built into pipeline |
 
 The legacy `dqm-ml` package is still available for reference, but new development should use the V2 API.

@@ -137,7 +137,7 @@ class TestJobOutputsIncludeExclude:
         """Source features filtered by literal column include list."""
         mock_writer.columns = ["a", "c"]
 
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         batch = self._make_batch(["a", "b", "c", "d"])
         acc: dict[str, list] = {}
         job._accumulate_source_features(batch, acc, 0)
@@ -146,7 +146,7 @@ class TestJobOutputsIncludeExclude:
     def test_source_include_wildcard(self, mock_writer: MagicMock) -> None:
         """Source features filtered by wildcard include pattern."""
         mock_writer.columns = ["img_*"]
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         batch = self._make_batch(["img_a", "img_b", "other", "meta_x"])
         acc: dict[str, list] = {}
         job._accumulate_source_features(batch, acc, 0)
@@ -156,7 +156,7 @@ class TestJobOutputsIncludeExclude:
         """Source features filtered by wildcard exclude pattern."""
         mock_writer.columns = ["*"]
         mock_writer.exclude = ["meta_*"]
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         batch = self._make_batch(["a", "meta_x", "b", "meta_y"])
         acc: dict[str, list] = {}
         job._accumulate_source_features(batch, acc, 0)
@@ -166,7 +166,7 @@ class TestJobOutputsIncludeExclude:
         """Source features filtered by combined include and exclude patterns."""
         mock_writer.columns = ["img_*", "id"]
         mock_writer.exclude = ["img_bad_*"]
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         batch = self._make_batch(["id", "img_a", "img_bad_1", "img_b", "other"])
         acc: dict[str, list] = {}
         job._accumulate_source_features(batch, acc, 0)
@@ -174,7 +174,7 @@ class TestJobOutputsIncludeExclude:
 
     def test_source_no_features_output(self):
         """Returns immediately when features_output is None."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         batch = self._make_batch(["a", "b"])
         acc: dict[str, list] = {}
         result = job._accumulate_source_features(batch, acc, 0)
@@ -184,7 +184,7 @@ class TestJobOutputsIncludeExclude:
     def test_generated_include_wildcard(self, mock_writer):
         """Generated features filtered by wildcard include pattern."""
         mock_writer.columns = ["luminosity_*"]
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         generated = {
             "luminosity_mean": pa.array([1.0]),
             "luminosity_std": pa.array([2.0]),
@@ -198,7 +198,7 @@ class TestJobOutputsIncludeExclude:
     def test_generated_exclude_metrics(self, mock_writer):
         """Generated features exclude columns that overlap with metrics keys."""
         mock_writer.columns = ["*"]
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=mock_writer)
+        job = DatasetJob(dataloaders={}, features_output=mock_writer)
         generated = {
             "luminosity": pa.array([1.0]),
             "blur": pa.array([2.0]),
@@ -211,7 +211,7 @@ class TestJobOutputsIncludeExclude:
 
     def test_generated_no_features_output(self):
         """Returns immediately when features_output is None for generated features."""
-        job = DatasetJob(dataloaders={}, metrics={}, features_output=None)
+        job = DatasetJob(dataloaders={})
         generated = {"luminosity": pa.array([1.0])}
         batch = self._make_batch([])
         acc: dict[str, list] = {}

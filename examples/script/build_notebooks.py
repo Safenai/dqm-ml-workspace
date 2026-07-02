@@ -35,7 +35,7 @@ def code(*lines):
         "cell_type": "code",
         "execution_count": None,
         "metadata": {},
-        "../outputs": [],
+        "outputs": [],
         "source": [l + "\n" for l in lines],
     }
 
@@ -796,12 +796,10 @@ cells_n2.append(
         I + "},",
         ")",
         "",
-        "processors = {",
-        I + '"vf": vf, "emb": emb,',
-        I + '"comp": comp, "div": div, "rep": rep,',
-        I + '"fid": fid, "mmd": mmd, "wass": wass,',
-        "}",
-        'print(f"Created {len(processors)} processors")',
+        "feature_processors = {\"vf\": vf, \"emb\": emb}",
+        "metric_processors = {\"comp\": comp, \"div\": div, \"rep\": rep}",
+        "gap_processors = {\"fid\": fid, \"mmd\": mmd, \"wass\": wass}",
+        'print(f"Created {sum(len(d) for d in [feature_processors, metric_processors, gap_processors])} processors")',
     )
 )
 
@@ -857,7 +855,9 @@ cells_n2.append(
     code(
         "job = DatasetJob(",
         I + "dataloaders=dataloaders,",
-        I + "metrics=processors,",
+        I + "features_processors=feature_processors,",
+        I + "metrics_processors=metric_processors,",
+        I + "gap_processors=gap_processors,",
         I + "features_output=feat_writer,",
         I + "progress_bar=True,",
         I + "threads=4,",

@@ -18,13 +18,13 @@ import torch
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.models.processors import RepresentativenessProcessorConfig
 
 logger = logging.getLogger(__name__)
 
 
-class RepresentativenessProcessor(DatametricProcessor):
+class RepresentativenessProcessor(MetricsProcessor):
     """
     Evaluates how well the dataset represents a target statistical distribution.
 
@@ -160,7 +160,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         # TODO : manage output metrics names with configuration
         # for now we follow a fixed naming convention
         metrics = []
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             if "chi-square" in self.metrics:
                 metrics.append(f"{col}_chi-square_p_value")
                 metrics.append(f"{col}_chi-square_statistic")
@@ -240,7 +240,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         """
         batch_metrics = {}
 
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             if col not in features:
                 logger.warning(f"[{self.name}] column '{col}' not found in batch")
                 continue
@@ -401,6 +401,21 @@ class RepresentativenessProcessor(DatametricProcessor):
             expected_values = self._rng.uniform(min_val, max_val, total_count)
         return np.histogram(expected_values, bins=edges)[0].astype(np.float64)
 
+    def _estimate_from_samples(
+        self, col_params: dict[str, Any], sample_key: str, batch_metrics: dict[str, pa.Array]
+    ) -> tuple[float, float]:
+        """Estimate normal params from KS sample data or fall back to defaults."""
+        if sample_key in batch_metrics:
+            sample_arrays = batch_metrics[sample_key].to_numpy()
+            if sample_arrays.ndim > 1:
+                sample_arrays = sample_arrays.flatten()
+            mean = float(col_params.get("mean", np.mean(sample_arrays)))
+            std = float(col_params.get("std", np.std(sample_arrays, ddof=0)))
+        else:
+            mean = float(col_params.get("mean", 0.0))
+            std = float(col_params.get("std", 1.0))
+        return mean, std
+
     def _estimate_normal_params(self, col: str, batch_metrics: dict[str, pa.Array]) -> tuple[float, float]:
         """Estimate normal distribution parameters from config or KS samples.
 
@@ -422,15 +437,7 @@ class RepresentativenessProcessor(DatametricProcessor):
             std = float(col_params["std"])
         else:
             sample_key = f"{col}_ks_sample"
-            if sample_key in batch_metrics:
-                sample_arrays = batch_metrics[sample_key].to_numpy()
-                if sample_arrays.ndim > 1:
-                    sample_arrays = sample_arrays.flatten()
-                mean = float(col_params.get("mean", np.mean(sample_arrays)))
-                std = float(col_params.get("std", np.std(sample_arrays, ddof=0)))
-            else:
-                mean = float(col_params.get("mean", 0.0))
-                std = float(col_params.get("std", 1.0))
+            mean, std = self._estimate_from_samples(col_params, sample_key, batch_metrics)
         std = std if std > 0.0 else self.epsilon
         return mean, std
 
@@ -677,13 +684,13 @@ class RepresentativenessProcessor(DatametricProcessor):
         results: dict[str, Any] = {}
         total_samples = 0
 
-        for col in self.input_columns:
+        for col in self.input_columns or []:
             total_samples += self._compute_column_results(col, batch_metrics, results)
 
         results["_metadata"] = self._build_compute_metadata(
             total_samples,
             batch_metrics,
-            self.input_columns,
+            self.input_columns or [],
             self.distribution,
             self.metrics,
             self.bins,

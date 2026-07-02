@@ -7,13 +7,13 @@ blur, and entropy.
 
 import io
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
-from dqm_ml_core import DatametricProcessor
+from dqm_ml_core import FeaturesProcessor
 from dqm_ml_core.models.columns import ColumnsConfig
 from dqm_ml_core.models.processors import _LUMINOSITY_STANDARDS, ImageFeaturesProcessorConfig
+from dqm_ml_core.utils.image_loading import ImageLoadingMixin
 import numpy as np
 from PIL import Image
 import pyarrow as pa
@@ -25,7 +25,7 @@ from typing_extensions import override
 logger = logging.getLogger(__name__)
 
 
-class VisualFeaturesProcessor(DatametricProcessor):
+class VisualFeaturesProcessor(ImageLoadingMixin, FeaturesProcessor):
     """
     Computes basic image quality features per sample.
 
@@ -227,14 +227,14 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return pa.array(values, type=pa.float32())
 
     def _output_column_name(self, col: str, feature_key: str) -> str:
-        """Generate output column name for a feature with prefix/suffix/rename.
+        """Generate output column name for a feature with rename/prefix/suffix.
 
         Args:
             col: Input column name.
             feature_key: Feature key (luminosity, contrast, blur, entropy).
 
         Returns:
-            Fully qualified output column name with prefix, rename, and suffix applied.
+            Fully qualified output column name with rename, prefix, and suffix applied.
         """
         name = self.output_features.get(feature_key, feature_key)
         if self.columns_config and self.columns_config.rename:
@@ -242,10 +242,7 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 if r.from_ == feature_key:
                     name = r.to
                     break
-        base = f"{col}_{name}"
-        p = self.columns_config.prefix or "" if self.columns_config else ""
-        s = self.columns_config.suffix or "" if self.columns_config else ""
-        return f"{p}{base}{s}"
+        return super()._resolve_output_name(col, name)
 
     @override
     def generated_features(self) -> list[str]:
@@ -306,24 +303,6 @@ class VisualFeaturesProcessor(DatametricProcessor):
         return result
 
     @override
-    def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """No-op aggregation: metrics are image-level only.
-
-        Returns:
-            Empty dictionary as this processor computes features only.
-        """
-        return {}
-
-    @override
-    def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, pa.Array]:
-        """No dataset-level aggregation required for this processor.
-
-        Returns:
-            Empty dictionary as features are computed at batch level.
-        """
-        return {}
-
-    @override
     def reset(self) -> None:
         """Reset processor state for new processing run.
 
@@ -375,45 +354,22 @@ class VisualFeaturesProcessor(DatametricProcessor):
             PIL Image object.
 
         Raises:
-            ValueError: If the S3 path does not exist.
+            ValueError: If the file does not exist and ``fail_fast`` is configured.
         """
-        prefix = self._current_image_prefix(column)
-
-        if self.s3_fs:
-            s3_key = f"{prefix}/{path}" if prefix else path
-            bucket_name = os.getenv("S3_BUCKET_NAME", "")
-            s3_path = f"{bucket_name}/{s3_key}"
-            with self.s3_fs.open_input_stream(s3_path) as f:
-                loaded = Image.open(io.BytesIO(f.read()))
-                img = loaded.copy()
+        img = super()._open_image_from_path(path, column)
+        if img is not None:
             return img
 
-        img_path = Path(prefix) / path if prefix else Path(path)
-        if not img_path.is_file():
-            # Check error configuration
-            if (
-                self.errors_config
-                and self.errors_config.tabular
-                and self.errors_config.tabular.on_file_not_found == "fail_fast"
-            ):  # noqa: E501
-                raise ValueError(f"Path does not exist: {img_path}")
-            # Log warning and return None for silent failure
-            logger.warning(f"Path does not exist: {img_path}")
-            return None
-        return Image.open(img_path)
-
-    def _current_image_prefix(self, column: str | None = None) -> str | None:
-        """Return the path prefix for the given column.
-
-        Reads from ``self.current_path_prefix``, a dict set by the job
-        mapping column names to path prefixes.
-
-        Args:
-            column: The input column name. Falls back to first input column if None.
-        """
-        prefix_map: dict[str, str] = getattr(self, "current_path_prefix", {})
-        col = column or (self.input_columns[0] if self.input_columns else "")
-        return prefix_map.get(col)
+        # File not found — check error configuration
+        if (
+            self.errors_config
+            and self.errors_config.tabular
+            and self.errors_config.tabular.on_file_not_found == "fail_fast"
+        ):
+            prefix = self._current_image_prefix(column)
+            img_path = Path(prefix) / path if prefix else Path(path)
+            raise ValueError(f"Path does not exist: {img_path}")
+        return None
 
     def _pil_to_gray(self, img: Image.Image) -> np.ndarray:
         """Convert a PIL Image to a 2D grayscale numpy array.

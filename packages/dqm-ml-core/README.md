@@ -8,7 +8,7 @@ Core package for DQM-ML V2 providing the foundational API and standard metrics f
 pip install dqm-ml-core
 ```
 
-> **Note:** `dqm-ml-core` provides **Metric** **Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-core` provides **Metrics Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Quick Start
 
@@ -80,12 +80,41 @@ dataloaders:
 
 ## Core Concepts
 
-### DatametricProcessor
+### Three Processor Interfaces
 
-The base class for all **Metrics** and **Feature** extractors. It supports a streaming architecture by splitting computation into two phases:
+DQM-ML V2 defines three distinct processor interfaces, each with its own base class:
 
-1. **Batch Level**: `compute_batch_metric()` updates intermediate **Batch Metric** statistics for a single chunk of data.
-2. **Dataset Level**: `compute()` aggregates these statistics into final **Metric** scores.
+| Interface | Base Class | Purpose |
+|-----------|------------|---------|
+| **Metrics** | `MetricsProcessor` | Compute aggregated metric scores from data (Completeness, Representativeness, Diversity) |
+| **Features** | `FeaturesProcessor` | Extract feature columns from data (Visual Features, Embeddings) |
+| **Gap** | `GapProcessor` | Compute pairwise distances between selections (Domain Gap) |
+
+All three inherit from a common `Processor` base class (`dqm_ml_core.api.processor:16`) which provides:
+- `__init__`, `_check_failure_rate`, `_check_image_fail_fast`, `needed_columns()`, `reset()`
+
+#### MetricsProcessor
+
+Extends `Processor`. Implement:
+- `generated_metrics()` → `list[str]` — output metric names
+- `extract_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+
+#### FeaturesProcessor
+
+Extends `Processor`. Implement:
+- `generated_features()` → `list[str]` — output feature column names
+- `compute_features(batch, prev_features)` → `dict[str, pa.Array]` — new feature columns
+- `needed_columns()` → `list[str]` — input columns needed (optional, default: `input_columns`)
+
+#### GapProcessor
+
+Extends `Processor`. Implement:
+- `extract_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+- `compute_delta(source, target)` → `dict[str, Any]` — pairwise distances
 
 ## Included Metrics
 
@@ -97,11 +126,18 @@ The base class for all **Metrics** and **Feature** extractors. It supports a str
 
 ## For Developers
 
-To create a new metric:
+To create a new **Metrics Processor**:
 
-1. Subclass `dqm_ml_core.api.data_processor.DatametricProcessor`.
-2. Define `needed_columns()`, `generated_features()`, and `generated_metrics()`.
-3. Implement the streaming logic in `compute_batch_metric()` and `compute()`.
+1. Subclass `dqm_ml_core.api.metrics_processor.MetricsProcessor`.
+2. Implement `generated_metrics()`, `extract_columns()` (optional), `compute_batch_metric()`, and `compute()`.
+3. Register in `[project.entry-points."dqm_ml.metrics"]` in `pyproject.toml`.
+
+To create a **Features Processor** or **Gap Processor**, use the respective base classes in `dqm_ml_core.api.features_processor` and `dqm_ml_core.api.gap_processor`.
+
+Reference implementations:
+- `CompletenessProcessor` — simple streaming metric
+- `RepresentativenessProcessor` — statistical tests
+- `DiversityProcessor` — value-count accumulation
 
 ## Dependencies
 

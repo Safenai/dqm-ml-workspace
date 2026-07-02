@@ -6,25 +6,31 @@ for metric processors and implementations for common metrics like
 completeness and representativeness.
 
 Main components:
-- DatametricProcessor: Base class for all data quality metrics
+- Processor: Base class for all processors
+- FeaturesProcessor: Base class for feature extraction processors
+- MetricsProcessor: Base class for metric computation processors
+- GapProcessor: Base class for domain-gap processors
 - CompletenessProcessor: Computes data completeness scores
 - RepresentativenessProcessor: Evaluates distribution representativeness
-- MetricRunner: Orchestrator for running metrics on DataFrames
+- ProcessorRunner: Orchestrator for running metrics on DataFrames
 - PluginLoadedRegistry: Registry for dynamically loaded metric plugins
 """
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api import FeaturesProcessor, GapProcessor, MetricsProcessor, Processor
 from dqm_ml_core.metrics.completeness import CompletenessProcessor
 from dqm_ml_core.metrics.diversity import DiversityProcessor
 from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
-from dqm_ml_core.utils.metric_runner import MetricRunner
+from dqm_ml_core.utils.processor_runner import ProcessorRunner
 from dqm_ml_core.utils.registry import PluginLoadedRegistry
 
 __all__ = [
     "CompletenessProcessor",
-    "DatametricProcessor",
     "DiversityProcessor",
-    "MetricRunner",
+    "FeaturesProcessor",
+    "GapProcessor",
+    "MetricsProcessor",
     "PluginLoadedRegistry",
+    "Processor",
+    "ProcessorRunner",
     "RepresentativenessProcessor",
 ]

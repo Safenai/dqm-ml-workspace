@@ -12,8 +12,6 @@ Metrics are computed in two modes depending on the number of **Sample Selections
 | Completeness | ✓ | |
 | Representativeness | ✓ | |
 | Diversity | ✓ | |
-| Domain Gap | | ✓ |
-| Visual Features | ✓ | |
 
 #### Completeness
 

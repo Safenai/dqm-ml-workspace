@@ -40,10 +40,10 @@ flowchart TB
 
 | Package | Purpose |
 |---------|---------|
-| **dqm-ml-core** | Defines the base `DatametricProcessor` class and core metrics (Completeness, Representativeness). The foundation everything else builds on. |
+| **dqm-ml-core** | Defines the base `Processor` class and three interfaces: `MetricsProcessor`, `FeaturesProcessor`, `GapProcessor`. Provides core metrics (Completeness, Representativeness, Diversity). |
 | **dqm-ml-job** | Handles the data pipeline: loading data, processing batches, and writing results. Think of it as the "engine room." |
 | **dqm-ml-images** | Extracts visual features from images (luminosity, contrast, blur, entropy) - useful for checking image dataset quality. |
-| **dqm-ml-pytorch** | Advanced metrics that need PyTorch, like Domain Gap (measuring difference between train/test distributions). |
+| **dqm-ml-pytorch** | Provides `GapProcessor` (Domain Gap) and `FeaturesProcessor` (Image Embeddings) - metrics that need PyTorch. |
 | **dqm-ml** | The CLI entry point - what you use from the command line to run jobs. |
 
 ## Key Technologies
@@ -97,23 +97,41 @@ uv run nox -s docs      # Build documentation
 
 If you want to add a new metric (awesome!), here's how it works:
 
-### The Metric Processor Pattern
+### Three Processor Interfaces
 
-All **Metrics** inherit from `DatametricProcessor` and implement these methods:
+DQM-ML V2 defines three distinct processor interfaces, each with its own base class:
 
-```mermaid
-flowchart TB
-    F[compute_features] --> B[compute_batch_metric]
-    B --> C[compute]
-    C --> D[compute_delta]
-```
+| Interface | Base Class | Purpose |
+|-----------|------------|---------|
+| **Metrics** | `MetricsProcessor` | Compute aggregated metric scores from data (Completeness, Representativeness, Diversity) |
+| **Features** | `FeaturesProcessor` | Extract feature columns from data (Visual Features, Embeddings) |
+| **Gap** | `GapProcessor` | Compute pairwise distances between selections (Domain Gap) |
 
-| Method | Purpose | Required? |
-|--------|---------|------------|
-| `compute_features()` | Extract per-sample features from raw data | Optional |
-| `compute_batch_metric()` | Compute intermediate stats for one batch | Yes |
-| `compute()` | Aggregate all batches into final metric | Yes |
-| `compute_delta()` | Compare two datasets (e.g., train vs test) | Optional |
+All three inherit from a common `Processor` base class which provides:
+- `__init__`, `_check_failure_rate`, `_check_image_fail_fast`, `needed_columns()`, `reset()`
+
+#### MetricsProcessor
+
+Extends `Processor`. Implement:
+- `generated_metrics()` → `list[str]` — output metric names
+- `extract_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+
+#### FeaturesProcessor
+
+Extends `Processor`. Implement:
+- `generated_features()` → `list[str]` — output feature column names
+- `compute_features(batch, prev_features)` → `dict[str, pa.Array]` — new feature columns
+- `needed_columns()` → `list[str]` — input columns needed (optional, default: `input_columns`)
+
+#### GapProcessor
+
+Extends `Processor`. Implement:
+- `extract_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+- `compute_delta(source, target)` → `dict[str, Any]` — pairwise distances
 
 ### Data Loading Pattern
 
