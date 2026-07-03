@@ -53,7 +53,7 @@ class ProcessorRunner:
             if isinstance(metric, FeaturesProcessor):
                 batch_features |= metric.compute_features(batch, prev_features=batch_features)
             elif isinstance(metric, MetricsProcessor):
-                batch_features |= metric.extract_columns(batch, prev_features=batch_features)
+                batch_features |= metric.select_columns(batch, prev_features=batch_features)
 
             if isinstance(metric, MetricsProcessor):
                 batch_metrics |= metric.compute_batch_metric(batch_features)

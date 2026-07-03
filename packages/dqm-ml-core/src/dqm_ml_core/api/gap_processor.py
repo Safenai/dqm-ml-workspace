@@ -21,12 +21,12 @@ class GapProcessor(Processor):
 
     Gap processors compute distribution shift between two datasets
     (e.g., MMD, FID, KL divergence). The primary lifecycle methods are
-    ``extract_features`` (per-batch column selection aware of previous features),
+    ``select_features`` (per-batch column selection aware of previous features),
     ``compute_batch_metric`` (batch aggregation), ``compute`` (final dataset-level
     statistics), and ``compute_delta`` (pairwise comparison).
     """
 
-    def extract_features(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
+    def select_features(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """
         Extract relevant columns from a batch, resolving patterns against
         both batch columns and previously computed upstream features.

@@ -30,14 +30,14 @@ def test_processor_runner_run_with_mock_metric(sample_dataframe):
     runner = ProcessorRunner()
 
     mock_metric = MagicMock(spec=MetricsProcessor)
-    mock_metric.extract_columns.return_value = {"feat1": pa.array([1, 1, 1])}
+    mock_metric.select_columns.return_value = {"feat1": pa.array([1, 1, 1])}
     mock_metric.compute_batch_metric.return_value = {"metric1": pa.array([10])}
     mock_metric.compute.return_value = {"final_metric1": 0.95}
 
     result = runner.run(sample_dataframe, [mock_metric])
 
     assert result == {"final_metric1": 0.95}
-    mock_metric.extract_columns.assert_called_once()
+    mock_metric.select_columns.assert_called_once()
     mock_metric.compute_batch_metric.assert_called_once()
     mock_metric.compute.assert_called_once()
 
@@ -51,12 +51,12 @@ def test_processor_runner_overwrite_behavior(sample_dataframe):
     runner = ProcessorRunner()
 
     metric1 = MagicMock(spec=MetricsProcessor)
-    metric1.extract_columns.return_value = {}
+    metric1.select_columns.return_value = {}
     metric1.compute_batch_metric.return_value = {"shared": pa.array([1])}
     metric1.compute.return_value = {}
 
     metric2 = MagicMock(spec=MetricsProcessor)
-    metric2.extract_columns.return_value = {}
+    metric2.select_columns.return_value = {}
     metric2.compute_batch_metric.return_value = {"shared": pa.array([2])}
     metric2.compute.return_value = {"final": 1}
 

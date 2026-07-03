@@ -31,12 +31,24 @@ class TestMmdFunctions:
 
     def test_mmd_poly_single_sample_src(self):
         """Verify MMD Poly returns 0 when source has single sample."""
-        result = _mmd_poly(np.array([[1.0, 2.0]]), np.array([[3.0, 4.0], [5.0, 6.0]]), 2.0, 1.0, 0.0)
+        result = _mmd_poly(
+            np.array([[1.0, 2.0]]),
+            np.array([[3.0, 4.0], [5.0, 6.0]]),
+            2.0,
+            1.0,
+            0.0,
+        )
         assert result == pytest.approx(0.0)
 
     def test_mmd_poly_single_sample_tgt(self):
         """Verify MMD Poly returns 0 when target has single sample."""
-        result = _mmd_poly(np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0]]), 2.0, 1.0, 0.0)
+        result = _mmd_poly(
+            np.array([[1.0, 2.0], [3.0, 4.0]]),
+            np.array([[5.0, 6.0]]),
+            2.0,
+            1.0,
+            0.0,
+        )
         assert result == pytest.approx(0.0)
 
     def test_mmd_poly_both_single(self):
@@ -45,17 +57,20 @@ class TestMmdFunctions:
 
 
 class TestDomainGapExtractFeatures:
-    """Tests for extract_features method."""
+    """Tests for select_features method."""
 
     def test_column_missing_in_batch_logs_warning(self, caplog):
         """Verify empty result and warning when input column missing from batch."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         batch = pa.RecordBatch.from_pydict({"other_col": pa.array([1.0])})
         with caplog.at_level(logging.WARNING):
-            result = proc.extract_features(batch, {})
+            result = proc.select_features(batch, {})
         assert result == {}
 
 
@@ -66,7 +81,10 @@ class TestDomainGapComputeBatchMetric:
         """Verify empty result when embedding is None."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         features = {"emb": pa.array([1.0])}
         result = proc.compute_batch_metric(features)
@@ -76,7 +94,10 @@ class TestDomainGapComputeBatchMetric:
         """Verify empty result when embedding is not a fixed-size list array."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         features = {"emb": pa.array([1.0, 2.0], type=pa.float64())}
         result = proc.compute_batch_metric(features)
@@ -90,7 +111,10 @@ class TestDomainGapCompute:
         """Verify empty result when batch_metrics is empty."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         result = proc.compute(batch_metrics={})
         assert result == {}
@@ -99,7 +123,10 @@ class TestDomainGapCompute:
         """Verify empty result when required count key is missing."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         result = proc.compute(batch_metrics={"some_key": pa.array([1.0])})
         assert result == {}
@@ -126,7 +153,10 @@ class TestDomainGapResolveEmbeddingPatterns:
         """Verify wildcard pattern resolves to matching columns."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb_*"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb_*"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         proc._resolve_embedding_patterns(["emb_a", "emb_b", "other"])
         assert proc.embedding_col == "emb_a"
@@ -136,7 +166,10 @@ class TestDomainGapResolveEmbeddingPatterns:
         """Verify explicit column name passes through unchanged."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         proc._resolve_embedding_patterns(["emb", "other"])
         assert proc.embedding_col == "emb"
@@ -149,7 +182,10 @@ class TestDomainGapResolveCmdChannels:
         """Verify ValueError for unknown embedding dimension."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         with pytest.raises(ValueError, match="Cannot determine channels"):
             proc._resolve_cmd_channels("emb", 12345, {})
@@ -158,7 +194,10 @@ class TestDomainGapResolveCmdChannels:
         """Verify legacy dimension lookup resolves correctly."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         result = proc._resolve_cmd_channels("emb", 25088, {})
         assert result == 512
@@ -168,10 +207,19 @@ def test_compute_delta_summary_empty_counts():
     """Verify _compute_delta_summary handles zero-count source/target."""
     proc = DomainGapProcessor(
         name="test",
-        config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+        config={
+            "columns": {"input": ["emb"]},
+            "distance": {"metric": "mmd_linear"},
+        },
     )
-    source = {"count": pa.array([0], type=pa.int64()), "sum": pa.array([0.0], type=pa.float64())}
-    target = {"count": pa.array([0], type=pa.int64()), "sum": pa.array([0.0], type=pa.float64())}
+    source = {
+        "count": pa.array([0], type=pa.int64()),
+        "sum": pa.array([0.0], type=pa.float64()),
+    }
+    target = {
+        "count": pa.array([0], type=pa.int64()),
+        "sum": pa.array([0.0], type=pa.float64()),
+    }
     result = proc._compute_delta_summary(source, target, "mmd_linear")
     assert "empty summaries" in result["note"].to_pylist()[0]
 
@@ -180,7 +228,10 @@ def test_compute_delta_unknown_metric():
     """Verify compute_delta handles unsupported metric gracefully."""
     proc = DomainGapProcessor(
         name="test",
-        config={"columns": {"input": ["emb"]}, "distance": {"metric": "unknown_metric"}},
+        config={
+            "columns": {"input": ["emb"]},
+            "distance": {"metric": "unknown_metric"},
+        },
     )
     result = proc.compute_delta({}, {})
     assert "unsupported metric" in result["note"].to_pylist()[0]
@@ -211,7 +262,10 @@ def test_compute_delta_wasserstein_missing_hist_counts():
     """Verify _compute_delta_wasserstein handles missing hist_counts."""
     proc = DomainGapProcessor(
         name="test",
-        config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+        config={
+            "columns": {"input": ["emb"]},
+            "distance": {"metric": "mmd_linear"},
+        },
     )
     result = proc._compute_delta_wasserstein({}, {})
     assert "missing hist_counts" in result["note"].to_pylist()[0]
@@ -221,7 +275,10 @@ def test_compute_delta_mmd_poly_missing_emb():
     """Verify _compute_delta_mmd_poly handles missing embedding."""
     proc = DomainGapProcessor(
         name="test",
-        config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+        config={
+            "columns": {"input": ["emb"]},
+            "distance": {"metric": "mmd_linear"},
+        },
     )
     result = proc._compute_delta_mmd_poly({}, {})
     assert "__emb__" in result["note"].to_pylist()[0]
@@ -231,7 +288,10 @@ def test_compute_delta_pad_missing_emb():
     """Verify _compute_delta_pad handles missing embedding."""
     proc = DomainGapProcessor(
         name="test",
-        config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+        config={
+            "columns": {"input": ["emb"]},
+            "distance": {"metric": "mmd_linear"},
+        },
     )
     result = proc._compute_delta_pad({}, {})
     assert "__emb__" in result["note"].to_pylist()[0]
@@ -244,7 +304,10 @@ class TestDomainGapLayerCmd:
         """Verify _compute_layer_cmd returns None when n key missing."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         assert proc._compute_layer_cmd("col", {}, {}) is None
 
@@ -252,7 +315,10 @@ class TestDomainGapLayerCmd:
         """Verify _compute_layer_cmd returns None when source count is zero."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "mmd_linear"}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "mmd_linear"},
+            },
         )
         source = {"cmd_col_n": pa.array([0], type=pa.int64())}
         target = {"cmd_col_n": pa.array([1], type=pa.int64())}
@@ -262,7 +328,10 @@ class TestDomainGapLayerCmd:
         """Verify _compute_layer_cmd returns None when power sum keys missing."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "cmd", "k": 5}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "cmd", "k": 5},
+            },
         )
         source = {"cmd_col_n": pa.array([5], type=pa.int64())}
         target = {"cmd_col_n": pa.array([5], type=pa.int64())}
@@ -333,7 +402,8 @@ class TestDomainGapExtremeValues:
             "sum": pa.FixedSizeListArray.from_arrays(pa.array(src_emb.sum(axis=0)), embed_dim),
             "sum_sq": pa.FixedSizeListArray.from_arrays(pa.array((src_emb * src_emb).sum(axis=0)), embed_dim),
             "sum_outer": pa.FixedSizeListArray.from_arrays(
-                pa.array((src_emb.T @ src_emb).reshape(-1)), embed_dim * embed_dim
+                pa.array((src_emb.T @ src_emb).reshape(-1)),
+                embed_dim * embed_dim,
             ),
         }
         tgt = {
@@ -341,7 +411,8 @@ class TestDomainGapExtremeValues:
             "sum": pa.FixedSizeListArray.from_arrays(pa.array(tgt_emb.sum(axis=0)), embed_dim),
             "sum_sq": pa.FixedSizeListArray.from_arrays(pa.array((tgt_emb * tgt_emb).sum(axis=0)), embed_dim),
             "sum_outer": pa.FixedSizeListArray.from_arrays(
-                pa.array((tgt_emb.T @ tgt_emb).reshape(-1)), embed_dim * embed_dim
+                pa.array((tgt_emb.T @ tgt_emb).reshape(-1)),
+                embed_dim * embed_dim,
             ),
         }
         result = proc._compute_delta_summary(src, tgt, "fid")
@@ -368,7 +439,8 @@ class TestDomainGapExtremeValues:
             "sum": pa.FixedSizeListArray.from_arrays(pa.array(src_emb.sum(axis=0)), embed_dim),
             "sum_sq": pa.FixedSizeListArray.from_arrays(pa.array((src_emb * src_emb).sum(axis=0)), embed_dim),
             "sum_outer": pa.FixedSizeListArray.from_arrays(
-                pa.array((src_emb.T @ src_emb).reshape(-1)), embed_dim * embed_dim
+                pa.array((src_emb.T @ src_emb).reshape(-1)),
+                embed_dim * embed_dim,
             ),
         }
         tgt = {
@@ -376,7 +448,8 @@ class TestDomainGapExtremeValues:
             "sum": pa.FixedSizeListArray.from_arrays(pa.array(tgt_emb.sum(axis=0)), embed_dim),
             "sum_sq": pa.FixedSizeListArray.from_arrays(pa.array((tgt_emb * tgt_emb).sum(axis=0)), embed_dim),
             "sum_outer": pa.FixedSizeListArray.from_arrays(
-                pa.array((tgt_emb.T @ tgt_emb).reshape(-1)), embed_dim * embed_dim
+                pa.array((tgt_emb.T @ tgt_emb).reshape(-1)),
+                embed_dim * embed_dim,
             ),
         }
         result = proc._compute_delta_summary(src, tgt, "fid")
@@ -423,7 +496,10 @@ class TestDomainGapExtremeValues:
             name="test",
             config={
                 "columns": {"input": ["emb"]},
-                "distance": {"metric": "mmd_poly", "kernel_params": {"degree": 2.0, "coefficient0": 0.0}},
+                "distance": {
+                    "metric": "mmd_poly",
+                    "kernel_params": {"degree": 2.0, "coefficient0": 0.0},
+                },
             },
         )
         dim = 2
@@ -489,7 +565,10 @@ class TestDomainGapExtremeValues:
         """Verify compute_batch_metric works with CMD k=0."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "cmd", "k": 0}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "cmd", "k": 0},
+            },
         )
         dim = 2
         vals = pa.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], type=pa.float64())
@@ -504,7 +583,10 @@ class TestDomainGapExtremeValues:
         """Verify compute_batch_metric works with large CMD k."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "cmd", "k": 50}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "cmd", "k": 50},
+            },
         )
         dim = 2
         vals = pa.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], type=pa.float64())
@@ -520,7 +602,10 @@ class TestDomainGapExtremeValues:
         """Verify _compute_delta_cmd handles k=0."""
         proc = DomainGapProcessor(
             name="test",
-            config={"columns": {"input": ["emb"]}, "distance": {"metric": "cmd", "k": 0}},
+            config={
+                "columns": {"input": ["emb"]},
+                "distance": {"metric": "cmd", "k": 0},
+            },
         )
         source = {"cmd_emb_n": pa.array([3], type=pa.int64())}
         target = {"cmd_emb_n": pa.array([3], type=pa.int64())}
@@ -550,7 +635,13 @@ class TestDomainGapExtremeValues:
             config={
                 "columns": {"input": ["emb"]},
                 "distance": {"metric": "wasserstein_1d"},
-                "summary": {"histogram": {"dims": 2, "bins": 100000, "range": [-3.0, 3.0]}},
+                "summary": {
+                    "histogram": {
+                        "dims": 2,
+                        "bins": 100000,
+                        "range": [-3.0, 3.0],
+                    }
+                },
             },
         )
         dim = 2
@@ -572,14 +663,20 @@ class TestDomainGapExtremeValues:
         source = {
             "hist_dims": pa.array([2], type=pa.int64()),
             "hist_counts": pa.array(
-                [pa.array([1] * 10, type=pa.int64()), pa.array([1] * 10, type=pa.int64())],
+                [
+                    pa.array([1] * 10, type=pa.int64()),
+                    pa.array([1] * 10, type=pa.int64()),
+                ],
                 type=pa.list_(pa.int64()),
             ),
         }
         target = {
             "hist_dims": pa.array([2], type=pa.int64()),
             "hist_counts": pa.array(
-                [pa.array([1] * 10, type=pa.int64()), pa.array([1] * 10, type=pa.int64())],
+                [
+                    pa.array([1] * 10, type=pa.int64()),
+                    pa.array([1] * 10, type=pa.int64()),
+                ],
                 type=pa.list_(pa.int64()),
             ),
         }
@@ -599,14 +696,20 @@ class TestDomainGapExtremeValues:
         source = {
             "hist_dims": pa.array([2], type=pa.int64()),
             "hist_counts": pa.array(
-                [pa.array([1] * 10, type=pa.int64()), pa.array([1] * 10, type=pa.int64())],
+                [
+                    pa.array([1] * 10, type=pa.int64()),
+                    pa.array([1] * 10, type=pa.int64()),
+                ],
                 type=pa.list_(pa.int64()),
             ),
         }
         target = {
             "hist_dims": pa.array([2], type=pa.int64()),
             "hist_counts": pa.array(
-                [pa.array([1] * 10, type=pa.int64()), pa.array([1] * 10, type=pa.int64())],
+                [
+                    pa.array([1] * 10, type=pa.int64()),
+                    pa.array([1] * 10, type=pa.int64()),
+                ],
                 type=pa.list_(pa.int64()),
             ),
         }

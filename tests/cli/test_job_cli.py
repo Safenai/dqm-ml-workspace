@@ -88,18 +88,19 @@ class TestExecuteEdgeCases:
 
 class TestInitComponentsFromList:
     def test_missing_name(self):
+        mock_registry = {"completeness": MagicMock()}
         with pytest.raises(ValueError, match="must contain 'name'"):
-            _init_components_from_list([{"type": "completeness"}], {"completeness": MagicMock()}, "processor")
+            _init_components_from_list([{"type": "completeness"}], mock_registry, "processor")
 
     def test_missing_type(self):
+        mock_registry = {"completeness": MagicMock()}
         with pytest.raises(ValueError, match="must contain 'type'"):
-            _init_components_from_list([{"name": "test"}], {"completeness": MagicMock()}, "processor")
+            _init_components_from_list([{"name": "test"}], mock_registry, "processor")
 
     def test_invalid_type(self):
+        mock_registry = {"completeness": MagicMock()}
         with pytest.raises(ValueError, match="has invalid type"):
-            _init_components_from_list(
-                [{"name": "test", "type": "nonexistent"}], {"completeness": MagicMock()}, "processor"
-            )
+            _init_components_from_list([{"name": "test", "type": "nonexistent"}], mock_registry, "processor")
 
     def test_success(self):
         mock_cls = MagicMock()

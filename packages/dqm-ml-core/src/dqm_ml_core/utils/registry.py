@@ -10,12 +10,9 @@ from __future__ import annotations
 from importlib.metadata import EntryPoints, entry_points
 import logging
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from dqm_ml_core.api.processor import Processor
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

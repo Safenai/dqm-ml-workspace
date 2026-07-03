@@ -114,7 +114,7 @@ All three inherit from a common `Processor` base class which provides:
 
 Extends `Processor`. Implement:
 - `generated_metrics()` → `list[str]` — output metric names
-- `extract_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
+- `select_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
 - `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
 - `compute(batch_metrics)` → `dict[str, Any]` — final scores
 
@@ -128,7 +128,7 @@ Extends `Processor`. Implement:
 #### GapProcessor
 
 Extends `Processor`. Implement:
-- `extract_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
+- `select_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
 - `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
 - `compute(batch_metrics)` → `dict[str, Any]` — final scores
 - `compute_delta(source, target)` → `dict[str, Any]` — pairwise distances

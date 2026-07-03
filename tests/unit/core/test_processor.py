@@ -70,8 +70,9 @@ def test_check_image_fail_fast_raises():
         config={"errors": {"images": {"on_decode_failure": "fail_fast"}}},
     )
     proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="fail_fast"))
+    error = ValueError("test error")
     with pytest.raises(ValueError, match="test error"):
-        proc._check_image_fail_fast(ValueError("test error"), "on_decode_failure")
+        proc._check_image_fail_fast(error, "on_decode_failure")
 
 
 def test_check_image_fail_fast_silent_does_not_raise():

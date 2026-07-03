@@ -97,7 +97,7 @@ All three inherit from a common `Processor` base class (`dqm_ml_core.api.process
 
 Extends `Processor`. Implement:
 - `generated_metrics()` → `list[str]` — output metric names
-- `extract_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
+- `select_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
 - `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
 - `compute(batch_metrics)` → `dict[str, Any]` — final scores
 
@@ -111,7 +111,7 @@ Extends `Processor`. Implement:
 #### GapProcessor
 
 Extends `Processor`. Implement:
-- `extract_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
+- `select_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
 - `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
 - `compute(batch_metrics)` → `dict[str, Any]` — final scores
 - `compute_delta(source, target)` → `dict[str, Any]` — pairwise distances
@@ -129,7 +129,7 @@ Extends `Processor`. Implement:
 To create a new **Metrics Processor**:
 
 1. Subclass `dqm_ml_core.api.metrics_processor.MetricsProcessor`.
-2. Implement `generated_metrics()`, `extract_columns()` (optional), `compute_batch_metric()`, and `compute()`.
+2. Implement `generated_metrics()`, `select_columns()` (optional), `compute_batch_metric()`, and `compute()`.
 3. Register in `[project.entry-points."dqm_ml.metrics"]` in `pyproject.toml`.
 
 To create a **Features Processor** or **Gap Processor**, use the respective base classes in `dqm_ml_core.api.features_processor` and `dqm_ml_core.api.gap_processor`.

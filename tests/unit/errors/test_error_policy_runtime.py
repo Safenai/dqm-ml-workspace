@@ -28,7 +28,7 @@ class TestOnMissingColumn:
         batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
         with pytest.raises(KeyError, match="'missing' not found"):
-            proc.extract_columns(batch, {})
+            proc.select_columns(batch, {})
 
     def test_silent_fail_logs_and_skips(self, caplog: pytest.LogCaptureFixture) -> None:
         """Verify silent_fail logs warning and skips missing column.
@@ -43,7 +43,7 @@ class TestOnMissingColumn:
         batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
         with caplog.at_level(logging.WARNING):
-            features = proc.extract_columns(batch, {})
+            features = proc.select_columns(batch, {})
 
         assert "a" in features
         assert "missing" not in features
@@ -97,7 +97,10 @@ class TestOnTransformError:
         proc = VisualFeaturesProcessor(name="test", config={"name": "test"})
         proc.errors_config = ErrorsConfig(
             tabular=TabularErrorsConfig(on_file_not_found="silent_fail"),
-            images=ImageErrorsConfig(on_transform_error="fail_fast", on_unsupported_format="silent_fail"),
+            images=ImageErrorsConfig(
+                on_transform_error="fail_fast",
+                on_unsupported_format="silent_fail",
+            ),
         )
 
         with pytest.raises(ValueError, match="Unsupported type"):
@@ -113,7 +116,10 @@ class TestOnTransformError:
         proc.errors_config = ErrorsConfig(
             max_failure_rate=1.0,
             tabular=TabularErrorsConfig(on_file_not_found="silent_fail"),
-            images=ImageErrorsConfig(on_transform_error="silent_fail", on_unsupported_format="silent_fail"),
+            images=ImageErrorsConfig(
+                on_transform_error="silent_fail",
+                on_unsupported_format="silent_fail",
+            ),
         )
 
         with caplog.at_level(logging.WARNING):
@@ -135,7 +141,10 @@ class TestOnUnsupportedFormat:
         proc = VisualFeaturesProcessor(name="test", config={"name": "test"})
         proc.errors_config = ErrorsConfig(
             tabular=TabularErrorsConfig(on_file_not_found="silent_fail"),
-            images=ImageErrorsConfig(on_transform_error="silent_fail", on_unsupported_format="fail_fast"),
+            images=ImageErrorsConfig(
+                on_transform_error="silent_fail",
+                on_unsupported_format="fail_fast",
+            ),
         )
 
         with pytest.raises(ValueError, match="Unsupported type"):
@@ -151,7 +160,10 @@ class TestOnUnsupportedFormat:
         proc.errors_config = ErrorsConfig(
             max_failure_rate=1.0,
             tabular=TabularErrorsConfig(on_file_not_found="silent_fail"),
-            images=ImageErrorsConfig(on_transform_error="silent_fail", on_unsupported_format="silent_fail"),
+            images=ImageErrorsConfig(
+                on_transform_error="silent_fail",
+                on_unsupported_format="silent_fail",
+            ),
         )
 
         with caplog.at_level(logging.WARNING):
@@ -187,7 +199,10 @@ class TestOnDecodeFailure:
         proc = ImageEmbeddingProcessor(name="test", config={"name": "test"})
         proc.errors_config = ErrorsConfig(
             max_failure_rate=1.0,
-            images=ImageErrorsConfig(on_decode_failure="silent_fail", on_transform_error="silent_fail"),
+            images=ImageErrorsConfig(
+                on_decode_failure="silent_fail",
+                on_transform_error="silent_fail",
+            ),
         )
 
         with caplog.at_level(logging.WARNING):

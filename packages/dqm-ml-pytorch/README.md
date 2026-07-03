@@ -118,6 +118,63 @@ Output column: `image_embedding` (pa.FixedSizeListArray<float32, 2048>)
 | **PAD** | Proxy A-Distance | Classifier-based divergence |
 | **CMD** | Central Moment Discrepancy | Multi-layer feature comparison |
 
+## Adding a Custom Gap Metric
+
+Gap metrics are added directly to the `DomainGapProcessor` class. Here are the steps:
+
+### 1. Add a metric computation method
+
+Add a `_compute_delta_<metric>()` method in `domain_gap.py`. The method receives source and target statistics (each `dict[str, pa.Array]`) and returns `dict[str, pa.Array]` with the metric value.
+
+**Example — Cosine Distance** (mean cosine similarity between source and target embeddings):
+
+```python
+@staticmethod
+def _cosine_distance(src_emb: np.ndarray, tgt_emb: np.ndarray) -> float:
+    norm_src = src_emb / np.maximum(np.linalg.norm(src_emb, axis=1, keepdims=True), 1e-12)
+    norm_tgt = tgt_emb / np.maximum(np.linalg.norm(tgt_emb, axis=1, keepdims=True), 1e-12)
+    cos_sim = (norm_src @ norm_tgt.T).mean()
+    return float(1.0 - cos_sim)
+
+def _compute_delta_cosine(self, source: dict[str, pa.Array], target: dict[str, pa.Array]) -> dict[str, pa.Array]:
+    if "__emb__" not in source or "__emb__" not in target:
+        return {"metric": pa.array(["cosine_distance"]), "note": pa.array(["missing __emb__"])}
+    src = _fixed_to_matrix(source["__emb__"])
+    tgt = _fixed_to_matrix(target["__emb__"])
+    val = self._cosine_distance(src, tgt)
+    return {"cosine_distance": pa.array([val], type=pa.float64())}
+```
+
+### 2. Wire into the dispatch chain
+
+Add an `elif` branch in `compute_delta()`:
+
+```python
+if metric == "cosine_distance":
+    return self._compute_delta_cosine(source, target)
+```
+
+### 3. (Optional) Configure summary collection
+
+If your metric needs data beyond what's already collected, add auto-detection in `_configure_summary()`:
+
+```python
+auto_store_emb = self.delta_metric in {"mmd_rbf", "mmd_poly", "pad", "cmd", "cosine_distance"}
+```
+
+### 4. Update the class docstring
+
+Add the new metric to the class and method docstrings so users know it's available.
+
+### Summary of summary requirements
+
+| Requires | Metrics |
+|----------|---------|
+| **sum/sum_sq** (mean + variance) | `klmvn_diag`, `mmd_linear`, `fid` |
+| **sum_outer** (covariance) | `fid` |
+| **hist_counts** (1D histograms) | `wasserstein_1d` |
+| **__emb__** (raw embeddings) | `mmd_rbf`, `mmd_poly`, `pad`, `cosine_distance` |
+
 ## Output
 
 Returns statistical distance values:

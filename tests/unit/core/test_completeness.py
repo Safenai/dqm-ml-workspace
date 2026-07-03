@@ -12,8 +12,8 @@ import pyarrow as pa
 import pytest
 
 
-def test_extract_columns_column_not_in_batch(caplog):
-    """Verify extract_columns skips missing columns and logs a warning.
+def test_select_columns_column_not_in_batch(caplog):
+    """Verify select_columns skips missing columns and logs a warning.
 
     Args:
         caplog: Pytest fixture to capture log output.
@@ -22,7 +22,7 @@ def test_extract_columns_column_not_in_batch(caplog):
     batch = pa.RecordBatch.from_arrays([pa.array([1, 2]), pa.array([3, 4])], names=["col1", "col2"])
 
     with caplog.at_level(logging.WARNING):
-        features = proc.extract_columns(batch)
+        features = proc.select_columns(batch)
 
     assert "col1" in features
     assert "missing" not in features
@@ -60,7 +60,11 @@ def test_compute_with_missing_column_metrics(caplog):
     """
     proc = CompletenessProcessor(
         name="test",
-        config={"columns": {"input": ["col1"]}, "include_per_column": False, "include_overall": False},
+        config={
+            "columns": {"input": ["col1"]},
+            "include_per_column": False,
+            "include_overall": False,
+        },
     )
     batch_metrics = {
         "col1_total_count": pa.array([10]),
@@ -130,7 +134,10 @@ class TestExtremeDataValues:
         """Verify zero total count returns zero completeness without division error."""
         result = CompletenessProcessor._compute_column_completeness(
             "col1",
-            {"col1_total_count": pa.array([0]), "col1_complete_count": pa.array([0])},
+            {
+                "col1_total_count": pa.array([0]),
+                "col1_complete_count": pa.array([0]),
+            },
         )
         assert result == pytest.approx(0.0)
 
@@ -138,7 +145,10 @@ class TestExtremeDataValues:
         """Verify 100% completeness when all values are present."""
         result = CompletenessProcessor._compute_column_completeness(
             "col1",
-            {"col1_total_count": pa.array([10]), "col1_complete_count": pa.array([10])},
+            {
+                "col1_total_count": pa.array([10]),
+                "col1_complete_count": pa.array([10]),
+            },
         )
         assert result == pytest.approx(1.0)
 
@@ -146,7 +156,10 @@ class TestExtremeDataValues:
         """Verify 0% completeness when all values are null."""
         result = CompletenessProcessor._compute_column_completeness(
             "col1",
-            {"col1_total_count": pa.array([10]), "col1_complete_count": pa.array([0])},
+            {
+                "col1_total_count": pa.array([10]),
+                "col1_complete_count": pa.array([0]),
+            },
         )
         assert result == pytest.approx(0.0)
 

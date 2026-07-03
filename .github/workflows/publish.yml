@@ -5,10 +5,6 @@ on:
     tags:
       - '[0-9]*'
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   check-main:
     runs-on: ubuntu-24.04
@@ -33,6 +29,8 @@ jobs:
     if: needs.check-main.outputs.is_on_main == 'true'
     runs-on: ubuntu-24.04
     environment: release
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:

@@ -122,7 +122,9 @@ class RepresentativenessProcessor(MetricsProcessor):
         )
 
     @staticmethod
-    def _parse_distribution_params(cfg: RepresentativenessProcessorConfig) -> dict[str, dict[str, float]]:
+    def _parse_distribution_params(
+        cfg: RepresentativenessProcessorConfig,
+    ) -> dict[str, dict[str, float]]:
         dist_params: dict[str, dict[str, float]] = {}
         if not cfg.distribution_params:
             return dist_params
@@ -217,7 +219,10 @@ class RepresentativenessProcessor(MetricsProcessor):
 
         sample_per_batch = min(
             self.ks_sample_size,
-            max(self.ks_min_sample_size, len(numeric_values) // self.ks_sample_divisor),
+            max(
+                self.ks_min_sample_size,
+                len(numeric_values) // self.ks_sample_divisor,
+            ),
         )
         if len(numeric_values) > sample_per_batch:
             sample_indices = self._rng.choice(len(numeric_values), sample_per_batch, replace=False)
@@ -402,7 +407,10 @@ class RepresentativenessProcessor(MetricsProcessor):
         return np.histogram(expected_values, bins=edges)[0].astype(np.float64)
 
     def _estimate_from_samples(
-        self, col_params: dict[str, Any], sample_key: str, batch_metrics: dict[str, pa.Array]
+        self,
+        col_params: dict[str, Any],
+        sample_key: str,
+        batch_metrics: dict[str, pa.Array],
     ) -> tuple[float, float]:
         """Estimate normal params from KS sample data or fall back to defaults."""
         if sample_key in batch_metrics:

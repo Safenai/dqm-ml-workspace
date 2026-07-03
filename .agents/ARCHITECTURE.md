@@ -3,7 +3,7 @@
 ## Pipeline Data Flow
 
 ```
-pa.RecordBatch ──(per batch)──→ extract_features → dict[str, pa.Array]
+pa.RecordBatch ──(per batch)──→ select_features → dict[str, pa.Array]
                                     ↓
                         compute_batch_metric → dict[str, pa.Array] (accumulated)
                                     ↓
@@ -86,13 +86,13 @@ Extend `MetricsProcessor` (`dqm_ml_core.api.metrics_processor:16`). Implement:
 | Method | Input | Output | Required? |
 |---|---|---|---|
 | `generated_metrics()` | — | `list[str]` — output metric names | Yes |
-| `extract_columns(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — selected columns | No (default in base) |
+| `select_columns(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — selected columns | No (default in base) |
 | `compute_batch_metric(features)` | `dict[str, pa.Array]` | `dict[str, pa.Array]` — batch stats | Yes |
 | `compute(batch_metrics)` | `dict[str, pa.Array]` (concat across batches) | `dict[str, Any]` — final scores | Yes |
 
 - Config: `columns.input`, `columns.exclude`, plus metric-specific params
 - Register in `[project.entry-points."dqm_ml.metrics"]` → `type = "package.module:ClassName"`
-- `extract_columns` handles `on_missing_column` (fail_fast/silent_fail) and wildcard resolution
+- `select_columns` handles `on_missing_column` (fail_fast/silent_fail) and wildcard resolution
 - Diversity: accumulates `pa.compute.value_counts()` per batch, merges `Counter` in `compute()`
 - Ref: `CompletenessProcessor`, `RepresentativenessProcessor`, `DiversityProcessor` (`dqm_ml_core.metrics`)
 
@@ -102,14 +102,14 @@ Extend `GapProcessor` (`dqm_ml_core.api.gap_processor:16`). Implement:
 
 | Method | Input | Output | Required? |
 |---|---|---|---|
-| `extract_features(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — retrieve embeddings | Yes |
+| `select_features(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — retrieve embeddings | Yes |
 | `compute_batch_metric(features)` | `dict[str, pa.Array]` | `dict[str, pa.Array]` — batch stats | Yes |
 | `compute(batch_metrics)` | `dict[str, pa.Array]` (concat) | `dict[str, Any]` — final scores | Yes |
 | `compute_delta(source, target)` | `dict`, `dict` | `dict[str, Any]` — pairwise distances | Yes |
 
 - Config: `columns.input` (resolved against `batch.schema.names + prev_features.keys()`), `columns.exclude`
 - Register in `[project.entry-points."dqm_ml.gap"]` → `type = "package.module:ClassName"`
-- `extract_features` searches both batch columns and previously generated features
+- `select_features` searches both batch columns and previously generated features
 - Embeddings: expects `pa.FixedSizeListArray(pa.float32())` in input column
 - Ref: `DomainGapProcessor` (`dqm_ml_pytorch.domain_gap`)
 

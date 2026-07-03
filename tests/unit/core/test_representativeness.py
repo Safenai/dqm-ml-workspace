@@ -619,8 +619,9 @@ def test_mean_std_user_provided_missing_params_raises():
             "mean_std_estimation": "user_provided",
         },
     )
+    bins = np.array([0.0, 1.0, 2.0])
     with pytest.raises(ValueError, match="requires 'mean' and 'std'"):
-        proc._initialize_bin_edges(np.array([0.0, 1.0, 2.0]), "col1")
+        proc._initialize_bin_edges(bins, "col1")
 
 
 def test_mean_std_from_all_data_not_implemented():

@@ -198,7 +198,9 @@ class DatasetJob:
         return self._topological_sort(procs, dep_on)
 
     @staticmethod
-    def _register_generated_columns(procs: list[Processor]) -> dict[str, set[int]]:
+    def _register_generated_columns(
+        procs: list[Processor],
+    ) -> dict[str, set[int]]:
         """Build a mapping from column names to the processor indices that generate them.
 
         Args:
@@ -260,6 +262,7 @@ class DatasetJob:
         for i, p in enumerate(procs):
             for col in p.needed_columns():
                 dep_on[i] |= DatasetJob._resolve_dependency_col(col, generated_names, generated_by, i)
+
         return dep_on
 
     @staticmethod
@@ -417,7 +420,9 @@ class DatasetJob:
             raise TypeError(f"Unsupported delta metric type: {type(value)} for key '{key}'")
 
     def _compute_delta_metrics(
-        self, metrics_processors: Sequence[GapProcessor], dataselection_metrics_list: dict[str, dict[str, Any]]
+        self,
+        metrics_processors: Sequence[GapProcessor],
+        dataselection_metrics_list: dict[str, dict[str, Any]],
     ) -> pa.Table | None:
         """Compute comparison metrics between every unique pair of data selections.
 
@@ -486,9 +491,9 @@ class DatasetJob:
             if isinstance(proc, FeaturesProcessor):
                 batch_features.update(proc.compute_features(batch, prev_features=batch_features))
             elif isinstance(proc, MetricsProcessor):
-                batch_features.update(proc.extract_columns(batch, prev_features=batch_features))
+                batch_features.update(proc.select_columns(batch, prev_features=batch_features))
             elif isinstance(proc, GapProcessor):
-                batch_features.update(proc.extract_features(batch, prev_features=batch_features))
+                batch_features.update(proc.select_features(batch, prev_features=batch_features))
 
         # Phase 2: Batch-level metric aggregation (only metrics and gap)
         for proc in metrics_processors:
@@ -497,7 +502,10 @@ class DatasetJob:
             batch_metrics.update(proc.compute_batch_metric(batch_features))
 
         if logging.getLogger().level == logging.DEBUG:
-            m_keys, m_features = list(batch_metrics.keys()), list(batch_features.keys())
+            m_keys, m_features = (
+                list(batch_metrics.keys()),
+                list(batch_features.keys()),
+            )
             logger.debug(f"Available batch_metrics {m_keys} - features {m_features}")
 
         return batch_features, batch_metrics
@@ -630,7 +638,9 @@ class DatasetJob:
         self.features_output.write_table(selection_name, features_array, part_index)
 
     @staticmethod
-    def _concatenate_accumulator(accumulator: dict[str, list[Any]]) -> dict[str, Any]:
+    def _concatenate_accumulator(
+        accumulator: dict[str, list[Any]],
+    ) -> dict[str, Any]:
         """Concatenate lists of arrays into a single dict of arrays."""
         return {k: pa.concat_arrays(v) for k, v in accumulator.items()}
 
@@ -653,7 +663,10 @@ class DatasetJob:
                 del proc.current_path_prefix
 
     def _compute_batches_metrics(
-        self, selection_name: str, selection: DataSelection, ordered_processors: list[Processor]
+        self,
+        selection_name: str,
+        selection: DataSelection,
+        ordered_processors: list[Processor],
     ) -> dict[str, Any]:
         """Process all batches to compute intermediate statistics and features.
 
@@ -684,7 +697,13 @@ class DatasetJob:
         memory_threshold = self._parse_memory_string(compute_max_memory) if compute_max_memory else 512 * 1024 * 1024
 
         dataloader_iter = (
-            tqdm(selection, desc="batches", position=1, leave=False, total=selection.get_nb_batches())
+            tqdm(
+                selection,
+                desc="batches",
+                position=1,
+                leave=False,
+                total=selection.get_nb_batches(),
+            )
             if self.progress_bar
             else selection
         )
@@ -702,10 +721,18 @@ class DatasetJob:
 
             feature_array_size = self._accumulate_source_features(batch, features_accumulator, feature_array_size)
             feature_array_size = self._accumulate_generated_features(
-                batch, batch_features, batch_metrics, features_accumulator, feature_array_size
+                batch,
+                batch_features,
+                batch_metrics,
+                features_accumulator,
+                feature_array_size,
             )
             part_index = self._maybe_flush_features(
-                selection_name, features_accumulator, feature_array_size, part_index, memory_threshold
+                selection_name,
+                features_accumulator,
+                feature_array_size,
+                part_index,
+                memory_threshold,
             )
             if part_index > 0:
                 feature_array_size = 0

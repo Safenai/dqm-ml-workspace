@@ -24,6 +24,7 @@ SPLIT_OPEN = '"split": {'
 BY_CLASS_NAME = '"by": "class_name",'
 VALUES_ELEPHANT_ZEBRA = '"values": ["elephant", "zebra"],'
 COLUMNS_INPUT_EMBEDDING = '"columns": {"input": ["image_bytes_embedding"]},'
+VF_PARQUET = '"../outputs/story_visual_features.parquet"'
 
 
 def md(text):
@@ -78,6 +79,16 @@ cells_n1.append(
         "Runs each step from [overview.md](overview.md) individually using `dqm_ml_job.cli.run()` "
         "with inline Python dict configs. Each step: builds the config, calls `run()`, loads the "
         "output parquet, and adds a matplotlib visualization."
+        "\n"
+        "Prerequisites:"
+        " - install dqm-ml in a virtual environment"
+        "    with uv: `uv sync`"
+        " - install notebooks dependencies"
+        "    with uv: `uv pip install 'packages/dqm-ml[notebooks]'`"
+        "\n"
+        "Then select the virtual environment for jupyter"
+        "\n"
+        "## 0. Setup\n"
     )
 )
 
@@ -138,7 +149,7 @@ cells_n1.append(
         'config = _load_config("../config/scenario/visual_features.yaml")',
         RUN_CONFIG,
         "",
-        'df = pd.read_parquet("../outputs/story_visual_features.parquet")',
+        'df = pd.read_parquet(' + VF_PARQUET + ')',
         'print("First 5 rows:")',
         "print(df.head(5).to_markdown(index=False))",
         'print("\\nAggregated by source:")',
@@ -155,7 +166,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'df = pd.read_parquet("../outputs/story_visual_features.parquet")',
+        'df = pd.read_parquet(' + VF_PARQUET + ')',
         "feature_cols = [",
         I + LUMINOSITY,
         I + CONTRAST,
@@ -297,7 +308,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'raw = pd.read_parquet("../outputs/story_visual_features.parquet")',
+        'raw = pd.read_parquet(' + VF_PARQUET + ')',
         "",
         "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.5))",
         "",
@@ -359,7 +370,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'raw = pd.read_parquet("../outputs/story_visual_features.parquet")',
+        'raw = pd.read_parquet(' + VF_PARQUET + ')',
         'columns = ["image_bytes_luminosity", "image_bytes_contrast", "image_bytes_blur", "image_bytes_entropy"]',
         "short = {k: k.replace('image_bytes_', '') for k in columns}",
         "",
@@ -549,6 +560,16 @@ cells_n2.append(
         "The pipeline runs 3 filtered+split data loaders, 2 feature processors (visual + embedding), "
         "3 metric processors (completeness, diversity, representativeness), and 3 gap processors "
         "(FID, MMD-RBF, Wasserstein-1D) \u2014 all in a single `job.run()` call."
+        "\n"
+        "Prerequisites:"
+        " - install dqm-ml in a virtual environment"
+        "    with uv: `uv sync`"
+        " - install notebooks dependencies"
+        "    with uv: `uv pip install 'packages/dqm-ml[notebooks]'`"
+        "\n"
+        "Then select the virtual environment for jupyter"
+        "\n"
+        "### Setup\n"
     )
 )
 

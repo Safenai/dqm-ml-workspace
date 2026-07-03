@@ -80,8 +80,10 @@ class CompletenessProcessor(MetricsProcessor):
         return metrics
 
     @override
-    def extract_columns(
-        self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array] | None = None
+    def select_columns(
+        self,
+        batch: pa.RecordBatch,
+        prev_features: dict[str, pa.Array] | None = None,
     ) -> dict[str, pa.Array]:
         """
         Extract the needed columns from the batch for completeness analysis.
@@ -147,7 +149,9 @@ class CompletenessProcessor(MetricsProcessor):
         return batch_metrics
 
     @staticmethod
-    def _extract_columns_from_metrics(batch_metrics: dict[str, pa.Array]) -> list[str]:
+    def _select_columns_from_metrics(
+        batch_metrics: dict[str, pa.Array],
+    ) -> list[str]:
         """Extract column names from batch metrics keys ending in _total_count.
 
         Args:
@@ -222,7 +226,7 @@ class CompletenessProcessor(MetricsProcessor):
         if not batch_metrics:
             return {"_metadata": {"error": "No batch metrics provided"}}
 
-        columns_analyzed = self._extract_columns_from_metrics(batch_metrics)
+        columns_analyzed = self._select_columns_from_metrics(batch_metrics)
         if not columns_analyzed:
             logger.warning(f"[{self.name}] No columns found in batch metrics")
             return {"_metadata": {"error": "No columns found in batch metrics"}}

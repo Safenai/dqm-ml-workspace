@@ -219,12 +219,21 @@ class InterpretationConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    follows_distribution: str = Field(default="fits target", description="Label when data follows the distribution.")
+    follows_distribution: str = Field(
+        default="fits target",
+        description="Label when data follows the distribution.",
+    )
     does_not_follow_distribution: str = Field(default="diverges from target", description="Label when data diverges.")
     high_diversity: str = Field(default="varied", description="Label for high diversity.")
     low_diversity: str = Field(default="uniform", description="Label for low diversity.")
-    high_representativeness: str = Field(default="representative", description="Label for high representativeness.")
-    low_representativeness: str = Field(default="under-represented", description="Label for low representativeness.")
+    high_representativeness: str = Field(
+        default="representative",
+        description="Label for high representativeness.",
+    )
+    low_representativeness: str = Field(
+        default="under-represented",
+        description="Label for low representativeness.",
+    )
 
 
 class HistogramsConfig(BaseModel):
@@ -278,7 +287,11 @@ class KsConfig(BaseModel):
 
     sample_size: int = Field(default=500, gt=0, description="Number of samples for KS testing.")
     min_sample_size: int = Field(default=50, gt=0, description="Minimum samples required for KS test.")
-    sample_divisor: int = Field(default=20, gt=0, description="Divisor for automatic sample-size calculation.")
+    sample_divisor: int = Field(
+        default=20,
+        gt=0,
+        description="Divisor for automatic sample-size calculation.",
+    )
 
 
 class ColumnDistributionParams(BaseModel):
@@ -316,7 +329,11 @@ class RepresentativenessProcessorConfig(_ProcessorBase):
         description="List of representativeness metrics to compute.",
     )
     alpha: float = Field(default=0.05, description="Significance level for statistical tests.")
-    epsilon: float = Field(default=1e-9, gt=0, description="Small constant to avoid division by zero.")
+    epsilon: float = Field(
+        default=1e-9,
+        gt=0,
+        description="Small constant to avoid division by zero.",
+    )
     distribution: Literal["normal", "uniform"] = Field(
         default="normal",
         description="Expected reference distribution.",
@@ -415,7 +432,10 @@ class DistanceConfig(BaseModel):
 
     metric: str = Field(description="Distance metric name (e.g. 'mmd', 'discriminative').")
     evaluator: str | None = Field(default=None, description="Optional evaluator type.")
-    k: int | None = Field(default=None, description="Number of nearest neighbours (if applicable).")
+    k: int | None = Field(
+        default=None,
+        description="Number of nearest neighbours (if applicable).",
+    )
     feature_weights: list[float] | None = Field(
         default=None,
         description="Per-feature weights for weighted distance computation.",

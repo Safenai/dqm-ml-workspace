@@ -12,8 +12,8 @@ import pyarrow as pa
 import pytest
 
 
-def test_extract_columns_column_not_in_batch(caplog):
-    """Test that extract_columns skips missing columns and logs a warning.
+def test_select_columns_column_not_in_batch(caplog):
+    """Test that select_columns skips missing columns and logs a warning.
 
     Args:
         caplog: Pytest fixture to capture log output.
@@ -25,7 +25,7 @@ def test_extract_columns_column_not_in_batch(caplog):
     prev_features = {"col1": pa.array([1, 2])}
 
     with caplog.at_level(logging.WARNING):
-        features = proc.extract_columns(batch, prev_features)
+        features = proc.select_columns(batch, prev_features)
 
     # col1 is in prev_features, so skipped
     # col2 is in batch, so added
@@ -37,16 +37,16 @@ def test_extract_columns_column_not_in_batch(caplog):
 
 
 def test_input_columns_wildcard():
-    """Test that wildcard '*' matches all columns in extract_columns."""
+    """Test that wildcard '*' matches all columns in select_columns."""
     proc = MetricsProcessor(name="test", config={"columns": {"input": ["*"]}})
     batch = pa.RecordBatch.from_arrays([pa.array([1]), pa.array([2]), pa.array([3])], names=["a", "b", "c"])
-    features = proc.extract_columns(batch, {})
+    features = proc.select_columns(batch, {})
     assert "a" in features
     assert "b" in features
     assert "c" in features
 
 
-def test_extract_columns_exclude_literal(caplog):
+def test_select_columns_exclude_literal(caplog):
     """Test that exclude filters out a literal column from features.
 
     Args:
@@ -57,13 +57,13 @@ def test_extract_columns_exclude_literal(caplog):
         config={"columns": {"input": ["a", "b", "c"], "exclude": ["b"]}},
     )
     batch = pa.RecordBatch.from_arrays([pa.array([1]), pa.array([2]), pa.array([3])], names=["a", "b", "c"])
-    features = proc.extract_columns(batch, {})
+    features = proc.select_columns(batch, {})
     assert "a" in features
     assert "b" not in features
     assert "c" in features
 
 
-def test_extract_columns_exclude_wildcard(caplog):
+def test_select_columns_exclude_wildcard(caplog):
     """Test that exclude supports wildcard patterns.
 
     Args:
@@ -74,12 +74,12 @@ def test_extract_columns_exclude_wildcard(caplog):
         config={"columns": {"input": ["a", "meta_x"], "exclude": ["meta_*"]}},
     )
     batch = pa.RecordBatch.from_arrays([pa.array([1]), pa.array([2])], names=["a", "meta_x"])
-    features = proc.extract_columns(batch, {})
+    features = proc.select_columns(batch, {})
     assert "a" in features
     assert "meta_x" not in features
 
 
-def test_extract_columns_exclude_no_match(caplog):
+def test_select_columns_exclude_no_match(caplog):
     """Test that exclude with no matching patterns keeps all.
 
     Args:
@@ -87,12 +87,12 @@ def test_extract_columns_exclude_no_match(caplog):
     """
     proc = MetricsProcessor(name="test", config={"columns": {"input": ["a", "b"], "exclude": ["z"]}})
     batch = pa.RecordBatch.from_arrays([pa.array([1]), pa.array([2])], names=["a", "b"])
-    features = proc.extract_columns(batch, {})
+    features = proc.select_columns(batch, {})
     assert "a" in features
     assert "b" in features
 
 
-def test_extract_columns_exclude_none(caplog):
+def test_select_columns_exclude_none(caplog):
     """Test that missing exclude key keeps all input columns.
 
     Args:
@@ -100,14 +100,14 @@ def test_extract_columns_exclude_none(caplog):
     """
     proc = MetricsProcessor(name="test", config={"columns": {"input": ["a"]}})
     batch = pa.RecordBatch.from_arrays([pa.array([1])], names=["a"])
-    features = proc.extract_columns(batch, {})
+    features = proc.select_columns(batch, {})
     assert "a" in features
 
 
 def test_default_implementations():
     proc = MetricsProcessor(name="test", config={})
     batch = pa.RecordBatch.from_arrays([], names=[])
-    assert proc.extract_columns(batch, {}) == {}
+    assert proc.select_columns(batch, {}) == {}
     assert proc.compute_batch_metric({}) == {}
     assert proc.compute({}) == {}
 
@@ -127,12 +127,13 @@ def test_check_image_fail_fast_raises():
         config={"errors": {"images": {"on_decode_failure": "fail_fast"}}},
     )
     proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="fail_fast"))
+    error = ValueError("test error")
     with pytest.raises(ValueError, match="test error"):
-        proc._check_image_fail_fast(ValueError("test error"), "on_decode_failure")
+        proc._check_image_fail_fast(error, "on_decode_failure")
 
 
 def test_on_missing_column_fail_fast_raises():
-    """Verify fail_fast raises KeyError for missing column in extract_columns."""
+    """Verify fail_fast raises KeyError for missing column in select_columns."""
     proc = MetricsProcessor(name="test", config={"columns": {"input": ["missing"]}})
     proc.errors_config = ErrorsConfig(
         tabular=TabularErrorsConfig(on_missing_column="fail_fast"),
@@ -140,7 +141,7 @@ def test_on_missing_column_fail_fast_raises():
     batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
     with pytest.raises(KeyError, match="'missing' not found"):
-        proc.extract_columns(batch, {})
+        proc.select_columns(batch, {})
 
 
 def test_on_missing_column_silent_fail_logs_and_skips(caplog):
@@ -156,7 +157,7 @@ def test_on_missing_column_silent_fail_logs_and_skips(caplog):
     batch = pa.RecordBatch.from_arrays([pa.array([1, 2])], names=["a"])
 
     with caplog.at_level(logging.WARNING):
-        features = proc.extract_columns(batch, {})
+        features = proc.select_columns(batch, {})
 
     assert "a" in features
     assert "missing" not in features

@@ -35,7 +35,11 @@ def _debug_enabled() -> bool:
     Returns:
         True if ``DQM_ML_DEBUG`` is set to a truthy value ("1", "true", "yes").
     """
-    return os.environ.get("DQM_ML_DEBUG", "").strip().lower() in {"1", "true", "yes"}
+    return os.environ.get("DQM_ML_DEBUG", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
 
 
 # Known ResNet-18 layer embedding dimensions (C*H*W) mapped to channel counts (C).
@@ -63,7 +67,9 @@ def _fixed_to_matrix(arr: pa.FixedSizeListArray) -> np.ndarray:
     return vals.reshape(-1, dim)
 
 
-def _sum_fixed(fixed_list_array: pa.FixedSizeListArray) -> tuple[np.ndarray, int]:
+def _sum_fixed(
+    fixed_list_array: pa.FixedSizeListArray,
+) -> tuple[np.ndarray, int]:
     """Sum all FixedSizeList entries into a single numpy vector.
 
     Args:
@@ -134,7 +140,13 @@ def _mmd_rbf(src_emb: np.ndarray, tgt_emb: np.ndarray, gamma: float) -> float:
     return float(max(mmd2, 0.0))
 
 
-def _mmd_poly(src_emb: np.ndarray, tgt_emb: np.ndarray, degree: float, gamma: float, coefficient0: float) -> float:
+def _mmd_poly(
+    src_emb: np.ndarray,
+    tgt_emb: np.ndarray,
+    degree: float,
+    gamma: float,
+    coefficient0: float,
+) -> float:
     """Compute Maximum Mean Discrepancy with a polynomial kernel.
 
     Uses the biased estimator matching the legacy implementation:
@@ -641,7 +653,11 @@ class DomainGapProcessor(GapProcessor):
         return {"mmd_linear": pa.array([val], type=pa.float64())}
 
     def _compute_klmvn_diag(
-        self, mean_src: np.ndarray, mean_tgt: np.ndarray, var_src: np.ndarray, var_tgt: np.ndarray
+        self,
+        mean_src: np.ndarray,
+        mean_tgt: np.ndarray,
+        var_src: np.ndarray,
+        var_tgt: np.ndarray,
     ) -> dict[str, pa.Array]:
         if self.klmvn_var_eps > 0:
             mean_var = 0.5 * (var_src.mean() + var_tgt.mean())
@@ -681,7 +697,10 @@ class DomainGapProcessor(GapProcessor):
         return {"fid": pa.array([float(abs(fid))], type=pa.float64())}
 
     def _compute_delta_summary(
-        self, source: dict[str, pa.Array], target: dict[str, pa.Array], metric: str
+        self,
+        source: dict[str, pa.Array],
+        target: dict[str, pa.Array],
+        metric: str,
     ) -> dict[str, pa.Array]:
         """Compute KLMVN, MMD-Linear, or FID from summary statistics.
 
@@ -879,7 +898,10 @@ class DomainGapProcessor(GapProcessor):
             np.savez_compressed(tmp_path, **debug_data)  # type: ignore[arg-type]
 
         if total_weight == 0:
-            return {"metric": pa.array(["cmd"]), "note": pa.array(["no valid layers"])}
+            return {
+                "metric": pa.array(["cmd"]),
+                "note": pa.array(["no valid layers"]),
+            }
 
         final_loss = total_loss / total_weight
         return {"cmd": pa.array([final_loss], type=pa.float64())}

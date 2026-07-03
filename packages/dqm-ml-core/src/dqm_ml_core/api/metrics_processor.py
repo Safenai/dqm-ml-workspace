@@ -21,7 +21,7 @@ class MetricsProcessor(Processor):
 
     Metric processors compute dataset-level scores (e.g., completeness,
     diversity, representativeness). The primary lifecycle methods are
-    ``extract_columns`` (per-batch column selection), ``compute_batch_metric``
+    ``select_columns`` (per-batch column selection), ``compute_batch_metric``
     (batch aggregation), and ``compute`` (final dataset-level computation).
     """
 
@@ -35,7 +35,7 @@ class MetricsProcessor(Processor):
         outputs = getattr(self, "output_metrics", {})
         return list(outputs.values())
 
-    def extract_columns(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
+    def select_columns(self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array]) -> dict[str, pa.Array]:
         """
         Select relevant columns from a raw batch for metric computation.
 

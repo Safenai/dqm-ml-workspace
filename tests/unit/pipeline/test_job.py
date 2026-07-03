@@ -235,7 +235,7 @@ class TestDebugLogging:
         """
         mock_metric = MagicMock(spec=MetricsProcessor)
         mock_metric.name = "test_metric"
-        mock_metric.extract_columns.return_value = {"feat": pa.array([1.0])}
+        mock_metric.select_columns.return_value = {"feat": pa.array([1.0])}
         mock_metric.compute_batch_metric.return_value = {"bm": pa.array([1.0])}
         batch = pa.RecordBatch.from_pydict({"col": pa.array([1.0])})
         with caplog.at_level(logging.DEBUG):
