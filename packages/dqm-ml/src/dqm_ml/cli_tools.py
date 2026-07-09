@@ -39,6 +39,14 @@ class CustomFormatter(logging.Formatter):
 
     @override
     def format(self, record: logging.LogRecord) -> str:
+        """Format a log record with ANSI color based on log level.
+
+        Args:
+            record: The log record to format.
+
+        Returns:
+            Formatted log message string with ANSI color codes.
+        """
         color = self.LVL_COLOR.get(record.levelno, "")
         log_fmt = color + self.MSG_FMT + Bcolors.ENDC
         formatter = logging.Formatter(log_fmt)

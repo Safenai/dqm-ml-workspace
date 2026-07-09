@@ -78,35 +78,38 @@ parent:
 
 ```yaml
 dataloaders:
-  my_data:
-    type: parquet
-    path: data/train.parquet
+  loaders:
+    - name: my_data
+      type: parquet
+      path: data/train.parquet
 ```
 
 ### Lists of Options
 
 ```yaml
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns:
-      - name
-      - age
-      - score
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input:
+          - name
+          - age
+          - score
 ```
 
 ### Nested Configuration
 
 ```yaml
-metrics_processor:
-  image_embedding:
-    type: image_embedding
-    model:
-      arch: resnet18
-      device: cpu
-    infer:
-      batch_size: 10
-      width: 224
+features:
+  processors:
+    - name: image_embedding
+      type: features_embeddings
+      model:
+        arch: resnet18
+      infer:
+        batch_size: 10
+        width: 224
 ```
 
 ## Common Mistakes to Avoid
@@ -114,23 +117,23 @@ metrics_processor:
 ### Wrong: Using Tabs
 
 ```yaml
-# Wrong - uses tabs
-key:	value
+# Wrong — uses tabs (shown as →)
+key:→value
 
-# Correct - uses spaces
-key:	value
+# Correct — uses spaces (shown as ·)
+key:.value
 ```
 
 ### Wrong: Inconsistent Indentation
 
 ```yaml
-# Wrong
+# Wrong — key2 indented inconsistently
 key1: value
-  key2: value
+··key2: value    # ← 2 extra spaces (shown as ..), wrong level
 
-# Correct
+# Correct — consistent indentation
 key1: value
-  key2: value
+key2: value
 ```
 
 ### Wrong: Missing Colon
@@ -146,10 +149,18 @@ key: value
 ## Tools for Writing YAML
 
 - [YAML Validator](https://www.yamllint.com/) - Check syntax
-- [YAML to JSON](https://www.convertjson.com/yaml-to-json.php) - Convert between formats
+- Visual Studio Code: extension YAML by Red Hat
+
+## Yaml validation
+
+Add on top of your configuration:
+```yaml
+# yaml-language-server: $schema=docs/schema/config.json
+```
+
+You might need to update the link to the schema, relative to your configuration file, or absolute.
 
 ## Related Pages
 
-- [Configuration](configuration.md) - Full configuration guide
-- [Data Loaders](dataloaders.md) - Data source configuration
+- [Configuration](configuration/overview.md) - Full configuration guide
 - [CLI Reference](cli.md) - Command-line usage

@@ -30,9 +30,9 @@ Documentation = "https://irt-systemx.github.io/dqm-ml"
 Repository = "https://github.com/IRT-SystemX/dqm-ml"
 
 
-# Registry of exported metrics
-[project.entry-points."dqm_ml.metrics"]
-visual_metric = "dqm_ml_images.visual_features:VisualFeaturesProcessor"
+# Registry of exported features
+[project.entry-points."dqm_ml.features"]
+image_features = "dqm_ml_images.visual_features:VisualFeaturesProcessor"
 
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]

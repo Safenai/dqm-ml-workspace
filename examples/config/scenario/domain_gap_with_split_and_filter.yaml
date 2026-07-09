@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Domain Gap with Split + Filter — zoo-only class comparison
+##
+## Filters to only the `zoo` source, then splits by `class_name` without
+## restricting values — all 4 classes (elephant, giraffe, lion, zebra) are
+## included. The Domain Gap processor measures Wasserstein-1D between every
+## class pair, producing 6 pairwise distances that reveal per-class
+## distribution shifts within a single controlled environment.
+##
+## The 4 × 4 heatmap makes it easy to spot which animal classes overlap
+## in embedding space and which are well-separated.
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/domain_gap_with_split_and_filter.yaml
+##
+## See also: docs/metrics/domain_gap.md, docs/configuration.md#filter--split
+
+---
+
+dataloaders:
+  loaders:
+    - name: zoo
+      type: parquet
+      path: examples/data/samples_with_images.parquet
+      batch_size: 500
+      filters:
+        - column: source
+          values: [zoo]
+      split:
+        by: class_name
+
+features:
+  outputs:
+    path: examples/outputs/story_domain_gap_split_filter_features.parquet
+    include:
+      - sample_id
+      - source
+      - class_name
+  processors:
+    - name: embedding
+      type: features_embeddings
+      columns:
+        input: [image_bytes]
+      model:
+        arch: resnet18
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 64
+        height: 64
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
+
+gap:
+  outputs:
+    path: examples/outputs/story_gap_split_filter.parquet
+  processors:
+    - name: wasserstein_gap
+      type: domain_gap
+      columns:
+        input: [image_bytes_embedding]
+      distance:
+        metric: wasserstein_1d

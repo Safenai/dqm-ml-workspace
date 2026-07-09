@@ -1,0 +1,86 @@
+[tools]
+
+########################################
+##         Code quality          ##
+########################################
+
+[tasks.code_quality]
+description = "Lint and type check"
+run = "scripts/code_quality.sh"
+
+[tasks.complexity]
+description = "Check code complexity with complexipy"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/complexity_${timestamp}.log") 2>&1
+uv run nox -s complexity
+"""
+
+
+[tasks.test_complexity]
+description = "Check tests complexity with complexipy"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/test_complexity_${timestamp}.log") 2>&1
+uv run nox -s test_complexity
+"""
+
+
+[tasks.spell]
+description = "Check spelling with cspell"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/spell_${timestamp}.log") 2>&1
+uv run nox -s spell -- "$@"
+"""
+
+########################################
+##         Testing             ##
+########################################
+
+[tasks.test_custom]
+description = "Run specific tests"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/test_custom_${timestamp}.log") 2>&1
+uv run nox -s test_custom -- "$@"
+"""
+
+[tasks.test]
+description = "Run tests with coverage"
+run = """
+#!/bin/bash
+if [ ! -f examples/data/large_test_2m.parquet ]; then
+  uv run python examples/script/generate_data.py
+fi
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/test_${timestamp}.log") 2>&1
+uv run nox -s test
+"""
+
+########################################
+##         Doc          ##
+########################################
+
+[tasks.mkdocs_offline]
+description = "Build MkDocs documentation site for local use"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/mkdocs_offline_${timestamp}.log") 2>&1
+uv run nox -s docs_offline
+"""
+
+[tasks.docs]
+description = "Build doc"
+run         = "uv run nox -s docs"

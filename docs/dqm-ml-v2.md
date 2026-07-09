@@ -2,6 +2,8 @@
 
 Curious about why we rebuilt DQM-ML from scratch? This page explains the design decisions behind V2 and how the streaming architecture works. For a general introduction, check out the [Home](index.md) page.
 
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Sample**, **Metric**, **Batch**, **Batch Metric**, **Processor**, and related terminology used throughout this page.
+
 ## The Problem with V1
 
 The original `dqm-ml` library worked well for small datasets, but had limitations:
@@ -27,7 +29,7 @@ Here's how data flows through the DQM-ML V2 system:
 flowchart LR
     A1[Parquet Files] --> B[DataLoader]
     A2[CSV Files] --> B
-    A3[Databases] --> B
+    A3[Databases*] --> B
     B --> C[Streaming Batches]
     C --> D[Metric Processor]
     D --> E[Intermediate Stats]
@@ -35,16 +37,17 @@ flowchart LR
     F --> G[Output Writer]
     G --> H1[Parquet Files]
     G --> H2[CSV Files]
-    G --> H3[Dashboards]
 ```
+
+\*Databases can be added by implementing and registering a plugin to handle a database source.
 
 **How it works:**
 
-1. **DataLoader** loads your data (Parquet, CSV, etc.)
+1. **DataLoader** loads your data and creates **Data Selections** from it (Parquet, CSV, etc.)
 2. **Streaming Batches** process data in chunks — never loads the whole dataset into memory
-3. **Metric Processor** computes features and intermediate statistics for each batch
+3. **Metric Processor** computes **Features** and intermediate **Batch Metric** statistics for each **Batch**
 4. **Intermediate Stats** accumulate as batches are processed
-5. **Final Metrics** aggregate all intermediate stats into dataset-level scores
+5. **Final Metrics** aggregate all intermediate stats into dataset-level **Metric** scores
 6. **Output Writer** saves results to your preferred format
 
 ## Memory Efficiency (Why Streaming Matters)
@@ -70,7 +73,11 @@ flowchart LR
     end
     
     style V1 fill:#ffcdd2
-    style V2 fill:#c8e6c9
+    style V2a fill:#c8e6c9
+    style V2p1 fill:#c8e6c9
+    style V2b fill:#c8e6c9
+    style V2p2 fill:#c8e6c9
+    style V2c fill:#c8e6c9
 ```
 
 
@@ -105,7 +112,7 @@ V2 shows significant improvements over V1:
 | Data handling | Load into memory | Stream in batches |
 | New metrics | Modify core | Plugin system |
 | Dependencies | All or nothing | Install only what you need |
-| API | ad-hoc | Unified `DatametricProcessor` |
+| API | ad-hoc | **Three interfaces: FeaturesProcessor / MetricsProcessor / GapProcessor** |
 | Image features | Separate tool | Built into pipeline |
 
 The legacy `dqm-ml` package is still available for reference, but new development should use the V2 API.

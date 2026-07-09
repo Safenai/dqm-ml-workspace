@@ -1,9 +1,9 @@
-# Developper guide 
+# Developer guide 
 
 
-## how to modify and or contribute to dqm-ml 
+## Setup dev environment, and contribute to DQM-ML
 
-[Contributin Guide](./contributing.md)
+[Setup and Contribution Guide](./contributing.md)
 
 ## What is currently planned
 
@@ -21,4 +21,4 @@ The [Roadmap](./ROADMAP.md), do not hesitate to propose adjustments
 
 - [Results](./reports/pytest/pytest_report.html)
 - [Coverage](./reports/htmlcov/coverage_report.html)
-- [Performance](./TBD2.md)
+- [Performance](./TBD1.md)

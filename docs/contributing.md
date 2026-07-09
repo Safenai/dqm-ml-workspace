@@ -1,18 +1,33 @@
 # Contributing to DQM-ML
 
-We welcome contributions! Whether you're fixing a bug, adding a new metric, or improving documentation, your help makes DQM-ML better for everyone.
+We welcome contributions! Whether you're fixing a bug, adding a new **Metric**, or improving documentation, your help makes DQM-ML better for everyone.
+
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Metric**, **Batch Metric**, **Processor**, and related terminology used throughout this page.
 
 This guide walks you through setting up your development environment and adding new features.
 
 ## What Can You Contribute?
 
-- 🐛 **Bug fixes** - Found an issue? Let us know and potentially fix it!
-- 📊 **New metrics** - Add completeness, representativeness, or domain gap calculations
-- 📝 **Documentation** - Improve docs, add examples, translate
-- 🎨 **Better tests** - Increase test coverage, add edge cases
-- 💡 **Ideas** - Open an issue with your suggestions
+### Non-Code Contributions
 
-## Quick Start
+You don't need to write code to contribute to DQM-ML!
+
+- 💡 **Ideas** - Open an issue with your suggestions
+- 📖 **Documentation** — Improve existing docs, fix typos, translate
+- 🧪 **Testing** — Report bugs, test on different platforms, suggest edge cases, review PRs
+- 💬 **Community** — Ask or answer questions in discussions, share your use case, write a post on social networks
+- 🎨 **Design** — Create logos, graphics for documentation
+
+### Code Contributions
+
+- 🐛 **Bug fixes** - Found an issue? Let us know, and maybe fix it too!
+- 📊 **New metrics** - Add completeness, representativeness, or domain gap calculations
+- 🔌 **New plugins** - Add a custom DataLoader or OutputWriter for your own use case
+- 📝 **Examples & tutorials** - Add example scripts or notebooks showing DQM-ML usage
+- 🧪 **Better tests** - Make the project more robust
+- 🎨 **Website & docs design** - Improve mkdocs config, CSS, theme, documentation layout, mermaid diagrams
+
+## Code Contribution Workflow
 
 ```mermaid
 flowchart TD
@@ -31,11 +46,30 @@ flowchart TD
     style H fill:#e8f5e9
 ```
 
+## Prerequisite
+
 ## Development Environment Setup
 
-We use [uv](https://github.com/astral-sh/uv) for fast development and workspace management.
+We use:
+- [uv](https://github.com/astral-sh/uv) for fast development and workspace management
+- [mise](https://mise.jdx.dev/) for common development tasks
 
 ### 1. Prerequisites
+
+Install mise
+
+```bash
+curl -fsSL https://mise.run | bash
+# Make sure mise is on your PATH (e.g. ~/.local/bin)
+export PATH="$HOME/.local/bin:$PATH"
+````
+
+[cspell](https://cspell.org/) depends on the [hunspell](https://github.com/hunspell/hunspell) C extension:
+
+```bash
+sudo apt install libhunspell-dev
+```
+
 
 ```bash
 # Clone the repository
@@ -44,13 +78,6 @@ cd dqm-ml-workspace
 
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install git-lfs for large test files
-sudo apt-get install git-lfs
-git lfs pull
-
-# Initialize submodules (for legacy dqm-ml comparison)
-git submodule update --init --recursive
 ```
 
 ### 2. Initialize Workspace
@@ -72,97 +99,66 @@ uv run pre-commit install
 Before submitting a PR, please ensure all checks pass:
 
 ```bash
-# Run all quality checks
-uv run nox
-
-# Or run individual checks:
-uv run nox -s test       # Run tests
-uv run nox -s lint       # Check code style
-uv run nox -s lint_fix   # Auto-fix style issues
-uv run nox -s type_check # Type checking
-uv run nox -s docs       # Build documentation
+mise code_quality   # Lint (ruff) + type check (pyright)
+mise spell          # Spell check (cspell)
+mise test           # Test with coverage
+mise complexity     # Code complexity (complexipy, max McCabe 15)
+mise mkdocs_offline
 ```
 
-## Adding a New Metric
+All checks run via [mise](https://mise.jdx.dev/).
+Tasks are defined in `.mise.toml`.
 
-Here's how to add your own metric to DQM-ML:
+You can select tests with pytest options:
 
-### 1. Create the Processor Class
-
-Inherit from `DatametricProcessor` and implement the required methods:
-
-```python
-from dqm_ml_core.api.data_processor import DatametricProcessor
-import pyarrow as pa
-
-class MyNewMetric(DatametricProcessor):
-    """A brief description of what this metric measures."""
-
-    def compute_features(self, batch, prev_features=None):
-        """
-        Extract features from raw data.
-        Optional: compute per-sample features.
-        """
-        return {}  # Return dict of feature arrays
-
-    def compute_batch_metric(self, features):
-        """Compute intermediate statistics for one batch."""
-        # Example: count non-null values
-        return {"count": pa.array([len(features)]), "sum": pa.array([...])}
-
-    def compute(self, batch_metrics=None):
-        """Aggregate batch results into final metric."""
-        # Compute final score from accumulated batch stats
-        return {"my_metric_score": pa.array([0.95])}
-
-    def compute_delta(self, source, target):
-        """Optional: Compare two datasets."""
-        return {"delta_score": pa.array([...])}
+```bash
+mise test_custom -- <args>   # Run specific tests with custom args
+# Example to run only 1 test
+mise test_custom -- -k test_representativeness
 ```
 
-### 2. Register via Entry Points
+### Spell check
 
-Add this to your package's `pyproject.toml`:
+Then run:
 
-```toml
-[project.entry-points."dqm_ml.metrics"]
-my_new_metric = "my_package:MyNewMetric"
+```bash
+mise spell
 ```
 
-### 3. Add Tests
+### Complexity
+
+Uses [complexipy](https://pypi.org/project/complexipy/) to enforce max McCabe complexity of 15 across `packages/`:
+
+```bash
+mise complexity
+```
+
+And tests complexity:
+
+```bash
+mise test_complexity
+```
+
+## Adding Processors & Plugins
+
+DQM-ML defines three processor interfaces — **Metrics**, **Features**, and **Gap** — plus plugins for **DataLoaders** and **OutputWriters**. Each has its own base class and entry point registration.
+
+The package READMEs provide detailed step-by-step guides:
+
+| What to add | Guide |
+|-------------|-------|
+| **Metrics Processor** | [`dqm-ml-core/README.md`](../packages/dqm-ml-core/README.md#for-developers) |
+| **Features Processor** (Visual) | [`dqm-ml-images/README.md`](../packages/dqm-ml-images/README.md#adding-a-custom-feature) |
+| **Features Processor** (Embeddings) | [`dqm-ml-pytorch/README.md`](../packages/dqm-ml-pytorch/README.md#features-processors) |
+| **Gap Processor** | [`dqm-ml-pytorch/README.md`](../packages/dqm-ml-pytorch/README.md#adding-a-custom-gap-metric) |
+| **DataLoader** plugin | [`dqm-ml-job/README.md`](../packages/dqm-ml-job/README.md#adding-a-custom-dataloader) |
+| **OutputWriter** plugin | [`dqm-ml-job/README.md`](../packages/dqm-ml-job/README.md#adding-a-custom-outputwriter) |
+
+## Add Tests
 
 Create a test file in the `tests/` directory. Use existing tests as templates.
 
-## Non-Code Contributions
-
-You don't need to write code to contribute to DQM-ML!
-
-**Documentation**
-
-- Improve existing docs
-- Add examples and tutorials
-- Fix typos and improve clarity
-- Translate documentation
-
-**Testing**
-
-- Report bugs you find
-- Test on different platforms
-- Suggest edge cases we haven't covered
-- Review pull requests
-
-**Community**
-
-- Answer questions in discussions
-- Share your use case
-- Write blog posts or tutorials
-- Speak at meetups or conferences
-
-**Design**
-
-- Suggest UI improvements for CLI
-- Design better documentation layouts
-- Create logos or graphics
+See [Testing Strategy](#testing-strategy) for the full breakdown of test categories, fixtures, and conventions.
 
 ## Submit changes for review
 
@@ -215,6 +211,9 @@ def compute(self, batch_metrics: dict | None = None) -> dict[str, pa.Array]:
 
     Returns:
         Dictionary containing the final metric values.
+
+    Raises:
+        ValueError: If `batch_metrics` is empty or missing required keys.
     """
     # Your code here
 ```
@@ -230,9 +229,10 @@ flowchart TB
 
     subgraph "Test Types"
   
-        U[Unit Tests <br/>tests/unit]
+        U[Unit Tests<br/>tests/unit]
         I[Integration Tests<br/>tests/integration]
-        C[CLI Tests <br/>tests/cli]
+        C[CLI Tests<br/>tests/cli]
+        B[Benchmark Tests<br/>tests/benchmark]
     end
     
     subgraph "Test Pyramid"
@@ -245,10 +245,12 @@ flowchart TB
     I --> TI
     C --> TC
 
-    F[Fixtures - Shared test data tests/integration/fixtures/ ]
+    F[Fixtures - Shared test data<br/>tests/fixtures/ and tests/integration/fixtures/]
     TP --> F
     TI --> F
+    B --> F
 
+    B -.-> BN[Compares v1 (IRT-SystemX/dqm-ml)<br/>and v2 (this repo) metric values<br/>on open-source datasets]
 ```
 
 ### Test Directory Structure
@@ -256,18 +258,23 @@ flowchart TB
 ```
 tests/
 ├── conftest.py              # Pytest configuration & fixture imports
+├── fixtures/                # Shared cross-test fixtures
+│   ├── cli_fixtures.py     # CLI environment fixtures
+│   ├── stress_images.py    # Stress test image generators
+│   └── test_fixtures.py    # Generic test fixtures (mock data, temp paths)
 ├── utils/                   # Utility functions for tests
 │   ├── files.py            # File handling helpers
 │   ├── jobs.py             # Job configuration helpers
+│   ├── pipeline_configs.py # Pipeline config builders
 │   └── plots.py            # Visualization helpers
 ├── unit/                    # Unit tests (fast, isolated)
 │   ├── core/               # Core API tests (data_processor, metric_runner)
 │   ├── pipeline/           # Pipeline tests (loaders, writers)
 │   └── v2/                 # CLI wrapper tests
-├── integration/             # Integration tests (real data, slow)
-│   ├── fixtures/           # Test fixtures and data
+├── integration/             # Integration tests (synthetic data)
+│   ├── fixtures/           # Integration-specific fixtures and data
 │   │   ├── config.py      # Configuration fixtures
-│   │   ├── data.py        # Data fixtures (synthetic + real)
+│   │   ├── data.py        # Data fixtures
 │   │   ├── jobs.py        # Job configuration fixtures
 │   │   └── paths.py       # Path fixtures
 │   ├── test_completeness.py
@@ -275,6 +282,8 @@ tests/
 │   ├── test_domain_gap.py
 │   ├── test_visual_features.py
 │   └── test_pandas_welding.py
+├── benchmark/               # Benchmark tests (record metric values)
+│   └── test_benchmark_domain_gap.py
 └── cli/                     # CLI end-to-end tests
     ├── test_v2_wrapper.py
     └── test_job_cli.py
@@ -297,6 +306,12 @@ DQM-ML uses pytest fixtures for reusable test data. Here's what's available:
 | `job_representativeness` | function | Representativeness job config | Pipeline tests |
 | `job_domain_gap` | function | Domain gap job config | Pipeline tests |
 | `job_visual_features` | function | Visual features job config | Pipeline tests |
+| `all_classes` | session | All available pipeline classes | CLI tests |
+| `coco_data_dir` | session | Path to COCO data directory | Benchmark tests |
+| `coco_parquet_path` | session | Path to COCO parquet file | Benchmark tests |
+| `mock_parquet_dataset` | function | Small mock Parquet dataset | Unit tests |
+| `sample_dataframe` | function | Small sample DataFrame | Unit tests |
+| `temp_output_path` | function | Temporary output directory | All test types |
 
 **Example using fixtures**:
 
@@ -310,7 +325,7 @@ def test_completeness_with_data(
     """Test completeness metric with uniform distribution."""
     processor = CompletenessProcessor(
         name="test",
-        config={"input_columns": ["feature"]}
+        config={"columns": {"input": ["feature"]}}
     )
     result = processor.compute({})
     assert result is not None
@@ -341,9 +356,10 @@ uv run pytest --cov=packages/dqm-ml-core tests/
 ### Adding a New Test
 
 1. **Choose test type**:
-   - **Unit tests**: `tests/unit/package_name/` - for fast, isolated tests
-   - **Integration tests**: `tests/integration/` - for real data and pipeline tests
-   - **CLI tests**: `tests/cli/` - for end-to-end command testing
+   - **Unit tests**: `tests/unit/package_name/` - fast, isolated tests of classes and functions
+   - **Integration tests**: `tests/integration/` - tests that call `dqm-ml process` with YAML configs on synthetic data
+   - **CLI tests**: `tests/cli/` - end-to-end tests of command-line usage
+   - **Benchmark tests**: `tests/benchmark/` - compute metrics on open-source datasets (COCO) to compare metric values between [v1](https://github.com/IRT-SystemX/dqm-ml) and v2 (this repo); no pass/fail assertions, records results for manual inspection
 
 2. **Follow naming conventions**:
    - Test files: `test_*.py`
@@ -381,9 +397,6 @@ After running tests, reports are generated:
 |--------|----------|-------------|
 | Coverage HTML | `docs/reports/htmlcov/index.html` | Line-by-line coverage |
 | Test Results HTML | `docs/reports/pytest/pytest_report.html` | Test execution report |
-| Live Coverage | [GitHub Pages](https://safenai.github.io/dqm-ml-workspace/reports/htmlcov/) | Published coverage |
-
-> **Tip**: Build the docs to generate these reports: `uv run nox -s docs_offline`
 
 ### CI/CD Testing
 

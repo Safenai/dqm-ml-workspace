@@ -8,7 +8,7 @@ Core package for DQM-ML V2 providing the foundational API and standard metrics f
 pip install dqm-ml-core
 ```
 
-> **Note:** `dqm-ml-core` provides metric processors only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
+> **Note:** `dqm-ml-core` provides **Metrics Processors** only — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
 ## Quick Start
 
@@ -19,7 +19,7 @@ from dqm_ml_core import CompletenessProcessor
 
 processor = CompletenessProcessor(
     name="my_check",
-    config={"input_columns": ["col_a", "col_b"]}
+    config={"columns": {"input": ["col_a", "col_b"]}, "include_per_column": true, "include_overall": true}
 )
 result = processor.compute({})
 print(f"Completeness: {result['overall_completeness']}")
@@ -37,10 +37,9 @@ data = np.random.randn(1000)
 processor = RepresentativenessProcessor(
     name="dist_check",
     config={
-        "input_columns": ["feature"],
+        "columns": {"input": ["feature"]},
         "distribution": "normal",
-        "metrics": ["chi-square", "kolmogorov-smirnov"],
-        "distribution_params": {"mean": 0.0, "std": 1.0}
+        "metrics": ["chi-square", "kolmogorov-smirnov"]
     }
 )
 
@@ -60,30 +59,62 @@ pip install dqm-ml-job dqm-ml-core
 Then use this config:
 
 ```yaml
-dataloaders:
-  train:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [col_a, col_b]
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [feature_x]
+      distribution: "normal"
 
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [col_a, col_b]
-  
-  representativeness:
-    type: representativeness
-    input_columns: [feature_x]
-    distribution: "normal"
+dataloaders:
+  loaders:
+    - name: train
+      type: parquet
+      path: data/train.parquet
 ```
 
-## Key Concepts
+## Core Concepts
 
-### DatametricProcessor
+### Three Processor Interfaces
 
-The base class for all metrics and feature extractors. It supports a streaming architecture by splitting computation into two phases:
+DQM-ML V2 defines three distinct processor interfaces, each with its own base class:
 
-1. **Batch Level**: `compute_batch_metric()` updates intermediate statistics for a single chunk of data.
-2. **Dataset Level**: `compute()` aggregates these statistics into final scores.
+| Interface | Base Class | Purpose |
+|-----------|------------|---------|
+| **Metrics** | `MetricsProcessor` | Compute aggregated metric scores from data (Completeness, Representativeness, Diversity) |
+| **Features** | `FeaturesProcessor` | Extract feature columns from data (Visual Features, Embeddings) |
+| **Gap** | `GapProcessor` | Compute pairwise distances between selections (Domain Gap) |
+
+All three inherit from a common `Processor` base class (`dqm_ml_core.api.processor:16`) which provides:
+- `__init__`, `_check_failure_rate`, `_check_image_fail_fast`, `needed_columns()`, `reset()`
+
+#### MetricsProcessor
+
+Extends `Processor`. Implement:
+- `generated_metrics()` → `list[str]` — output metric names
+- `select_columns(batch, prev_features)` → `dict[str, pa.Array]` — select columns (optional, default in base)
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+
+#### FeaturesProcessor
+
+Extends `Processor`. Implement:
+- `generated_features()` → `list[str]` — output feature column names
+- `compute_features(batch, prev_features)` → `dict[str, pa.Array]` — new feature columns
+- `needed_columns()` → `list[str]` — input columns needed (optional, default: `input_columns`)
+
+#### GapProcessor
+
+Extends `Processor`. Implement:
+- `select_features(batch, prev_features)` → `dict[str, pa.Array]` — retrieve embeddings
+- `compute_batch_metric(features)` → `dict[str, pa.Array]` — batch statistics
+- `compute(batch_metrics)` → `dict[str, Any]` — final scores
+- `compute_delta(source, target)` → `dict[str, Any]` — pairwise distances
 
 ## Included Metrics
 
@@ -91,14 +122,22 @@ The base class for all metrics and feature extractors. It supports a streaming a
 |--------|-------------|
 | **Completeness** | Analyzes null/missing values in your dataset |
 | **Representativeness** | Statistical distribution analysis (Chi-Square, KS, Shannon Entropy, GRTE) |
+| **Diversity** | Measures category distribution spread (Simpson, Gini-Simpson, Shannon, Richness) |
 
 ## For Developers
 
-To create a new metric:
+To create a new **Metrics Processor**:
 
-1. Subclass `dqm_ml_core.api.data_processor.DatametricProcessor`.
-2. Define `needed_columns()`, `generated_features()`, and `generated_metrics()`.
-3. Implement the streaming logic in `compute_batch_metric()` and `compute()`.
+1. Subclass `dqm_ml_core.api.metrics_processor.MetricsProcessor`.
+2. Implement `generated_metrics()`, `select_columns()` (optional), `compute_batch_metric()`, and `compute()`.
+3. Register in `[project.entry-points."dqm_ml.metrics"]` in `pyproject.toml`.
+
+To create a **Features Processor** or **Gap Processor**, use the respective base classes in `dqm_ml_core.api.features_processor` and `dqm_ml_core.api.gap_processor`.
+
+Reference implementations:
+- `CompletenessProcessor` — simple streaming metric
+- `RepresentativenessProcessor` — statistical tests
+- `DiversityProcessor` — value-count accumulation
 
 ## Dependencies
 
@@ -117,5 +156,6 @@ pip install dqm-ml-job dqm-ml-core dqm-ml-images dqm-ml-pytorch
 
 ## See Also
 
+- [Formal and Core Concepts](https://safenai.github.io/dqm-ml-workspace/docs/formal_concepts.md) for definitions of **Sample**, **Metric**, **Data Selection**, **Batch**, and related terminology.
 - [Metrics Documentation](https://safenai.github.io/dqm-ml-workspace/docs/metrics/)
 - [API Reference](https://safenai.github.io/dqm-ml-workspace/reference/)

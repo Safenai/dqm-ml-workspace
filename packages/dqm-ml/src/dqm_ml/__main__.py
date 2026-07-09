@@ -29,6 +29,17 @@ class _HelpAction(argparse._HelpAction):
         values: str | Iterable[Any] | None,
         option_string: str | None = None,
     ) -> None:
+        """Handle help action for command-specific or global help.
+
+        Args:
+            parser: The argument parser instance.
+            namespace: Parsed namespace containing the command.
+            values: Optional values passed to the help action.
+            option_string: The option string that triggered this action.
+
+        Raises:
+            ValueError: If the specified command is unknown.
+        """
         if namespace.command:
             # print help for the specific command
             command_list = get_available_command()

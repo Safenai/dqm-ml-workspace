@@ -1,0 +1,71 @@
+"""Unit tests for the ProcessorRunner utility.
+
+This module contains unit tests that verify the ProcessorRunner
+correctly orchestrates metric computation on DataFrames.
+"""
+
+from unittest.mock import MagicMock
+
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
+from dqm_ml_core.utils.processor_runner import ProcessorRunner
+import pandas as pd
+import pyarrow as pa
+
+
+def test_processor_runner_run_empty_df():
+    """Test that ProcessorRunner returns empty dict for empty DataFrame."""
+    runner = ProcessorRunner()
+    df = pd.DataFrame(columns=["a", "b"])
+    metrics = []
+    result = runner.run(df, metrics)
+    assert result == {}
+
+
+def test_processor_runner_run_with_mock_metric(sample_dataframe):
+    """Test that ProcessorRunner correctly runs metrics on DataFrame.
+
+    Args:
+        sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
+    """
+    runner = ProcessorRunner()
+
+    mock_metric = MagicMock(spec=MetricsProcessor)
+    mock_metric.select_columns.return_value = {"feat1": pa.array([1, 1, 1])}
+    mock_metric.compute_batch_metric.return_value = {"metric1": pa.array([10])}
+    mock_metric.compute.return_value = {"final_metric1": 0.95}
+
+    result = runner.run(sample_dataframe, [mock_metric])
+
+    assert result == {"final_metric1": 0.95}
+    mock_metric.select_columns.assert_called_once()
+    mock_metric.compute_batch_metric.assert_called_once()
+    mock_metric.compute.assert_called_once()
+
+
+def test_processor_runner_overwrite_behavior(sample_dataframe):
+    """Test that later metrics overwrite earlier ones when sharing keys.
+
+    Args:
+        sample_dataframe: Pytest fixture providing a sample pandas DataFrame.
+    """
+    runner = ProcessorRunner()
+
+    metric1 = MagicMock(spec=MetricsProcessor)
+    metric1.select_columns.return_value = {}
+    metric1.compute_batch_metric.return_value = {"shared": pa.array([1])}
+    metric1.compute.return_value = {}
+
+    metric2 = MagicMock(spec=MetricsProcessor)
+    metric2.select_columns.return_value = {}
+    metric2.compute_batch_metric.return_value = {"shared": pa.array([2])}
+    metric2.compute.return_value = {"final": 1}
+
+    result = runner.run(sample_dataframe, [metric1, metric2])
+
+    # Verify overwriting happened in the internal metrics_array
+    last_call_args = metric2.compute.call_args[1]["batch_metrics"]
+    assert len(last_call_args["shared"]) == 1
+    assert last_call_args["shared"].to_pylist() == [2]
+
+    # Verify the final result content
+    assert result == {"final": 1}

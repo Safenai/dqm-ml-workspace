@@ -1,5 +1,7 @@
+import re
 from pathlib import Path
 import shutil
+from urllib.parse import urljoin
 
 DOCS_INDEX = "docs/index.md"
 
@@ -16,15 +18,58 @@ def update_readme_relative_links():
             "(packages/",
             "(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/",
         )
+        updated_md = updated_md.replace(
+            "(examples/",
+            "(https://github.com/Safenai/dqm-ml-workspace/tree/main/examples/",
+        )
     with index.open("w") as f:
         f.write(updated_md)
 
 
-def copy_example():
-    Path("docs/examples").mkdir(exist_ok=True)
+def copy_examples():
+    src_root = Path("examples")
+    dst_root = Path("docs/examples")
+    dst_root.mkdir(exist_ok=True)
+
+    # Copy overview.md from root
+    overview = src_root / "overview.md"
+    if overview.exists():
+        shutil.copy(overview, dst_root / "overview.md")
+
+    # Copy scenario markdowns
+    scenario_src = src_root / "scenario"
+    if scenario_src.exists():
+        scenario_dst = dst_root / "scenario"
+        scenario_dst.mkdir(exist_ok=True)
+        for md_file in scenario_src.glob("*.md"):
+            shutil.copy(md_file, scenario_dst / md_file.name)
+
+    # Copy notebooks
+    notebooks_src = src_root / "notebooks"
+    if notebooks_src.exists():
+        notebooks_dst = dst_root / "notebooks"
+        notebooks_dst.mkdir(exist_ok=True)
+        for nb_file in notebooks_src.glob("*.ipynb"):
+            shutil.copy(nb_file, notebooks_dst / nb_file.name)
+
+    # Copy configs
+    config_dst = dst_root / "config"
+    config_dst.mkdir(exist_ok=True)
+    for yaml_file in (src_root / "config").glob("*.yaml"):
+        shutil.copy(yaml_file, config_dst / yaml_file.name)
+
+    # Copy configs
+    config_dst = dst_root / "config/scenario"
+    config_dst.mkdir(exist_ok=True)
+    for yaml_file in (src_root / "config/scenario").glob("*.yaml"):
+        shutil.copy(yaml_file, config_dst / yaml_file.name)
+
+    # Copy scripts
+    script_dst = dst_root / "script"
+    script_dst.mkdir(exist_ok=True)
     shutil.copy(
-        "examples/multiple_metrics_tests_v2.ipynb",
-        "docs/examples/multiple_metrics_tests_v2.ipynb",
+        src_root / "script" / "completeness.py",
+        script_dst / "completeness.py",
     )
 
 
@@ -76,8 +121,99 @@ def add_repository_link():
             f.write(updated_md)
 
 
+def fix_example_links():
+    """Rewrite relative links in copied examples so they work under docs/examples/.
+
+    Source examples/ files use ../docs/... or ../../docs/... links that work
+    locally and on GitHub/GitLab. After being copied to docs/examples/, the
+    links need adjusting based on directory depth:
+      - docs/examples/ (depth 0):  ../docs/metrics/  -> ../metrics/
+      - docs/examples/scenario/ (depth 1): ../../docs/metrics/ -> ../../metrics/
+    """
+    examples_dir = Path("docs/examples")
+    for md_file in examples_dir.rglob("*.md"):
+        rel = md_file.relative_to(examples_dir)
+        depth = len(rel.parent.parts)
+
+        with md_file.open() as f:
+            md = f.read()
+
+        if depth == 0:
+            updated_md = md.replace("../docs/metrics/", "../metrics/")
+        elif depth == 1:
+            updated_md = md.replace("../../docs/metrics/", "../../metrics/")
+        else:
+            updated_md = md
+
+        if updated_md != md:
+            with md_file.open("w") as f:
+                f.write(updated_md)
+
+
+def _transform_examples_to_github(markdown: str, src_path: str) -> str:
+    """Transform relative links to examples/ into GitHub URLs.
+
+    Source docs/*.md files use relative paths like ../examples/... that work
+    locally and on GitHub/GitLab. On the mkdocs website these example files
+    aren't served directly, so rewrite the links to permanent GitHub URLs.
+    """
+    github_raw = "https://github.com/Safenai/dqm-ml-workspace/tree/main"
+
+    if src_path.startswith("examples/"):
+        page_dir = src_path.rsplit("/", 1)[0] + "/"
+
+        def _repl(m):
+            text, url = m.group(1), m.group(2)
+            if url.startswith(("https://", "#", "/")):
+                return m.group(0)
+            if url.endswith(".md"):
+                return m.group(0)
+            if url.endswith((".py", ".yaml")):
+                resolved = urljoin(page_dir, url)
+                return f"[{text}]({github_raw}/{resolved})"
+            return m.group(0)
+
+        markdown = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _repl, markdown)
+        return markdown
+
+    # src_path is relative to docs/ directory.
+    # E.g., "cli.md" → depth 0 → need "../" to reach repo root
+    #        "configuration/features.md" → depth 1 → need "../../"
+    depth = src_path.count("/")
+    prefix = "../" * (depth + 1)
+    markdown = markdown.replace(f"({prefix}examples/", f"({github_raw}/examples/")
+
+    return markdown
+
+
+def _transform_package_links(markdown: str, src_path: str) -> str:
+    """Transform relative links to packages/*/README.md into docs/packages/*.md links.
+
+    Source docs/*.md files use ../packages/xxx/README.md paths that work locally
+    and on GitHub/GitLab. On the mkdocs website these READMEs have been copied to
+    docs/packages/xxx.md, so rewrite the links accordingly.
+    """
+    if src_path.startswith("examples/"):
+        return markdown
+
+    markdown = re.sub(
+        r"\(\.\./packages/([^/]+)/README\.md(#[^)]*)?\)",
+        r"(packages/\1.md\2)",
+        markdown,
+    )
+    return markdown
+
+
+def page_markdown(markdown, page, config, files):  # NOSONAR
+    """Hook: transform relative links after page markdown is loaded."""
+    markdown = _transform_examples_to_github(markdown, page.file.src_path)
+    markdown = _transform_package_links(markdown, page.file.src_path)
+    return markdown
+
+
 def pre_build(*args, **kwargs):
-    copy_example()
+    copy_examples()
+    fix_example_links()
     copy_readme()
     add_repository_link()
     copy_package_readmes()

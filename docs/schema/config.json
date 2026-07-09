@@ -1,0 +1,2291 @@
+{
+  "title": "DQM-ML Job Configuration",
+  "description": "Root configuration for a dqm-ml job. Each field maps to a pipeline stage.",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "TODO",
+  "additionalProperties": false,
+  "properties": {
+    "dataloaders": {
+      "$ref": "#/$defs/DataLoadersConfig"
+    },
+    "features": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FeaturesInterfaceConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metrics": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MetricsInterfaceConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "gap": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GapInterfaceConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "storage": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StorageConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "compute": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ComputeConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "errors": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "dataloaders"
+  ],
+  "$defs": {
+    "ColumnDistributionParams": {
+      "title": "ColumnDistributionParams",
+      "description": "Per-column distribution parameters for user_provided mean_std_estimation.",
+      "type": "object",
+      "properties": {
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "max": {
+          "title": "Max",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean": {
+          "title": "Mean",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min": {
+          "title": "Min",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "std": {
+          "title": "Std",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "column"
+      ]
+    },
+    "ColumnRename": {
+      "title": "ColumnRename",
+      "description": "Mapping from an original column name to a new name.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "title": "From",
+          "description": "Original column name.",
+          "type": "string"
+        },
+        "to": {
+          "title": "To",
+          "description": "New column name.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "ColumnsConfig": {
+      "title": "ColumnsConfig",
+      "description": "Column selection, exclusion, renaming, and prefix/suffix operations.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "title": "Exclude",
+          "description": "Columns to exclude (fnmatch patterns supported).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input": {
+          "title": "Input",
+          "description": "Columns to read (fnmatch patterns supported). None reads all.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prefix": {
+          "title": "Prefix",
+          "description": "Prefix prepended to each column name.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rename": {
+          "title": "Rename",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ColumnRename"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suffix": {
+          "title": "Suffix",
+          "description": "Suffix appended to each column name.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "CompletenessProcessorConfig": {
+      "title": "CompletenessProcessorConfig",
+      "description": "Configuration for completeness metric computation. Computes per-column and overall completeness (non-null) metrics. Attributes: type: Processor type discriminator (\"completeness\"). include_per_column: Include per-column completeness scores in output. include_overall: Include overall completeness score in output. include_metadata: Include metadata (total rows, null counts) in output.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "completeness",
+          "default": "completeness"
+        },
+        "columns": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "include_metadata": {
+          "title": "Include Metadata",
+          "description": "Include metadata in output.",
+          "type": "boolean",
+          "default": false
+        },
+        "include_overall": {
+          "title": "Include Overall",
+          "description": "Include overall completeness score.",
+          "type": "boolean",
+          "default": true
+        },
+        "include_per_column": {
+          "title": "Include Per Column",
+          "description": "Include per-column completeness scores.",
+          "type": "boolean",
+          "default": true
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "ComputeConfig": {
+      "title": "ComputeConfig",
+      "description": "Global compute / runtime settings.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "device": {
+          "title": "Device",
+          "description": "Compute device: 'auto' picks cuda if available.",
+          "type": "string",
+          "enum": [
+            "auto",
+            "cpu",
+            "cuda"
+          ],
+          "default": "auto"
+        },
+        "log_level": {
+          "title": "Log Level",
+          "description": "Logging verbosity.",
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warning",
+            "error"
+          ],
+          "default": "warning"
+        },
+        "max_memory": {
+          "title": "Max Memory",
+          "description": "Maximum memory per worker (e.g. '4Gi').",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "progress_bar": {
+          "title": "Progress Bar",
+          "description": "Show tqdm progress bars.",
+          "type": "boolean",
+          "default": true
+        },
+        "seed": {
+          "title": "Seed",
+          "description": "Random seed for reproducibility.",
+          "type": "integer",
+          "default": 42
+        },
+        "threads": {
+          "title": "Threads",
+          "description": "Number of worker threads.",
+          "type": "integer",
+          "default": 4,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "DataLoaderConfig": {
+      "title": "DataLoaderConfig",
+      "description": "Configuration for a single dataloader (Parquet or CSV).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "description": "Data file format.",
+          "type": "string",
+          "enum": [
+            "parquet",
+            "csv"
+          ]
+        },
+        "batch_size": {
+          "title": "Batch Size",
+          "description": "Number of rows per batch.",
+          "type": "integer",
+          "default": 10000
+        },
+        "filters": {
+          "title": "Filters",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FilterConfig"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id_column": {
+          "title": "Id Column",
+          "description": "Column used as row identifier.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique name for this dataloader.",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "description": "Glob pattern or path to data files.",
+          "type": "string"
+        },
+        "sample_path": {
+          "title": "Sample Path",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SamplePathConfig"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "split": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SplitConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storage": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StorageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transform": {
+          "title": "Transform",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TransformConfig"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "path"
+      ]
+    },
+    "DataLoadersConfig": {
+      "title": "DataLoadersConfig",
+      "description": "Collection of dataloaders for a job.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "loaders": {
+          "title": "Loaders",
+          "description": "List of dataloader configurations.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataLoaderConfig"
+          }
+        },
+        "storage": {
+          "description": "Default storage config inherited by all loaders.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StorageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "loaders"
+      ]
+    },
+    "DistanceConfig": {
+      "title": "DistanceConfig",
+      "description": "Distance metric configuration for domain-gap computation. Attributes: metric: Distance metric name (e.g., \"mmd\", \"discriminative\", \"klmvn_diag\"). evaluator: Optional evaluator type for discriminative metrics. k: Number of nearest neighbours (for k-NN based metrics). feature_weights: Per-feature weights for weighted distance computation. kernel_params: Kernel parameters (RBF or Polynomial) for kernel-based metrics. epsilon: Regularization epsilon for numerical stability of covariance-based metrics. klmvn_var_eps: Variance regularization for KL divergence numerical stability.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "epsilon": {
+          "title": "Epsilon",
+          "description": "Regularization epsilon for numerical stability of covariance-based metrics (e.g. FID).",
+          "type": "number",
+          "default": 1e-06,
+          "minimum": 0
+        },
+        "evaluator": {
+          "title": "Evaluator",
+          "description": "Optional evaluator type.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feature_weights": {
+          "title": "Feature Weights",
+          "description": "Per-feature weights for weighted distance computation.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "k": {
+          "title": "K",
+          "description": "Number of nearest neighbours (if applicable).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kernel_params": {
+          "title": "Kernel Params",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KernelParamsRbf"
+            },
+            {
+              "$ref": "#/$defs/KernelParamsPoly"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "klmvn_var_eps": {
+          "title": "Klmvn Var Eps",
+          "description": "Variance regularization for klmvn_diag numerical stability (default 0.0). When > 0, source and target variances are replaced by var + klmvn_var_eps * mean(var) before computing KL divergence, preventing blow-up from near-zero variance dimensions.",
+          "type": "number",
+          "default": 0.0,
+          "minimum": 0
+        },
+        "metric": {
+          "title": "Metric",
+          "description": "Distance metric name (e.g. 'mmd', 'discriminative').",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metric"
+      ]
+    },
+    "DiversityProcessorConfig": {
+      "title": "DiversityProcessorConfig",
+      "description": "Configuration for diversity metric computation. Computes diversity metrics: Simpson, Gini, Shannon entropy, and richness. Attributes: type: Processor type discriminator (\"diversity\"). metrics: List of diversity metrics to compute.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "diversity",
+          "default": "diversity"
+        },
+        "columns": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metrics": {
+          "title": "Metrics",
+          "description": "List of diversity metrics to compute.",
+          "type": "array",
+          "default": [
+            "simpson",
+            "gini",
+            "shannon",
+            "richness"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "DomainGapProcessorConfig": {
+      "title": "DomainGapProcessorConfig",
+      "description": "Configuration for domain-gap (distribution shift) measurement. Measures distribution shift between datasets using a configured distance metric. Attributes: type: Processor type discriminator (\"domain_gap\"). columns: Column input configuration (required). distance: Distance metric configuration. summary: Embedding summary configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "domain_gap",
+          "default": "domain_gap"
+        },
+        "columns": {
+          "description": "Column input configuration (required).",
+          "$ref": "#/$defs/ColumnsConfig"
+        },
+        "distance": {
+          "description": "Distance metric configuration.",
+          "$ref": "#/$defs/DistanceConfig"
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        },
+        "summary": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SummaryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "columns",
+        "distance"
+      ]
+    },
+    "ErrorsConfig": {
+      "title": "ErrorsConfig",
+      "description": "Aggregate error-handling configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "title": "Default",
+          "description": "Default error action when no specific policy is set.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "silent_fail"
+        },
+        "images": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageErrorsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_failure_rate": {
+          "title": "Max Failure Rate",
+          "description": "Maximum tolerated failure rate before the job aborts (from 0.0 to 1.0).",
+          "type": "number",
+          "default": 0.05,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "tabular": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TabularErrorsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "FeaturesEmbeddingsProcessorConfig": {
+      "title": "FeaturesEmbeddingsProcessorConfig",
+      "description": "Configuration for neural-network embedding feature extraction. Extracts deep learning embeddings from images using a configured model. Attributes: type: Processor type discriminator (\"features_embeddings\"). model: Neural network model configuration. infer: Inference pre-processing settings.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "features_embeddings",
+          "default": "features_embeddings"
+        },
+        "columns": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "infer": {
+          "$ref": "#/$defs/InferConfig"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelConfig"
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "FeaturesInterfaceConfig": {
+      "title": "FeaturesInterfaceConfig",
+      "description": "Feature-extraction pipeline configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "compute": {
+          "description": "Compute override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComputeConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errors": {
+          "description": "Error-handling override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputs": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FeaturesOutputsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processors": {
+          "title": "Processors",
+          "description": "Ordered list of feature processors.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ImageFeaturesProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/FeaturesEmbeddingsProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/CompletenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DiversityProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DomainGapProcessorConfig"
+              }
+            ],
+            "discriminator": {
+              "mapping": {
+                "completeness": "#/$defs/CompletenessProcessorConfig",
+                "diversity": "#/$defs/DiversityProcessorConfig",
+                "domain_gap": "#/$defs/DomainGapProcessorConfig",
+                "features_embeddings": "#/$defs/FeaturesEmbeddingsProcessorConfig",
+                "image_features": "#/$defs/ImageFeaturesProcessorConfig",
+                "representativeness": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              "propertyName": "type"
+            }
+          }
+        },
+        "storage": {
+          "description": "Storage override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StorageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "FeaturesOutputsConfig": {
+      "title": "FeaturesOutputsConfig",
+      "description": "Output configuration for computed features.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "title": "Exclude",
+          "description": "Feature columns to exclude (fnmatch patterns supported).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "include": {
+          "title": "Include",
+          "description": "Feature columns to include (fnmatch patterns supported).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "path": {
+          "title": "Path",
+          "description": "Destination path for feature output.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "FilterConfig": {
+      "title": "FilterConfig",
+      "description": "Row-level filter applied during data loading.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "description": "Column name to filter on.",
+          "type": "string"
+        },
+        "values": {
+          "title": "Values",
+          "description": "Value(s) to keep. Rows where column matches are included.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "column",
+        "values"
+      ]
+    },
+    "GapInterfaceConfig": {
+      "title": "GapInterfaceConfig",
+      "description": "Domain-gap computation pipeline configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "compute": {
+          "description": "Compute override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComputeConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errors": {
+          "description": "Error-handling override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputs": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GapOutputsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processors": {
+          "title": "Processors",
+          "description": "Ordered list of domain-gap processors.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ImageFeaturesProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/FeaturesEmbeddingsProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/CompletenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DiversityProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DomainGapProcessorConfig"
+              }
+            ],
+            "discriminator": {
+              "mapping": {
+                "completeness": "#/$defs/CompletenessProcessorConfig",
+                "diversity": "#/$defs/DiversityProcessorConfig",
+                "domain_gap": "#/$defs/DomainGapProcessorConfig",
+                "features_embeddings": "#/$defs/FeaturesEmbeddingsProcessorConfig",
+                "image_features": "#/$defs/ImageFeaturesProcessorConfig",
+                "representativeness": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              "propertyName": "type"
+            }
+          }
+        },
+        "storage": {
+          "description": "Storage override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StorageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "GapOutputsConfig": {
+      "title": "GapOutputsConfig",
+      "description": "Output configuration for domain-gap results.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pairwise": {
+          "title": "Pairwise",
+          "description": "Include pairwise (delta) results.",
+          "type": "boolean",
+          "default": true
+        },
+        "path": {
+          "title": "Path",
+          "description": "Destination path for domain-gap output.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "GrteConfig": {
+      "title": "GrteConfig",
+      "description": "Gini-ratio-threshold-entropy (GRTE) configuration for representativeness. Attributes: threshold: Gini ratio threshold for flagging. scaling_factor: Scaling applied to the Gini ratio (negative inverts).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scaling_factor": {
+          "title": "Scaling Factor",
+          "description": "Scaling applied to the Gini ratio.",
+          "type": "number",
+          "default": -2.0
+        },
+        "threshold": {
+          "title": "Threshold",
+          "description": "Gini ratio threshold.",
+          "type": "number",
+          "default": 0.5
+        }
+      }
+    },
+    "HistogramConfig": {
+      "title": "HistogramConfig",
+      "description": "Histogram parameters for feature extraction. Attributes: bins: Number of histogram bins (must be positive).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bins": {
+          "title": "Bins",
+          "description": "Number of histogram bins.",
+          "type": "integer",
+          "default": 256,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "HistogramSummaryConfig": {
+      "title": "HistogramSummaryConfig",
+      "description": "Histogram settings for embedding summary statistics. Attributes: dims: Number of dimensions to histogram. bins: Number of bins per dimension (must be positive). range: Histogram range [min, max] for each dimension.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bins": {
+          "title": "Bins",
+          "description": "Number of bins per dimension.",
+          "type": "integer",
+          "default": 32,
+          "exclusiveMinimum": 0
+        },
+        "dims": {
+          "title": "Dims",
+          "description": "Number of dimensions to histogram.",
+          "type": "integer",
+          "default": 64,
+          "exclusiveMinimum": 0
+        },
+        "range": {
+          "title": "Range",
+          "description": "Histogram range [min, max].",
+          "type": "array",
+          "default": [
+            -3.0,
+            3.0
+          ],
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "HistogramsConfig": {
+      "title": "HistogramsConfig",
+      "description": "Histogram parameters for representativeness evaluation. Attributes: bins: Number of histogram bins (must be positive).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bins": {
+          "title": "Bins",
+          "description": "Number of histogram bins.",
+          "type": "integer",
+          "default": 10,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "ImageErrorsConfig": {
+      "title": "ImageErrorsConfig",
+      "description": "Error-handling policy for image-processing failures.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_decode_failure": {
+          "title": "On Decode Failure",
+          "description": "Action when an image cannot be decoded.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "silent_fail"
+        },
+        "on_transform_error": {
+          "title": "On Transform Error",
+          "description": "Action when an image transform fails.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "silent_fail"
+        },
+        "on_unsupported_format": {
+          "title": "On Unsupported Format",
+          "description": "Action on unsupported image format.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "fail_fast"
+        }
+      }
+    },
+    "ImageFeaturesProcessorConfig": {
+      "title": "ImageFeaturesProcessorConfig",
+      "description": "Configuration for low-level image feature extraction. Extracts luminosity, contrast, blur, and entropy features from images. Attributes: type: Processor type discriminator (\"image_features\"). features: List of image features to compute. batch_size: Batch size for image processing. grayscale: Whether to convert images to grayscale. normalize: Whether to normalize pixel values to [0, 1]. laplacian_kernel: Laplacian kernel size for blur detection (\"3x3\" or \"5x5\"). clip_percentiles: Percentile clipping for extreme pixel values, e.g. (1, 99). histogram: Histogram configuration for feature computation. luminosity_weights: Luminosity weights for grayscale conversion. Standard name ('bt601', 'bt709', 'bt2020') or [R, G, B] list/tuple. Defaults to BT.709 when None.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "image_features",
+          "default": "image_features"
+        },
+        "batch_size": {
+          "title": "Batch Size",
+          "description": "Batch size for image processing.",
+          "type": "integer",
+          "default": 64,
+          "exclusiveMinimum": 0
+        },
+        "clip_percentiles": {
+          "title": "Clip Percentiles",
+          "description": "Percentile clipping for extreme pixel values, e.g. (1, 99).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "columns": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "features": {
+          "title": "Features",
+          "description": "List of image features to compute.",
+          "type": "array",
+          "default": [
+            "luminosity",
+            "contrast",
+            "blur",
+            "entropy"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "grayscale": {
+          "title": "Grayscale",
+          "description": "Convert images to grayscale.",
+          "type": "boolean",
+          "default": true
+        },
+        "histogram": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistogramConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "laplacian_kernel": {
+          "title": "Laplacian Kernel",
+          "description": "Laplacian kernel size for blur detection.",
+          "type": "string",
+          "default": "3x3"
+        },
+        "luminosity_weights": {
+          "title": "Luminosity Weights",
+          "description": "Luminosity weights for grayscale conversion. Standard name ('bt601', 'bt709', 'bt2020') or [R, G, B] list. Defaults to BT.709 when None.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 3,
+              "maxItems": 3
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        },
+        "normalize": {
+          "title": "Normalize",
+          "description": "Normalise pixel values to [0, 1].",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "InferConfig": {
+      "title": "InferConfig",
+      "description": "Inference pre-processing settings for image embeddings. Attributes: batch_size: Inference batch size. width: Resize width for input images. height: Resize height for input images. norm_mean: Per-channel mean used for normalisation (ImageNet defaults). norm_std: Per-channel std used for normalisation (ImageNet defaults).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "batch_size": {
+          "title": "Batch Size",
+          "description": "Inference batch size.",
+          "type": "integer",
+          "default": 32,
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "title": "Height",
+          "description": "Resize height for input images.",
+          "type": "integer",
+          "default": 224,
+          "exclusiveMinimum": 0
+        },
+        "norm_mean": {
+          "title": "Norm Mean",
+          "description": "Per-channel mean used for normalisation.",
+          "type": "array",
+          "default": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "items": {
+            "type": "number"
+          }
+        },
+        "norm_std": {
+          "title": "Norm Std",
+          "description": "Per-channel std used for normalisation.",
+          "type": "array",
+          "default": [
+            0.229,
+            0.224,
+            0.225
+          ],
+          "items": {
+            "type": "number"
+          }
+        },
+        "width": {
+          "title": "Width",
+          "description": "Resize width for input images.",
+          "type": "integer",
+          "default": 224,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "InterpretationConfig": {
+      "title": "InterpretationConfig",
+      "description": "Human-readable labels for representativeness and diversity results. Attributes: follows_distribution: Label when data follows the expected distribution. does_not_follow_distribution: Label when data diverges from expected distribution. high_diversity: Label for high diversity results. low_diversity: Label for low diversity results. high_representativeness: Label for high representativeness results. low_representativeness: Label for low representativeness results.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "does_not_follow_distribution": {
+          "title": "Does Not Follow Distribution",
+          "description": "Label when data diverges.",
+          "type": "string",
+          "default": "diverges from target"
+        },
+        "follows_distribution": {
+          "title": "Follows Distribution",
+          "description": "Label when data follows the distribution.",
+          "type": "string",
+          "default": "fits target"
+        },
+        "high_diversity": {
+          "title": "High Diversity",
+          "description": "Label for high diversity.",
+          "type": "string",
+          "default": "varied"
+        },
+        "high_representativeness": {
+          "title": "High Representativeness",
+          "description": "Label for high representativeness.",
+          "type": "string",
+          "default": "representative"
+        },
+        "low_diversity": {
+          "title": "Low Diversity",
+          "description": "Label for low diversity.",
+          "type": "string",
+          "default": "uniform"
+        },
+        "low_representativeness": {
+          "title": "Low Representativeness",
+          "description": "Label for low representativeness.",
+          "type": "string",
+          "default": "under-represented"
+        }
+      }
+    },
+    "KernelParamsPoly": {
+      "title": "KernelParamsPoly",
+      "description": "Polynomial kernel parameters for distance metrics. Attributes: degree: Polynomial degree. gamma: Polynomial kernel gamma parameter. coefficient0: Polynomial kernel coefficient offset (constant term).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coefficient0": {
+          "title": "Coefficient0",
+          "description": "Polynomial kernel coefficient offset.",
+          "type": "number",
+          "default": 1.0
+        },
+        "degree": {
+          "title": "Degree",
+          "description": "Polynomial degree.",
+          "type": "number",
+          "default": 3.0
+        },
+        "gamma": {
+          "title": "Gamma",
+          "description": "Polynomial kernel gamma.",
+          "type": "number",
+          "default": 1.0
+        }
+      }
+    },
+    "KernelParamsRbf": {
+      "title": "KernelParamsRbf",
+      "description": "RBF (Radial Basis Function) kernel parameters for distance metrics. Attributes: gamma: RBF kernel gamma parameter (inverse kernel width).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gamma": {
+          "title": "Gamma",
+          "description": "RBF kernel gamma parameter.",
+          "type": "number",
+          "default": 1.0
+        }
+      }
+    },
+    "KsConfig": {
+      "title": "KsConfig",
+      "description": "Kolmogorov-Smirnov test configuration for representativeness. Attributes: sample_size: Number of samples for KS testing. min_sample_size: Minimum samples required for KS test. sample_divisor: Divisor for automatic sample-size calculation.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_sample_size": {
+          "title": "Min Sample Size",
+          "description": "Minimum samples required for KS test.",
+          "type": "integer",
+          "default": 50,
+          "exclusiveMinimum": 0
+        },
+        "sample_divisor": {
+          "title": "Sample Divisor",
+          "description": "Divisor for automatic sample-size calculation.",
+          "type": "integer",
+          "default": 20,
+          "exclusiveMinimum": 0
+        },
+        "sample_size": {
+          "title": "Sample Size",
+          "description": "Number of samples for KS testing.",
+          "type": "integer",
+          "default": 500,
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "MetricsInterfaceConfig": {
+      "title": "MetricsInterfaceConfig",
+      "description": "Metric-computation pipeline configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "compute": {
+          "description": "Compute override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComputeConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errors": {
+          "description": "Error-handling override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputs": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MetricsOutputsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processors": {
+          "title": "Processors",
+          "description": "Ordered list of metric processors.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ImageFeaturesProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/FeaturesEmbeddingsProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/CompletenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DiversityProcessorConfig"
+              },
+              {
+                "$ref": "#/$defs/DomainGapProcessorConfig"
+              }
+            ],
+            "discriminator": {
+              "mapping": {
+                "completeness": "#/$defs/CompletenessProcessorConfig",
+                "diversity": "#/$defs/DiversityProcessorConfig",
+                "domain_gap": "#/$defs/DomainGapProcessorConfig",
+                "features_embeddings": "#/$defs/FeaturesEmbeddingsProcessorConfig",
+                "image_features": "#/$defs/ImageFeaturesProcessorConfig",
+                "representativeness": "#/$defs/RepresentativenessProcessorConfig"
+              },
+              "propertyName": "type"
+            }
+          }
+        },
+        "storage": {
+          "description": "Storage override for this interface.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StorageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "MetricsOutputsConfig": {
+      "title": "MetricsOutputsConfig",
+      "description": "Output configuration for computed metrics.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "description": "Destination path for metrics output.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "ModelConfig": {
+      "title": "ModelConfig",
+      "description": "Neural network model configuration for embedding extraction. Attributes: arch: Model architecture name (e.g., \"resnet18\", \"resnet50\"). n_layer_feature: Layer index (negative for reverse) or list of layer names for feature extraction. Default -2 (second to last layer). device: Device for model inference (\"auto\", \"cpu\", \"cuda\").",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arch": {
+          "title": "Arch",
+          "description": "Model architecture name.",
+          "type": "string",
+          "default": "resnet18"
+        },
+        "device": {
+          "title": "Device",
+          "description": "Device for model inference.",
+          "type": "string",
+          "enum": [
+            "auto",
+            "cpu",
+            "cuda"
+          ],
+          "default": "auto"
+        },
+        "n_layer_feature": {
+          "title": "N Layer Feature",
+          "description": "Layer index or list of layer names for feature extraction.",
+          "default": -2,
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RepresentativenessProcessorConfig": {
+      "title": "RepresentativenessProcessorConfig",
+      "description": "Configuration for representativeness evaluation against a reference distribution. Evaluates how well a dataset represents a target distribution using multiple statistical metrics. Attributes: type: Processor type discriminator (\"representativeness\"). metrics: List of representativeness metrics to compute. alpha: Significance level for statistical tests. epsilon: Small constant to avoid division by zero. distribution: Expected reference distribution (\"normal\" or \"uniform\"). interpretation: Human-readable labels for results. histogram: Histogram configuration for evaluation. shannon: Shannon entropy threshold configuration. grte: GRTE configuration. ks: Kolmogorov-Smirnov test configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "const": "representativeness",
+          "default": "representativeness"
+        },
+        "alpha": {
+          "title": "Alpha",
+          "description": "Significance level for statistical tests.",
+          "type": "number",
+          "default": 0.05
+        },
+        "columns": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColumnsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "distribution": {
+          "title": "Distribution",
+          "description": "Expected reference distribution.",
+          "type": "string",
+          "enum": [
+            "normal",
+            "uniform"
+          ],
+          "default": "normal"
+        },
+        "distribution_params": {
+          "title": "Distribution Params",
+          "description": "Per-column explicit distribution parameters for 'user_provided' strategy. Example: [{'column': 'col1', 'mean': 0.0, 'std': 1.0}]",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ColumnDistributionParams"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "epsilon": {
+          "title": "Epsilon",
+          "description": "Small constant to avoid division by zero.",
+          "type": "number",
+          "default": 1e-09,
+          "exclusiveMinimum": 0
+        },
+        "expected_counts_method": {
+          "title": "Expected Counts Method",
+          "description": "Method for computing expected bin counts. 'cdf' \u2014 exact expected counts via CDF (deterministic). 'monte_carlo' \u2014 Monte Carlo sampling via RNG (stochastic).",
+          "type": "string",
+          "enum": [
+            "cdf",
+            "monte_carlo"
+          ],
+          "default": "cdf"
+        },
+        "grte": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GrteConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "histogram": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistogramsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "interpretation": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InterpretationConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ks": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean_std_estimation": {
+          "title": "Mean Std Estimation",
+          "description": "How distribution parameters (mean/std for normal, min/max for uniform) are estimated. 'from_first_batch' \u2014 estimate from the first batch and reuse (consistent with bin edges). 'per_batch' \u2014 re-estimate on each batch (use with high-variance data, risks insufficient_bins). 'user_provided' \u2014 use explicit parameters from distribution_params. 'from_all_data' \u2014 estimate from full dataset (not yet implemented).",
+          "type": "string",
+          "enum": [
+            "from_first_batch",
+            "per_batch",
+            "from_all_data",
+            "user_provided"
+          ],
+          "default": "from_first_batch"
+        },
+        "metrics": {
+          "title": "Metrics",
+          "description": "List of representativeness metrics to compute.",
+          "type": "array",
+          "default": [
+            "chi-square",
+            "grte",
+            "kolmogorov-smirnov",
+            "shannon-entropy"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "title": "Name",
+          "description": "Unique processor name.",
+          "type": "string"
+        },
+        "shannon": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ShannonConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "RetryConfig": {
+      "title": "RetryConfig",
+      "description": "Retry policy for storage operations.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "title": "Max Attempts",
+          "description": "Maximum number of retry attempts.",
+          "type": "integer",
+          "default": 3,
+          "exclusiveMinimum": 0
+        },
+        "mode": {
+          "title": "Mode",
+          "description": "Retry mode: 'default' uses exponential backoff, 'standard' uses fixed intervals.",
+          "type": "string",
+          "enum": [
+            "default",
+            "standard"
+          ],
+          "default": "standard"
+        }
+      }
+    },
+    "SamplePathConfig": {
+      "title": "SamplePathConfig",
+      "description": "Per-column path prefix configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "description": "Column name containing relative file paths.",
+          "type": "string"
+        },
+        "prefix": {
+          "title": "Prefix",
+          "description": "Base directory for resolving relative paths.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "column"
+      ]
+    },
+    "ShannonConfig": {
+      "title": "ShannonConfig",
+      "description": "Shannon-entropy threshold configuration for representativeness. Attributes: threshold: Entropy threshold for flagging under-represented values.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "threshold": {
+          "title": "Threshold",
+          "description": "Entropy threshold for flagging.",
+          "type": "number",
+          "default": 2.0
+        }
+      }
+    },
+    "SplitConfig": {
+      "title": "SplitConfig",
+      "description": "How to split data into named groups (e.g. train / test).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "title": "By",
+          "description": "Column used to determine the split group.",
+          "type": "string"
+        },
+        "exclude": {
+          "title": "Exclude",
+          "description": "Split-group values to exclude (fnmatch patterns supported).",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "values": {
+          "title": "Values",
+          "description": "Explicit list of split-group values to materialise. Auto-discovered if None.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "StorageConfig": {
+      "title": "StorageConfig",
+      "description": "Remote or local storage configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "description": "Storage backend type.",
+          "type": "string",
+          "enum": [
+            "s3",
+            "local"
+          ]
+        },
+        "access_key": {
+          "title": "Access Key",
+          "description": "AWS access key ID.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "anonymous": {
+          "title": "Anonymous",
+          "description": "Use anonymous (unsigned) requests.",
+          "type": "boolean",
+          "default": false
+        },
+        "bucket": {
+          "title": "Bucket",
+          "description": "S3 bucket name (required when type='s3').",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checksum_validation": {
+          "title": "Checksum Validation",
+          "description": "Controls S3 checksum validation behaviour.",
+          "type": "string",
+          "enum": [
+            "when_required",
+            "always",
+            "never"
+          ],
+          "default": "when_required"
+        },
+        "connect_timeout": {
+          "title": "Connect Timeout",
+          "description": "Connection timeout in seconds.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "description": "Custom S3 endpoint URL.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "external_id": {
+          "title": "External Id",
+          "description": "External ID for role assumption.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "load_frequency": {
+          "title": "Load Frequency",
+          "description": "Frequency (seconds) to refresh credentials / role.",
+          "type": "integer",
+          "default": 900,
+          "exclusiveMinimum": 0
+        },
+        "proxy_options": {
+          "title": "Proxy Options",
+          "description": "Proxy configuration as a dict or URL string.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": true
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region": {
+          "title": "Region",
+          "description": "AWS region (e.g. 'us-east-1').",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "request_timeout": {
+          "title": "Request Timeout",
+          "description": "Request timeout in seconds.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retry": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RetryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "role_arn": {
+          "title": "Role Arn",
+          "description": "ARN of IAM role to assume.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scheme": {
+          "title": "Scheme",
+          "description": "URI scheme (e.g. 'https').",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secret_key": {
+          "title": "Secret Key",
+          "description": "AWS secret access key.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "session_name": {
+          "title": "Session Name",
+          "description": "Name for the assumed role session.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "session_token": {
+          "title": "Session Token",
+          "description": "AWS session token.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tls_ca_file_path": {
+          "title": "Tls Ca File Path",
+          "description": "Path to a custom TLS CA bundle.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "SummaryConfig": {
+      "title": "SummaryConfig",
+      "description": "Embedding summary configuration for domain-gap computation. Attributes: collect_sum_outer: Collect sum-of-outer-products for covariance estimation. store_embeddings: Store full embedding vectors in output. histogram: Histogram configuration for embedding summaries.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "collect_sum_outer": {
+          "title": "Collect Sum Outer",
+          "description": "Collect sum-of-outer-products for covariance estimation.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "histogram": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistogramSummaryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "store_embeddings": {
+          "title": "Store Embeddings",
+          "description": "Store full embedding vectors.",
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "TabularErrorsConfig": {
+      "title": "TabularErrorsConfig",
+      "description": "Error-handling policy for tabular-data failures.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on_file_not_found": {
+          "title": "On File Not Found",
+          "description": "Action when a data file is not found.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "fail_fast"
+        },
+        "on_missing_column": {
+          "title": "On Missing Column",
+          "description": "Action when a required column is missing.",
+          "type": "string",
+          "enum": [
+            "silent_fail",
+            "fail_fast"
+          ],
+          "default": "fail_fast"
+        }
+      }
+    },
+    "TransformConfig": {
+      "title": "TransformConfig",
+      "description": "Column type-casting transformation.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "title": "Column",
+          "description": "Column name to transform.",
+          "type": "string"
+        },
+        "in_place": {
+          "title": "In Place",
+          "description": "Overwrite the original column in place.",
+          "type": "boolean",
+          "default": false
+        },
+        "to_type": {
+          "description": "Target data type.",
+          "$ref": "#/$defs/TransformType"
+        }
+      },
+      "required": [
+        "column",
+        "to_type"
+      ]
+    },
+    "TransformType": {
+      "title": "TransformType",
+      "description": "Target data type for column transformations.",
+      "type": "string",
+      "enum": [
+        "int32",
+        "int64",
+        "float32",
+        "float64",
+        "bool",
+        "str",
+        "categorical"
+      ]
+    }
+  }
+}

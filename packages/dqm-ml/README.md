@@ -51,96 +51,112 @@ dqm-ml version
 ## Configuration
 
 DQM-ML uses YAML configuration files to define:
+
 - Data sources (dataloaders)
-- Metrics to compute (metrics_processor)
+- Metrics to compute (metrics: interface)
 - Output settings (outputs)
 
 ### Completeness Example
 
 ```yaml
-dataloaders:
-  train:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [col_a, col_b]
 
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [col_a, col_b]
+dataloaders:
+  loaders:
+    - name: train
+      type: parquet
+      path: data/train.parquet
 ```
 
 ### Representativeness Example
 
 ```yaml
-dataloaders:
-  train:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [feature_x, feature_y]
+      distribution: "normal"
+      metrics: ["chi-square", "kolmogorov-smirnov"]
 
-metrics_processor:
-  representativeness:
-    type: representativeness
-    input_columns: [feature_x, feature_y]
-    distribution: "normal"
-    metrics: ["chi-square", "kolmogorov-smirnov"]
+dataloaders:
+  loaders:
+    - name: train
+      type: parquet
+      path: data/train.parquet
 ```
 
 ### Domain Gap Example
 
 ```yaml
-dataloaders:
-  source:
-    type: parquet
-    path: data/source.parquet
-  target:
-    type: parquet
-    path: data/target.parquet
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "mmd_linear"
 
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    INPUT:
-      embedding_col: "features"
-    DELTA:
-      metric: "mmd_linear"
+dataloaders:
+  loaders:
+    - name: source
+      type: parquet
+      path: data/source.parquet
+    - name: target
+      type: parquet
+      path: data/target.parquet
 ```
 
 ### Visual Features Example
 
 ```yaml
-dataloaders:
-  images:
-    type: parquet
-    path: data/images.parquet
+features:
+  processors:
+    - name: visual
+      type: image_features
+      columns:
+        input: ["image_data"]
+      grayscale: true
 
-metrics_processor:
-  visual:
-    type: visual_metric
-    input_columns: ["image_data"]
-    grayscale: true
+dataloaders:
+  loaders:
+    - name: images
+      type: parquet
+      path: data/images.parquet
 ```
 
 ### Multiple Metrics Example
 
 ```yaml
-dataloaders:
-  train:
-    type: parquet
-    path: data/train.parquet
+metrics:
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [col_a, col_b]
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [feature_x]
+      distribution: "normal"
 
-metrics_processor:
-  completeness:
-    type: completeness
-    input_columns: [col_a, col_b]
-  
-  representativeness:
-    type: representativeness
-    input_columns: [feature_x]
-    distribution: "normal"
+dataloaders:
+  loaders:
+    - name: train
+      type: parquet
+      path: data/train.parquet
 ```
 
 ## See Also
 
+- [Formal and Core Concepts](https://safenai.github.io/dqm-ml-workspace/docs/formal_concepts.md) for definitions of **Processor**, **Metric**, **Feature**, and related terminology.
 - [Documentation](https://safenai.github.io/dqm-ml-workspace/)
 - [Metrics Guide](https://safenai.github.io/dqm-ml-workspace/docs/metrics/)
 - [Configuration Guide](https://safenai.github.io/dqm-ml-workspace/docs/configuration/)

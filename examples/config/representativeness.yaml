@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../docs/schema/config.json
+## Yaml pipeline configuration for representativeness
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/data/large_test_2m.parquet
+      batch_size: 50000
+
+metrics:
+  processors:
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [blur_score, contrast, quality_score]
+      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
+      distribution: normal
+      histogram:
+        bins: 20

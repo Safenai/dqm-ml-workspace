@@ -1,35 +1,26 @@
-## Yaml pipeline configuration
-
 ---
-config:
+compute:
+  log_level: "debug"
+  seed: 42
+  progress_bar: true
+  threads: 4
 
-  dataloaders:
-    source_dataset:
+dataloaders:
+  loaders:
+    - name: source_dataset
       type: parquet
       path:
       batch_size: 1000000
-      memory_limit: 2GB
-      threads: 4
 
-  metrics_processor:
-
-    representativeness:
+metrics:
+  processors:
+    - name: representativeness
       type: representativeness
       metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
-      ks_sample_size: 1000000
-      ks_sample_divisor: 1
-
-      input_columns: [data_1, data_2, data_3]
-
-      output_features:  None
-
-      distribution:
-      bins: 10
-
-  outputs :
-
-    metrics:
-      type: parquet
-      path_pattern:
-      columns: []
-
+      ks:
+        sample_size: 1000000
+        sample_divisor: 1
+      columns:
+        input: [data_1, data_2, data_3]
+      histogram:
+        bins: 10

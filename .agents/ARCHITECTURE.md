@@ -3,13 +3,13 @@
 ## Pipeline Data Flow
 
 ```
-pa.RecordBatch ──(per batch)──→ compute_features → dict[str, pa.Array]
-                                           ↓
-                                compute_batch_metric → dict[str, pa.Array] (accumulated)
-                                           ↓
-                                compute → dict[str, Any] (Python scalars)
-                                           ↓
-                                compute_delta(source, target) → dict[str, Any]
+pa.RecordBatch ──(per batch)──→ select_features → dict[str, pa.Array]
+                                    ↓
+                        compute_batch_metric → dict[str, pa.Array] (accumulated)
+                                    ↓
+                        compute → dict[str, Any] (Python scalars)
+                                    ↓
+                        compute_delta(source, target) → dict[str, Any]
 ```
 
 `accumulate_flush`: features buffered to 512 MB then written to Parquet.
@@ -24,40 +24,94 @@ config:
       path: ...
       batch_size: 10000      # default
       ...
-  metrics_processor:
-    instance_name:
-      type: completeness     # entry point name
-      input_columns: [...]   # simple config
-      ...                    # or nested config
+  features:
+    processors:
+      instance_name:
+        type: image_features     # entry point name
+        columns:
+          input: [...]
+        ...
+  metrics:
+    processors:
+      instance_name:
+        type: completeness       # entry point name
+        columns:
+          input: [...]
+        ...
+  gap:
+    processors:
+      instance_name:
+        type: domain_gap         # entry point name
+        columns:
+          input: [...]
+        distance:
+          metric: mmd_linear
+        ...
   outputs:
+    features:
+      type: parquet
+      path_pattern: "output/features_{}.parquet"
     metrics:
       type: parquet
-      path_pattern: ...
-    features:                # optional
+      path_pattern: "output/metrics_{}.parquet"
+    gap:
       type: parquet
-    delta_metrics:           # optional
-      type: parquet
+      path_pattern: "output/gap_{}-{}.parquet"
 ```
 
 - `type:` field dispatches to registered entry point.
 - Config root key must be `config:` (not `pipeline_config:`).
 - `s3_filesystem:` can be `true` (reads env vars) or dict (`access_key`, `secret_key`, `endpoint_override`, `region`).
+- Three processor interfaces: `features`, `metrics`, `gap` — each with own `processors` list.
 
-## Adding a Metric
+## Adding a Features Processor
 
-Extend `DatametricProcessor` (`dqm_ml_core.api.data_processor:16`). Implement three methods:
+Extend `FeaturesProcessor` (`dqm_ml_core.api.features_processor:16`). Implement:
 
-| Method | Input | Output |
-|---|---|---|
-| `compute_features` | `pa.RecordBatch` | `dict[str, pa.Array]` — one array per sample |
-| `compute_batch_metric` | `dict[str, pa.Array]` | `dict[str, pa.Array]` — scalar per batch |
-| `compute` | `dict[str, pa.Array]` (concatenated across batches) | `dict[str, Any]` — final dataset scores |
+| Method | Input | Output | Required? |
+|---|---|---|---|
+| `generated_features()` | — | `list[str]` — output column names | Yes |
+| `compute_features(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — new feature columns | Yes |
+| `needed_columns()` | — | `list[str]` — input columns needed | No (default: `input_columns`) |
 
-- Config: accept `input_columns: list[str]` for simple metrics (ref: `completeness.py:35`). Use nested grouped sections for complex ones (ref: `image_embedding.py:47`).
-- Register in `[project.entry-points."dqm_ml.metrics"]` → `type = "package.module:ClassName"`.
-- ImageEmbedding produces `pa.FixedSizeListArray(pa.float32())` in column `"embedding"`. DomainGap consumes it by checking `isinstance(arr.type, pa.FixedSizeListArray)`.
-- DiversityProcessor accumulates `pa.compute.value_counts()` per batch and merges into a `Counter` in `compute()` (`diversity.py:96`).
-- `compute_delta` flag is deprecated — do not use.
+- Config: `columns.input` (list[str] or None), `columns.exclude`, `columns.rename/prefix/suffix`
+- Register in `[project.entry-points."dqm_ml.features"]` → `type = "package.module:ClassName"`
+- Output columns resolved via `_resolve_output_name(base_name)` using rename/prefix/suffix
+- Ref: `VisualFeaturesProcessor` (`dqm_ml_images.visual_features`), `ImageEmbeddingProcessor` (`dqm_ml_pytorch.image_embedding`)
+
+## Adding a Metrics Processor
+
+Extend `MetricsProcessor` (`dqm_ml_core.api.metrics_processor:16`). Implement:
+
+| Method | Input | Output | Required? |
+|---|---|---|---|
+| `generated_metrics()` | — | `list[str]` — output metric names | Yes |
+| `select_columns(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — selected columns | No (default in base) |
+| `compute_batch_metric(features)` | `dict[str, pa.Array]` | `dict[str, pa.Array]` — batch stats | Yes |
+| `compute(batch_metrics)` | `dict[str, pa.Array]` (concat across batches) | `dict[str, Any]` — final scores | Yes |
+
+- Config: `columns.input`, `columns.exclude`, plus metric-specific params
+- Register in `[project.entry-points."dqm_ml.metrics"]` → `type = "package.module:ClassName"`
+- `select_columns` handles `on_missing_column` (fail_fast/silent_fail) and wildcard resolution
+- Diversity: accumulates `pa.compute.value_counts()` per batch, merges `Counter` in `compute()`
+- Ref: `CompletenessProcessor`, `RepresentativenessProcessor`, `DiversityProcessor` (`dqm_ml_core.metrics`)
+
+## Adding a Gap Processor
+
+Extend `GapProcessor` (`dqm_ml_core.api.gap_processor:16`). Implement:
+
+| Method | Input | Output | Required? |
+|---|---|---|---|
+| `select_features(batch, prev_features)` | `pa.RecordBatch`, `dict[str, pa.Array]` | `dict[str, pa.Array]` — retrieve embeddings | Yes |
+| `compute_batch_metric(features)` | `dict[str, pa.Array]` | `dict[str, pa.Array]` — batch stats | Yes |
+| `compute(batch_metrics)` | `dict[str, pa.Array]` (concat) | `dict[str, Any]` — final scores | Yes |
+| `compute_delta(source, target)` | `dict`, `dict` | `dict[str, Any]` — pairwise distances | Yes |
+
+- Config: `columns.input` (resolved against `batch.schema.names + prev_features.keys()`), `columns.exclude`
+- Register in `[project.entry-points."dqm_ml.gap"]` → `type = "package.module:ClassName"`
+- `select_features` searches both batch columns and previously generated features
+- Embeddings: expects `pa.FixedSizeListArray(pa.float32())` in input column
+- Ref: `DomainGapProcessor` (`dqm_ml_pytorch.domain_gap`)
 
 ## Adding a Dataloader
 
@@ -95,10 +149,16 @@ Register in `[project.entry-points."dqm_ml.outputwriter"]`.
 
 | Pattern | File |
 |---|---|
-| DatametricProcessor base class | `packages/dqm-ml-core/src/dqm_ml_core/api/data_processor.py:16` |
-| Simple metric (Completeness) | `packages/dqm-ml-core/src/dqm_ml_core/metrics/completeness.py:35` |
-| Value-count streaming (Diversity) | `packages/dqm-ml-core/src/dqm_ml_core/metrics/diversity.py:96` |
-| Complex metric (ImageEmbedding) | `packages/dqm-ml-pytorch/src/dqm_ml_pytorch/image_embedding.py:47` |
+| Processor base class | `packages/dqm-ml-core/src/dqm_ml_core/api/processor.py:16` |
+| FeaturesProcessor base | `packages/dqm-ml-core/src/dqm_ml_core/api/features_processor.py:16` |
+| MetricsProcessor base | `packages/dqm-ml-core/src/dqm_ml_core/api/metrics_processor.py:16` |
+| GapProcessor base | `packages/dqm-ml-core/src/dqm_ml_core/api/gap_processor.py:16` |
+| Features: VisualFeaturesProcessor | `packages/dqm-ml-images/src/dqm_ml_images/visual_features.py` |
+| Features: ImageEmbeddingProcessor | `packages/dqm-ml-pytorch/src/dqm_ml_pytorch/image_embedding.py` |
+| Metrics: CompletenessProcessor | `packages/dqm-ml-core/src/dqm_ml_core/metrics/completeness.py` |
+| Metrics: RepresentativenessProcessor | `packages/dqm-ml-core/src/dqm_ml_core/metrics/representativeness.py` |
+| Metrics: DiversityProcessor | `packages/dqm-ml-core/src/dqm_ml_core/metrics/diversity.py` |
+| Gap: DomainGapProcessor | `packages/dqm-ml-pytorch/src/dqm_ml_pytorch/domain_gap.py` |
 | ParquetDataLoader | `packages/dqm-ml-job/src/dqm_ml_job/dataloaders/parquet.py:126` |
 | PandasDataLoader (CSV bridge) | `packages/dqm-ml-job/src/dqm_ml_job/dataloaders/pandas.py:76` |
 | ParquetOutputWriter | `packages/dqm-ml-job/src/dqm_ml_job/outputwriter/parquet.py:20` |
@@ -106,3 +166,6 @@ Register in `[project.entry-points."dqm_ml.outputwriter"]`.
 | Integration test structure | `tests/integration/test_completeness.py:15` |
 | Entry points (dataloaders) | `packages/dqm-ml-job/pyproject.toml:32` |
 | Entry points (output writers) | `packages/dqm-ml-job/pyproject.toml:37` |
+| Entry points (metrics) | `packages/dqm-ml-core/pyproject.toml` |
+| Entry points (features) | `packages/dqm-ml-images/pyproject.toml`, `packages/dqm-ml-pytorch/pyproject.toml` |
+| Entry points (gap) | `packages/dqm-ml-pytorch/pyproject.toml` |

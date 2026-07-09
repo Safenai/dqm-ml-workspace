@@ -35,6 +35,20 @@ dqm-ml process -p config.yaml
 dqm-ml process -p examples/config/completeness.yaml
 ```
 
+> Configuration file: [`examples/config/completeness.yaml`](../examples/config/completeness.yaml)
+
+### List Available Processors
+
+```bash
+dqml-ml list
+```
+
+Shows available processors grouped by interface:
+- **features**: `image_features`, `features_embeddings`
+- **metrics**: `completeness`, `representativeness`, `diversity`
+- **gap**: `domain_gap`
+```
+
 ## Getting Help
 
 ```bash
@@ -45,5 +59,8 @@ dqm-ml process --help
 ## Related Pages
 
 - [Quick Start](quickstart.md) - Get started with DQM-ML
-- [Configuration](configuration.md) - Write configuration files
-- [Metrics](metrics.md) - Available metrics
+- [Configuration](configuration/overview.md) - Write configuration files
+- [Configuration: Features](configuration/features.md) - Features interface
+- [Configuration: Metrics](configuration/metrics.md) - Metrics interface
+- [Configuration: Gap](configuration/gap.md) - Gap interface
+- [Metrics](metrics.md) - Available metrics by interface

@@ -18,11 +18,7 @@ V2 represents a major architectural improvement, but it's still evolving. Here's
 
 | Area | Current State | Notes |
 |------|---------------|-------|
-| **Beta packages** | `dqm-ml-job`, `dqm-ml-images` | Config schemas may change based on feedback |
-| **V1 metrics** | Some not yet ported | Relative Diversity, PAD, CMD (pending scientific discussion) |
-| **Result variations** | Minor differences in FID/KLMVN | Being investigated for mathematical equivalence |
 | **Single-column focus** | Most metrics work per-column | Multi-dimensional feature support coming |
-| ~~Legacy dependency~~ | ~~Submodule still present~~ | ~~Legacy `dqm-ml` for comparison (to be phased out)~~ |
 
 For more information see * **[Why a dqm-ml V2](./dqm-ml-v2.md)**: The "why" and "how" of V2.
 
@@ -32,21 +28,21 @@ For more information see * **[Why a dqm-ml V2](./dqm-ml-v2.md)**: The "why" and 
 
 Here's our vision for DQM-ML, organized into phases:
 
-### Phase 0: Complete V2.0.0-rc (Now - open for comment dqm-ml v2)
+### Phase 0: Complete V2.0.0-rc
 
 Usable version of dqm-ml v2 open for comment before official release.
 
 - [x] **Standalone release** - Finalize V2.0.0 as a proper package
 
 
-### Phase 1: Complete V2.0.0 (Near term - Q2 T2026)
+### Phase 1: Complete V2.0.0 (Now - open for comment dqm-ml v2)
 
-What's coming in the next release:
+What's in this release:
 
-- [ ] **Configuration consitency** - make configuration metrics consistent, and check configuration validity
-- [ ] **Comminuty feedback** - implement user feedback quick correction and upgrade roadmap with others
-- [ ] **Feature parity** - Port remaining V1 metrics to V2 API
-- [ ] **API freeze** - Lock down `dqm-ml-core` for stability
+- [x] **Configuration consitency** - make configuration metrics consistent, and check configuration validity
+- [x] **Comminuty feedback** - implement user feedback quick correction and upgrade roadmap with others
+- [x] **Feature parity** - Port remaining V1 metrics to V2 API
+- [x] **API freeze** - Lock down `dqm-ml-core` for stability
 
 ### Phase 2: New Domains 
 
@@ -63,8 +59,6 @@ Improving for larger workloads:
 - [ ] **Advanced streaming** - Disk-backed accumulators for very large datasets
 - [ ] **Parallelization** - Multi-core processing for image features and deep learning metrics
 - [ ] **Database support** - Read directly from databases, not just files
-
-
 
 ## How We Prioritize
 
@@ -86,18 +80,48 @@ Looking to contribute? Here's what needs help most:
 
 ### High Priority
 
-- **Porting V1 metrics**: Relative Diversity, PAD, CMD
-- **Test coverage**: More edge cases and integration tests
+
+Review
+
+- **Documentation Review**
+  - Is the documentation useful ?
+  - Is something missing ?
+  - Does it help writing a configuration based on your needs ?
+  - Are the packages easy to install and use ?
+- **Examples Review**
+  - Did you encounter any issue while running the examples or notebooks ?
+- **Configuration Review**
+  - Is something missing in the configuration that you need in your use case ?
 
 ### Medium Priority
 
-- **Documentation**: Examples, use cases, better explanations
+Documentation
+- **Add examples**
+- **Add use cases**
+- **Add scenarios**
+- **Improve explanations**
+- **Detail per OS**: Windows, Linux, Mac
+
+Development
+
 - **Performance optimizations**: Batch processing improvements
-
-### Lower Priority
-
-- **New features**: Time series support, database connectors
-- **Tooling**: IDE integrations, IDE plugins
+- **Adding Data loader plugins**
+- **Adding Output Writer plugins**
+- **Adding Time Series**
+- **Adding Metrics**:
+  - classic **H-Divergence** for domain gap
+    - Training a classifier (typically linear SVM or neural net) to discriminate source vs target.
+    - Computing H-divergence as 2(1 - 2ε) where ε is the classification error of the best hypothesis.
+    - Similar infrastructure to PAD but with the H-divergence formulation
+  - Relative Representativeness.
+    - Instead of comparing distribution of a dataset with uniform or normal distribution, we could compare it to a given distribution.
+- **Adding Features**:
+  - Add or enhance Visual Features, there are currently only 4:
+    - luminosity
+    - blur
+    - contrast
+    - entropy
+  - Time series Features
 
 ### How to Start
 
@@ -109,7 +133,7 @@ Looking to contribute? Here's what needs help most:
 
 | Version | Release Date | Highlights |
 |---------|-------------|------------|
-| 2.0.0-rc | 2026 | V2 architecture, streaming, plugins, `dqm-ml` CLI (renamed from dqm-ml-v2) |
+| 2.0.0 | 2026 | V2 architecture, streaming, plugins, `dqm-ml` CLI (renamed from dqm-ml-v2) |
 | 1.1.x | Q1 2026 | V2 release candidate series |
 | 1.0.x | Earlier | Original library (V1) |
 

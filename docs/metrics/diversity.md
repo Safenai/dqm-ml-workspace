@@ -1,6 +1,8 @@
 # Diversity Metric
 
-The Diversity metric evaluates the variety and distribution of categorical values in your dataset. It provides four complementary indices that measure how many distinct categories exist and how evenly they are distributed.
+The Diversity **Metric** evaluates the variety and distribution of categorical values in your dataset. It provides four complementary indices that measure how many distinct categories exist and how evenly they are distributed.
+
+> **See also:** [Concepts](../formal_concepts.md) for definitions of **Metric**, **Sample**, and related terminology.
 
 ## What It Measures
 
@@ -9,7 +11,7 @@ Diversity quantifies the spread and balance of category occurrences. Use it to:
 - **Detect class imbalance** — Identify columns dominated by a single value
 - **Assess dataset coverage** — Measure how many distinct categories your data covers
 - **Compare splits** — Verify that train/test splits have similar category distributions
-- **Monitor data drift** — Detect when category diversity changes over time
+- **Compare acquisition batches** — Detect category distribution shifts across different collection sessions or data sources to ensure stable dataset assembly
 
 ### Available Indices
 
@@ -24,7 +26,7 @@ Diversity quantifies the spread and balance of category occurrences. Use it to:
 
 - **Classification datasets** — Ensure all expected classes are present in training data
 - **Data augmentation** — Verify augmented data doesn't collapse categories
-- **Production monitoring** — Detect when a data pipeline starts dropping categories
+- **Data pipeline integrity** — Detect when a data pipeline drops categories during dataset construction
 - **Label quality** — Spot anomalous categories that might indicate labeling errors
 
 ## Processor Information
@@ -35,7 +37,7 @@ Diversity quantifies the spread and balance of category occurrences. Use it to:
 
 ## Configuration Parameters
 
-* `input_columns`: List of columns to analyze (required). Columns are cast to string for type-safe aggregation.
+* `columns.input`: List of columns to analyze (required). Columns are cast to string for type-safe aggregation.
 * `metrics`: List of diversity indices to compute (optional). Defaults to all four: `simpson`, `gini`, `shannon`, `richness`.
 
 ## Example YAML Configuration
@@ -43,21 +45,25 @@ Diversity quantifies the spread and balance of category occurrences. Use it to:
 ### Full (all four indices):
 
 ```yaml
-metrics_processor:
-  category_diversity:
-    type: diversity
-    input_columns: ["class_label", "color", "region"]
-    metrics: ["simpson", "gini", "shannon", "richness"]
+metrics:
+  processors:
+    - name: category_diversity
+      type: diversity
+      columns:
+        input: ["class_label", "color", "region"]
+      metrics: ["simpson", "gini", "shannon", "richness"]
 ```
 
 ### Subset (Simpson + Richness only):
 
 ```yaml
-metrics_processor:
-  simple_diversity:
-    type: diversity
-    input_columns: ["class_label"]
-    metrics: ["simpson", "richness"]
+metrics:
+  processors:
+    - name: simple_diversity
+      type: diversity
+      columns:
+        input: ["class_label"]
+      metrics: ["simpson", "richness"]
 ```
 
 ## Output

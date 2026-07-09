@@ -14,12 +14,13 @@ import pyarrow as pa
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
+from dqm_ml_core.models.processors import CompletenessProcessorConfig
 
 logger = logging.getLogger(__name__)
 
 
-class CompletenessProcessor(DatametricProcessor):
+class CompletenessProcessor(MetricsProcessor):
     """
     Data completeness processor that evaluates the completeness of tabular data.
 
@@ -46,19 +47,15 @@ class CompletenessProcessor(DatametricProcessor):
         """
         super().__init__(name, config)
 
-        config = self.config or {}
+        cfg = CompletenessProcessorConfig.model_validate({**self.config, "name": self.name})
 
         # Which completeness levels to compute: per-column, overall, and metadata
-        self.include_per_column: bool = bool(config.get("include_per_column", True))
-        self.include_overall: bool = bool(config.get("include_overall", True))
-        self.include_metadata: bool = bool(config.get("include_metadata", False))
+        self.include_per_column: bool = cfg.include_per_column
+        self.include_overall: bool = cfg.include_overall
+        self.include_metadata: bool = cfg.include_metadata
 
         # Output column mappings
-        self.output_metrics = config.get("output_metrics", {})
-
-        # Validation
-        if not self.include_per_column and not self.include_overall:
-            raise ValueError(f"[{self.name}] At least one of 'include_per_column' or 'include_overall' must be True")
+        self.output_metrics: dict[str, str] = {}
 
     @override
     def generated_metrics(self) -> list[str]:
@@ -83,8 +80,10 @@ class CompletenessProcessor(DatametricProcessor):
         return metrics
 
     @override
-    def compute_features(
-        self, batch: pa.RecordBatch, prev_features: dict[str, pa.Array] | None = None
+    def select_columns(
+        self,
+        batch: pa.RecordBatch,
+        prev_features: dict[str, pa.Array] | None = None,
     ) -> dict[str, pa.Array]:
         """
         Extract the needed columns from the batch for completeness analysis.
@@ -130,13 +129,18 @@ class CompletenessProcessor(DatametricProcessor):
         batch_metrics = {}
 
         for col, col_array in features.items():
-            # Count total samples in this batch
             total_count = len(col_array)
 
-            # Count non-null (complete) samples in this batch
-            # pa.compute.is_valid() returns True for non-null values
-            is_valid_mask = pa.compute.is_valid(col_array)
-            complete_count = pa.compute.sum(is_valid_mask).as_py()
+            # Count complete (non-null, non-NaN) samples in this batch.
+            # pa.compute.is_valid() returns True for non-null values, but
+            # float NaN from numpy is preserved as a valid float in Arrow
+            # (not as a null), so we subtract NaN positions for float cols.
+            valid_count = pa.compute.sum(pa.compute.is_valid(col_array)).as_py()
+            if pa.types.is_floating(col_array.type):
+                nan_count = pa.compute.sum(pa.compute.is_nan(col_array)).as_py()
+                complete_count = valid_count - nan_count
+            else:
+                complete_count = valid_count
 
             # store counts for aggregation across batches
             batch_metrics[f"{col}_total_count"] = pa.array([total_count], type=pa.int64())
@@ -145,7 +149,9 @@ class CompletenessProcessor(DatametricProcessor):
         return batch_metrics
 
     @staticmethod
-    def _extract_columns_from_metrics(batch_metrics: dict[str, pa.Array]) -> list[str]:
+    def _select_columns_from_metrics(
+        batch_metrics: dict[str, pa.Array],
+    ) -> list[str]:
         """Extract column names from batch metrics keys ending in _total_count.
 
         Args:
@@ -220,7 +226,7 @@ class CompletenessProcessor(DatametricProcessor):
         if not batch_metrics:
             return {"_metadata": {"error": "No batch metrics provided"}}
 
-        columns_analyzed = self._extract_columns_from_metrics(batch_metrics)
+        columns_analyzed = self._select_columns_from_metrics(batch_metrics)
         if not columns_analyzed:
             logger.warning(f"[{self.name}] No columns found in batch metrics")
             return {"_metadata": {"error": "No columns found in batch metrics"}}
@@ -253,6 +259,11 @@ class CompletenessProcessor(DatametricProcessor):
 
         return results
 
+    @override
     def reset(self) -> None:
-        """Reset processor state for new processing run."""
+        """Reset processor state for new processing run.
+
+        The completeness processor has no persistent state across runs,
+        so this is a no-op. Provided for interface compliance.
+        """
         # No persistent state to reset for completeness processor

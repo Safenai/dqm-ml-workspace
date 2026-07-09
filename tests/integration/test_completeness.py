@@ -9,13 +9,14 @@ import shlex
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
 
-from dqm_ml_job.cli import execute
 
-
-@pytest.mark.parametrize("test_name", ["completeness", "completeness_batch"])
+@pytest.mark.parametrize(
+    "test_name", ["completeness", "completeness_batch", "completeness_no_per_column", "completeness_no_overall"]
+)
 def test_completeness(
     tests_config: Any,
     test_path: Path,
@@ -41,7 +42,7 @@ def test_completeness(
 
     expected_scores = tests_config["completeness"]["expected_scores"]
     epsilon = tests_config["completeness"]["params"]["tolerance"]
-    col_names = tests_config["completeness"]["params"]["columns_names"]
+    col_names = tests_config["completeness"]["columns_names"][test_name]
 
     # # Test completeness by columns and overall
     output_filename = f"metrics_{test_name}_-.parquet"
