@@ -42,9 +42,9 @@ jobs:
       - name: Validate tag format
         run: |
           TAG="${{ github.ref_name }}"
-          if ! echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(rc[0-9]+|a[0-9]+)?$'; then
+          if ! echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-?(rc|a)[0-9]+)?$'; then
             echo "Invalid tag format: $TAG"
-            echo "Allowed: X.Y.Z, X.Y.ZrcD, X.Y.ZaD"
+            echo "Allowed: X.Y.Z, X.Y.Z[-](rc|a)D"
             exit 1
           fi
 
