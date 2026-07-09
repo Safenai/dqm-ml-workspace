@@ -50,23 +50,23 @@ jobs:
 
       - name: Build packages
         run: |
-          uv build --directory packages/dqm-ml-core
-          uv build --directory packages/dqm-ml-images
-          uv build --directory packages/dqm-ml-job
-          uv build --directory packages/dqm-ml-pytorch
-          uv build --directory packages/dqm-ml
+          uv build packages/dqm-ml-core
+          uv build packages/dqm-ml-images
+          uv build packages/dqm-ml-job
+          uv build packages/dqm-ml-pytorch
+          uv build packages/dqm-ml
 
       - name: Publish dqm-ml-core
-        run: uv publish packages/dqm-ml-core/dist/* --publish-url https://test.pypi.org/legacy/
+        run: uv publish dist/dqm_ml_core-* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-images
-        run: uv publish packages/dqm-ml-images/dist/* --publish-url https://test.pypi.org/legacy/
+        run: uv publish dist/dqm_ml_images-* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-job
-        run: uv publish packages/dqm-ml-job/dist/* --publish-url https://test.pypi.org/legacy/
+        run: uv publish dist/dqm_ml_job-* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml-pytorch
-        run: uv publish packages/dqm-ml-pytorch/dist/* --publish-url https://test.pypi.org/legacy/
+        run: uv publish dist/dqm_ml_pytorch-* --publish-url https://test.pypi.org/legacy/
 
       - name: Publish dqm-ml
-        run: uv publish packages/dqm-ml/dist/* --publish-url https://test.pypi.org/legacy/
+        run: uv publish dist/dqm_ml-* --publish-url https://test.pypi.org/legacy/
