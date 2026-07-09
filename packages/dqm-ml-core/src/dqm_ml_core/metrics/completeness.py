@@ -73,7 +73,7 @@ class CompletenessProcessor(MetricsProcessor):
             metrics.append(overall_key)
 
         if self.include_per_column:
-            for col in self.input_columns or []:
+            for col in self.input_columns:
                 col_key = self.output_metrics.get(f"completeness_{col}", f"completeness_{col}")
                 metrics.append(col_key)
 

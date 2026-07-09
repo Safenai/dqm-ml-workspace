@@ -222,6 +222,8 @@ The three domain-gap metrics consistently rank pairs by distributional differenc
 dqm-ml process -p examples/config/scenario/full_story.yaml
 ```
 
+> Config: [`examples/config/scenario/full_story.yaml`](../config/scenario/full_story.yaml)
+
 ## Output Files
 
 | File | Rows | Description |

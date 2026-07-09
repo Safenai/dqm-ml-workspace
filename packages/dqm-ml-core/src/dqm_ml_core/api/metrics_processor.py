@@ -88,7 +88,7 @@ class MetricsProcessor(Processor):
         """
         return {}
 
-    def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:
+    def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:  # NOSONAR
         """
         Perform the final dataset-level metric calculation.
 
@@ -98,4 +98,6 @@ class MetricsProcessor(Processor):
         Returns:
             A dictionary containing the final metrics.
         """
+        # SonarQube raises a warning because batch_metrics is not used.
+        # It is irrelevant because compute is implemented in child classes which use batch_metrics.
         return {}

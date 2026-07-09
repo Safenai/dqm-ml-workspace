@@ -21,6 +21,8 @@ These files are referenced in `docs/quickstart.md` for users to copy and try loc
 dqm-ml process -p examples/getting_started/completeness.yaml
 ```
 
+> Configuration file: [`completeness.yaml`](completeness.yaml)
+
 ### Data Description
 
 The `data.csv` file contains:

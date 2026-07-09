@@ -65,7 +65,7 @@ def resolve_include_exclude(
     -------
         The filtered list (order preserved).
     """
-    candidates = resolve_patterns(include, available) if include is not None else list(available)
+    candidates = resolve_patterns(include, available) if include else list(available)
 
     if not exclude:
         return candidates

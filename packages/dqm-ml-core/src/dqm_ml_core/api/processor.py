@@ -36,7 +36,7 @@ class Processor:
         self._failure_count = 0
         self._total_count = 0
 
-        self.input_columns: list[str] | None = None
+        self.input_columns: list[str] = []
         self.exclude_columns: list[str] | None = None
         self.columns_config = None
         if "columns" in self.config and isinstance(self.config["columns"], dict):
@@ -54,14 +54,6 @@ class Processor:
                     f"Failure rate {failure_rate:.1%} exceeds max {self.errors_config.max_failure_rate:.1%}"
                 )
 
-    def _check_image_fail_fast(self, exc: Exception, *error_attrs: str) -> None:
-        if not (self.errors_config and self.errors_config.images):
-            return
-        image_errors = self.errors_config.images
-        for attr in error_attrs:
-            if getattr(image_errors, attr, None) == "fail_fast":
-                raise exc
-
     def needed_columns(self) -> list[str]:
         """
         Return the list of raw input columns required for processing.
@@ -69,7 +61,7 @@ class Processor:
         Returns:
             A list of column names.
         """
-        return self.input_columns or []
+        return self.input_columns
 
     def reset(self) -> None:
         """Reset per-selection state between dataselections.

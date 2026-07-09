@@ -97,9 +97,9 @@ class TestResolveIncludeExclude:
         """Verify None include returns all candidates when no exclude."""
         assert resolve_include_exclude(None, None, ["a", "b"]) == ["a", "b"]
 
-    def test_include_empty_returns_empty(self):
-        """Verify empty include list returns empty result."""
-        assert resolve_include_exclude([], None, ["a", "b"]) == []
+    def test_include_empty_returns_all(self):
+        """Verify empty include list returns all available."""
+        assert resolve_include_exclude([], None, ["a", "b"]) == ["a", "b"]
 
     def test_literal_exclude(self):
         """Verify literal exclude removes exact matches from include list."""

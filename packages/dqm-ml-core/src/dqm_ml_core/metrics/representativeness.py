@@ -162,7 +162,7 @@ class RepresentativenessProcessor(MetricsProcessor):
         # TODO : manage output metrics names with configuration
         # for now we follow a fixed naming convention
         metrics = []
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             if "chi-square" in self.metrics:
                 metrics.append(f"{col}_chi-square_p_value")
                 metrics.append(f"{col}_chi-square_statistic")
@@ -245,7 +245,7 @@ class RepresentativenessProcessor(MetricsProcessor):
         """
         batch_metrics = {}
 
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             if col not in features:
                 logger.warning(f"[{self.name}] column '{col}' not found in batch")
                 continue
@@ -692,7 +692,7 @@ class RepresentativenessProcessor(MetricsProcessor):
         results: dict[str, Any] = {}
         total_samples = 0
 
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             total_samples += self._compute_column_results(col, batch_metrics, results)
 
         results["_metadata"] = self._build_compute_metadata(

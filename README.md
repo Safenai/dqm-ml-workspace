@@ -150,24 +150,6 @@ In the current version, the available capabilities are grouped by interface:
 
 Choose the method that fits your workflow:
 
-### Using uv
-
-Recommended for working with this repository
-
-```bash
-# Clone the repo
-git clone https://github.com/Safenai/dqm-ml-workspace.git
-cd dqm-ml-workspace
-```
-
-```bash
-# Install uv if not already available
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Sync the development environment (creates .venv + installs all dependencies)
-uv sync
-```
-
 ### Using pip
 
 Recommended for testing or using the libs in a [virtual environment](https://docs.python.org/3.12/library/venv.html)
@@ -195,13 +177,6 @@ pip install "dqm-ml[all]"
 
 ## Execution with cli provided **dqm-ml**
 
-> **uv users:** If you installed with `uv sync`, prefix commands below with `uv run`
-> (e.g., `uv run python examples/script/generate_data.py`).
->
-> **pip / conda users:** Activate your environment first
-> (`source .venv/bin/activate` or `conda activate dqm-ml`),
-> then run the commands directly.
-
 Generate the example data (do this once before running the metrics):
 
 ```bash
@@ -214,7 +189,8 @@ Run metric processing jobs using a configuration file:
 dqm-ml process -p examples/config/completeness.yaml
 ```
 
-Other configuration examples can be found in the `examples/config/` directory.
+The script and example can be found at [examples/script/generate_data.py](examples/script/generate_data.py) and [examples/config/completeness.yaml](examples/config/completeness.yaml)
+Other configuration examples can be found in the [examples/config/](examples/config/) directory.
 
 ## Call the same process from your script / code
 
@@ -240,7 +216,7 @@ if __name__ == "__main__":
     compute_metric()
 ```
 
-this example can be found in `examples/script/completeness.py'` and executed with:
+this example can be found in [examples/script/completeness.py](examples/script/completeness.py) and executed with:
 
 ```bash
 python examples/script/completeness.py

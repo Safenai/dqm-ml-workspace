@@ -50,6 +50,8 @@ features:
 dqm-ml process -p examples/config/scenario/visual_features.yaml
 ```
 
+> Config: [`examples/config/scenario/visual_features.yaml`](../config/scenario/visual_features.yaml)
+
 ## Output
 
 Metadata columns (from `include`) are written to `examples/outputs/story_visual_features.parquet` alongside the per-image feature values. Preview the first 5 rows:

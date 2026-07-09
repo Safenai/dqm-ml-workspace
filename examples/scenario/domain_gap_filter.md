@@ -80,6 +80,8 @@ gap:
 dqm-ml process -p examples/config/scenario/domain_gap_with_filter.yaml
 ```
 
+> Config: [`examples/config/scenario/domain_gap_with_filter.yaml`](../config/scenario/domain_gap_with_filter.yaml)
+
 ## Output
 
 Two files are written to `examples/outputs/`:

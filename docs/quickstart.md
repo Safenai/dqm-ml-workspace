@@ -66,7 +66,7 @@ dataloaders:
 dqm-ml process -p config.yaml
 ```
 
-> **Note:** Example files are available in `examples/getting_started/` in the repository.
+> **Note:** Example files are available in [`examples/getting_started/`](../examples/getting_started/) in the repository.
 
 ### Python API
 
@@ -113,7 +113,7 @@ results = runner.run(df, [CompletenessProcessor(config={"columns": {"input": ["a
 print(results)
 ```
 
-> **Tip:** For interactive exploration, check out our [Jupyter notebook example](https://github.com/Safenai/dqm-ml-workspace/tree/main/examples/notebooks/multiple_metrics_tests_v2.ipynb).
+> **Tip:** For interactive exploration, check out our [Jupyter notebook example](../examples/notebooks/multiple_metrics_tests_v2.ipynb).
 
 ## Next Steps
 

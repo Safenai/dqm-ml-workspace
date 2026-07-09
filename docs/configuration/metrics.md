@@ -39,7 +39,7 @@ Parameters:
 
 > See [Completeness](../metrics/completeness.md) for interpretation thresholds and use cases.
 
-> **💡 Runnable example:** See [../examples/scenario/completeness.md](../examples/scenario/completeness.md) for this metric in a complete pipeline.
+> **💡 Runnable example:** See [../../examples/scenario/completeness.md](../../examples/scenario/completeness.md) for this metric in a complete pipeline.
 
 #### Representativeness
 
@@ -87,7 +87,7 @@ metrics:
 
 > See [Representativeness](../metrics/representativeness.md) for GRTE formula, calibration, and use cases.
 
-> **💡 Runnable example:** See [../examples/scenario/representativeness.md](../examples/scenario/representativeness.md) for this metric in a complete pipeline.
+> **💡 Runnable example:** See [../../examples/scenario/representativeness.md](../../examples/scenario/representativeness.md) for this metric in a complete pipeline.
 
 #### Diversity
 
@@ -105,4 +105,4 @@ metrics:
 
 > See [Diversity](../metrics/diversity.md) for metric interpretation and use cases.
 
-> **💡 Runnable example:** See [../examples/scenario/diversity.md](../examples/scenario/diversity.md) for this metric in a complete pipeline.
+> **💡 Runnable example:** See [../../examples/scenario/diversity.md](../../examples/scenario/diversity.md) for this metric in a complete pipeline.

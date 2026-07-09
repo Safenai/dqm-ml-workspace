@@ -68,7 +68,7 @@ class GapProcessor(Processor):
         """
         return {}
 
-    def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:
+    def compute(self, batch_metrics: dict[str, pa.Array]) -> dict[str, Any]:  # NOSONAR
         """
         Perform the final dataset-level aggregation of batch statistics.
 
@@ -78,6 +78,8 @@ class GapProcessor(Processor):
         Returns:
             A dictionary containing the final dataset-level statistics.
         """
+        # SonarQube raises a warning because batch_metrics is not used.
+        # It is irrelevant because compute is implemented in child classes which use batch_metrics.
         return {}
 
     def compute_delta(self, source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:

@@ -34,9 +34,17 @@ class FeaturesProcessor(Processor):
 
         cfg: ColumnsConfig | None = getattr(self, "columns_config", None)
         base = f"{col}_{feature_key}"
-        p = cfg.prefix or "" if cfg else ""
-        s = cfg.suffix or "" if cfg else ""
+        p = cfg.prefix if cfg else ""
+        s = cfg.suffix if cfg else ""
         return f"{p}{base}{s}"
+
+    def _check_image_fail_fast(self, exc: Exception, *error_attrs: str) -> None:
+        if not (self.errors_config and self.errors_config.images):
+            return
+        image_errors = self.errors_config.images
+        for attr in error_attrs:
+            if getattr(image_errors, attr, None) == "fail_fast":
+                raise exc
 
     def generated_features(self) -> list[str]:
         """

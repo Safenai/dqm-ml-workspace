@@ -24,7 +24,7 @@ SPLIT_OPEN = '"split": {'
 BY_CLASS_NAME = '"by": "class_name",'
 VALUES_ELEPHANT_ZEBRA = '"values": ["elephant", "zebra"],'
 COLUMNS_INPUT_EMBEDDING = '"columns": {"input": ["image_bytes_embedding"]},'
-VF_PARQUET = '"../outputs/story_visual_features.parquet"'
+
 
 
 def md(text):
@@ -126,6 +126,7 @@ cells_n1.append(
         "",
         "# Verify data files exist",
         'data_dir = Path("../data")',
+        'VF_PATH = "../outputs/story_visual_features.parquet"',
         'if not (data_dir / "samples_with_images.parquet").exists():',
         I + 'print("Run `python script/generate_data.py` first")',
     )
@@ -149,7 +150,7 @@ cells_n1.append(
         'config = _load_config("../config/scenario/visual_features.yaml")',
         RUN_CONFIG,
         "",
-        'df = pd.read_parquet(' + VF_PARQUET + ')',
+        'df = pd.read_parquet(VF_PATH)',
         'print("First 5 rows:")',
         "print(df.head(5).to_markdown(index=False))",
         'print("\\nAggregated by source:")',
@@ -166,7 +167,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'df = pd.read_parquet(' + VF_PARQUET + ')',
+        'df = pd.read_parquet(VF_PATH)',
         "feature_cols = [",
         I + LUMINOSITY,
         I + CONTRAST,
@@ -308,7 +309,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'raw = pd.read_parquet(' + VF_PARQUET + ')',
+        'raw = pd.read_parquet(VF_PATH)',
         "",
         "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.5))",
         "",
@@ -370,7 +371,7 @@ cells_n1.append(
 
 cells_n1.append(
     code(
-        'raw = pd.read_parquet(' + VF_PARQUET + ')',
+        'raw = pd.read_parquet(VF_PATH)',
         'columns = ["image_bytes_luminosity", "image_bytes_contrast", "image_bytes_blur", "image_bytes_entropy"]',
         "short = {k: k.replace('image_bytes_', '') for k in columns}",
         "",

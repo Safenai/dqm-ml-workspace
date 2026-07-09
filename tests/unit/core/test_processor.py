@@ -38,7 +38,7 @@ def test_init_parses_exclude_columns():
 def test_init_no_columns():
     """Verify input_columns is empty list when no columns config given."""
     proc = Processor(name="test", config={})
-    assert proc.input_columns is None
+    assert proc.input_columns == []
     assert proc.exclude_columns is None
 
 
@@ -59,29 +59,3 @@ def test_check_failure_rate_exceeds_threshold():
     proc._total_count = 10
     with pytest.raises(RuntimeError, match="Failure rate"):
         proc._check_failure_rate()
-
-
-def test_check_image_fail_fast_raises():
-    """Verify image fail fast raises ValueError."""
-    from dqm_ml_core.models.global_ import ImageErrorsConfig
-
-    proc = Processor(
-        name="test",
-        config={"errors": {"images": {"on_decode_failure": "fail_fast"}}},
-    )
-    proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="fail_fast"))
-    error = ValueError("test error")
-    with pytest.raises(ValueError, match="test error"):
-        proc._check_image_fail_fast(error, "on_decode_failure")
-
-
-def test_check_image_fail_fast_silent_does_not_raise():
-    """Verify image silent_fail does not raise."""
-    from dqm_ml_core.models.global_ import ImageErrorsConfig
-
-    proc = Processor(
-        name="test",
-        config={"errors": {"images": {"on_decode_failure": "silent_fail"}}},
-    )
-    proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="silent_fail"))
-    proc._check_image_fail_fast(ValueError("test error"), "on_decode_failure")  # should not raise

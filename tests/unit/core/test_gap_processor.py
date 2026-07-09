@@ -41,11 +41,11 @@ def test_select_features_wildcard():
 
 
 def test_select_features_empty_input():
-    """Verify empty input list returns empty dict."""
+    """Verify empty input list matches all batch columns."""
     proc = GapProcessor(name="test", config={"columns": {"input": []}})
     batch = pa.RecordBatch.from_arrays([pa.array([1])], names=["a"])
     features = proc.select_features(batch, {})
-    assert features == {}
+    assert "a" in features
 
 
 def test_select_features_no_input_config():

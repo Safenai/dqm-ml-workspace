@@ -52,6 +52,8 @@ features:
 dqm-ml process -p examples/config/scenario/embeddings.yaml
 ```
 
+> Config: [`examples/config/scenario/embeddings.yaml`](../config/scenario/embeddings.yaml)
+
 ## Output
 
 Metadata columns (from `include`) are written to `examples/outputs/story_embeddings.parquet`. The embedding vectors flow to gap processors in-memory; use `.head()` for a compact preview of the persisted metadata columns:

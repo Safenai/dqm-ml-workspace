@@ -43,6 +43,8 @@ metrics:
 dqm-ml process -p examples/config/scenario/diversity.yaml
 ```
 
+> Config: [`examples/config/scenario/diversity.yaml`](../config/scenario/diversity.yaml)
+
 ## Output
 
 Diversity indices (Simpson, Gini-Simpson, Shannon, Richness) are written to `examples/outputs/story_diversity.parquet`:

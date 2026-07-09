@@ -29,6 +29,8 @@ Each example page shows the relevant config with inline explanations and a ready
 python examples/script/generate_data.py
 ```
 
+> See the generation script at [`examples/script/generate_data.py`](script/generate_data.py).
+
 This creates two files in `examples/data/`:
 
 | File | Rows | Content |
@@ -47,3 +49,5 @@ Or run the full pipeline:
 ```bash
 dqm-ml process -p examples/config/scenario/full_story.yaml
 ```
+
+> See the full pipeline config at [`examples/config/scenario/full_story.yaml`](config/scenario/full_story.yaml).

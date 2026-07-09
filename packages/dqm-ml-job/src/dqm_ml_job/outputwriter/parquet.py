@@ -43,7 +43,7 @@ class ParquetOutputWriter:
 
         self.path_pattern = cfg.path_pattern
         self.columns = list(cfg.columns)
-        self.exclude = list(cfg.exclude or [])
+        self.exclude = list(cfg.exclude)
         self.name = name
         self.s3_filesystem = None
 

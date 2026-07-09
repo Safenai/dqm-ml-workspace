@@ -26,7 +26,7 @@ features:
 
 > See [Visual Features](../metrics/visual_features.md) for detailed parameter documentation.
 
-> **💡 Runnable example:** See [../examples/scenario/visual_features.md](../examples/scenario/visual_features.md) for this processor in a complete pipeline.
+> **💡 Runnable example:** See [../../examples/scenario/visual_features.md](../../examples/scenario/visual_features.md) for this processor in a complete pipeline.
 
 #### Embedding Features Processor
 
@@ -52,4 +52,4 @@ features:
 
 > See [Features Embeddings](../metrics/features_embeddings.md) for architecture selection and normalization guidance.
 
-> **💡 Runnable example:** See [../examples/scenario/embeddings.md](../examples/scenario/embeddings.md) for this processor in a complete pipeline.
+> **💡 Runnable example:** See [../../examples/scenario/embeddings.md](../../examples/scenario/embeddings.md) for this processor in a complete pipeline.

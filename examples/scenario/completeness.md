@@ -38,11 +38,15 @@ metrics:
 dqm-ml process -p examples/config/scenario/visual_features.yaml
 ```
 
+> Config: [`examples/config/scenario/visual_features.yaml`](../config/scenario/visual_features.yaml)
+
 ## Run
 
 ```bash
-dqm-ml process -p examples/config/scenario/completeness_scenario.yaml
+dqm-ml process -p examples/config/scenario/completeness.yaml
 ```
+
+> Config: [`examples/config/scenario/completeness.yaml`](../config/scenario/completeness.yaml)
 
 ## Output
 

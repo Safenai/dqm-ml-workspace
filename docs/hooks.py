@@ -1,5 +1,7 @@
+import re
 from pathlib import Path
 import shutil
+from urllib.parse import urljoin
 
 DOCS_INDEX = "docs/index.md"
 
@@ -15,6 +17,10 @@ def update_readme_relative_links():
         updated_md = updated_md.replace(
             "(packages/",
             "(https://github.com/Safenai/dqm-ml-workspace/tree/main/packages/",
+        )
+        updated_md = updated_md.replace(
+            "(examples/",
+            "(https://github.com/Safenai/dqm-ml-workspace/tree/main/examples/",
         )
     with index.open("w") as f:
         f.write(updated_md)
@@ -144,16 +150,64 @@ def fix_example_links():
                 f.write(updated_md)
 
 
-def page_markdown(markdown, page, _config, _files):
-    """Rewrite ../examples/ links to examples/ for mkdocs.
+def _transform_examples_to_github(markdown: str, src_path: str) -> str:
+    """Transform relative links to examples/ into GitHub URLs.
 
-    Source docs/configuration.md uses ../examples/... links that work
-    locally and on GitHub/GitLab (pointing to examples/ at repo root).
-    On mkdocs the examples are at docs/examples/, so rewrite the links
-    to examples/... (without the ../ prefix) at build time.
+    Source docs/*.md files use relative paths like ../examples/... that work
+    locally and on GitHub/GitLab. On the mkdocs website these example files
+    aren't served directly, so rewrite the links to permanent GitHub URLs.
     """
-    if page.file.src_path == "configuration.md":
-        markdown = markdown.replace("../examples/", "examples/")
+    github_raw = "https://github.com/Safenai/dqm-ml-workspace/tree/main"
+
+    if src_path.startswith("examples/"):
+        page_dir = src_path.rsplit("/", 1)[0] + "/"
+
+        def _repl(m):
+            text, url = m.group(1), m.group(2)
+            if url.startswith(("https://", "#", "/")):
+                return m.group(0)
+            if url.endswith(".md"):
+                return m.group(0)
+            if url.endswith((".py", ".yaml")):
+                resolved = urljoin(page_dir, url)
+                return f"[{text}]({github_raw}/{resolved})"
+            return m.group(0)
+
+        markdown = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _repl, markdown)
+        return markdown
+
+    # src_path is relative to docs/ directory.
+    # E.g., "cli.md" → depth 0 → need "../" to reach repo root
+    #        "configuration/features.md" → depth 1 → need "../../"
+    depth = src_path.count("/")
+    prefix = "../" * (depth + 1)
+    markdown = markdown.replace(f"({prefix}examples/", f"({github_raw}/examples/")
+
+    return markdown
+
+
+def _transform_package_links(markdown: str, src_path: str) -> str:
+    """Transform relative links to packages/*/README.md into docs/packages/*.md links.
+
+    Source docs/*.md files use ../packages/xxx/README.md paths that work locally
+    and on GitHub/GitLab. On the mkdocs website these READMEs have been copied to
+    docs/packages/xxx.md, so rewrite the links accordingly.
+    """
+    if src_path.startswith("examples/"):
+        return markdown
+
+    markdown = re.sub(
+        r"\(\.\./packages/([^/]+)/README\.md(#[^)]*)?\)",
+        r"(packages/\1.md\2)",
+        markdown,
+    )
+    return markdown
+
+
+def page_markdown(markdown, page, config, files):  # NOSONAR
+    """Hook: transform relative links after page markdown is loaded."""
+    markdown = _transform_examples_to_github(markdown, page.file.src_path)
+    markdown = _transform_package_links(markdown, page.file.src_path)
     return markdown
 
 

@@ -45,7 +45,7 @@ The pipeline execution order is different from the authoring order: data loaders
 - [Data Selection](data_selection.md) — Detailed data source configuration
 - [Global Configuration](global.md) — Storage, compute, and error settings
 
-> **Tip:** For a complete working example with every section populated, see `examples/config/config_v2.yaml`.
+> **Tip:** For a complete working example with every section populated, see [`examples/config/config_v2.yaml`](../../examples/config/config_v2.yaml).
 
 ## Schema Validation
 

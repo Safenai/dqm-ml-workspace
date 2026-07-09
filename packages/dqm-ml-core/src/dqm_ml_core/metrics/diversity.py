@@ -67,7 +67,7 @@ class DiversityProcessor(MetricsProcessor):
             List of output metric column names.
         """
         metrics = []
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             if "simpson" in self.metrics:
                 metrics.append(f"{col}_simpson")
             if "gini" in self.metrics:
@@ -90,7 +90,7 @@ class DiversityProcessor(MetricsProcessor):
         """
         batch_metrics: dict[str, pa.Array] = {}
 
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             if col not in features:
                 logger.warning("[%s] column '%s' not found in batch", self.name, col)
                 continue
@@ -126,7 +126,7 @@ class DiversityProcessor(MetricsProcessor):
             return {"_metadata": {"error": "No batch metrics provided"}}
 
         results: dict[str, Any] = {}
-        for col in self.input_columns or []:
+        for col in self.input_columns:
             col_res = self._compute_column_diversity(col, batch_metrics)
             results.update(col_res)
         return results

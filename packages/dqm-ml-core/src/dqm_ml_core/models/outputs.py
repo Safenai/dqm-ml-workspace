@@ -25,7 +25,7 @@ class ParquetOutputConfig(BaseModel):
 
     path_pattern: str = Field(description="Output file path format string.")
     columns: list[str] = Field(default_factory=list, description="Columns to include in output.")
-    exclude: list[str] | None = Field(default=None, description="Columns to exclude from output.")
+    exclude: list[str] = Field(default_factory=list, description="Columns to exclude from output.")
     add_dataloader_column: bool = Field(default=False, description="Add a dataloader identifier column.")
     dataloader_column_name: str = Field(default="dataloader", description="Name for the dataloader column.")
     storage: bool | dict[str, Any] | None = Field(

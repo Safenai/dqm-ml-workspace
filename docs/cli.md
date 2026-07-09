@@ -35,29 +35,7 @@ dqm-ml process -p config.yaml
 dqm-ml process -p examples/config/completeness.yaml
 ```
 
-### Features Interface (Visual Features)
-
-```bash
-dqm-ml process -p examples/config/features_image.yaml
-```
-
-### Metrics Interface (Completeness)
-
-```bash
-dqm-ml process -p examples/config/metrics_completeness.yaml
-```
-
-### Gap Interface (Domain Gap)
-
-```bash
-dqm-ml process -p examples/config/gap_domain_gap.yaml
-```
-
-### Full Pipeline (All Three Interfaces)
-
-```bash
-dqm-ml process -p examples/config/full_pipeline.yaml
-```
+> Configuration file: [`examples/config/completeness.yaml`](../examples/config/completeness.yaml)
 
 ### List Available Processors
 

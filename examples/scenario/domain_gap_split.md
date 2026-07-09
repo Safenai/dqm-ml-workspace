@@ -71,6 +71,8 @@ gap:
 dqm-ml process -p examples/config/scenario/domain_gap_with_split.yaml
 ```
 
+> Config: [`examples/config/scenario/domain_gap_with_split.yaml`](../config/scenario/domain_gap_with_split.yaml)
+
 ## Output
 
 Two files are written to `examples/outputs/`:

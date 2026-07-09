@@ -7,7 +7,7 @@ correctly handles initialization, configuration validation, and method behaviors
 import logging
 
 from dqm_ml_core.api.metrics_processor import MetricsProcessor
-from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig, TabularErrorsConfig
+from dqm_ml_core.models.global_ import ErrorsConfig, TabularErrorsConfig
 import pyarrow as pa
 import pytest
 
@@ -119,17 +119,6 @@ def test_check_failure_rate_exceeds_threshold():
     proc._total_count = 10
     with pytest.raises(RuntimeError, match="Failure rate"):
         proc._check_failure_rate()
-
-
-def test_check_image_fail_fast_raises():
-    proc = MetricsProcessor(
-        name="test",
-        config={"errors": {"images": {"on_decode_failure": "fail_fast"}}},
-    )
-    proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="fail_fast"))
-    error = ValueError("test error")
-    with pytest.raises(ValueError, match="test error"):
-        proc._check_image_fail_fast(error, "on_decode_failure")
 
 
 def test_on_missing_column_fail_fast_raises():

@@ -1,11 +1,14 @@
 """Unit tests for the FeaturesProcessor base class.
 
 This module contains tests that verify the FeaturesProcessor correctly
-handles feature extraction, column resolution, and output naming.
+handles feature extraction, column resolution, output naming, and
+image fail-fast error handling.
 """
 
 from dqm_ml_core.api.features_processor import FeaturesProcessor
+from dqm_ml_core.models.global_ import ErrorsConfig, ImageErrorsConfig
 import pyarrow as pa
+import pytest
 
 
 def _make_proc(extra_config: dict | None = None) -> FeaturesProcessor:
@@ -64,11 +67,11 @@ def test_compute_features_exclude():
 
 
 def test_compute_features_empty_input():
-    """Verify empty input list returns empty dict."""
+    """Verify empty input list matches all batch columns."""
     proc = FeaturesProcessor(name="test", config={"columns": {"input": []}})
     batch = pa.RecordBatch.from_arrays([pa.array([1])], names=["a"])
     features = proc.compute_features(batch, {})
-    assert features == {}
+    assert "a" in features
 
 
 def test_compute_features_no_input_config():
@@ -115,3 +118,25 @@ def test_resolve_output_name_no_config():
     proc = FeaturesProcessor(name="test", config={"columns": {"input": ["col"]}})
     result = proc._resolve_output_name("col", "feat")
     assert result == "col_feat"
+
+
+def test_check_image_fail_fast_raises():
+    """Verify image fail fast raises ValueError."""
+    proc = FeaturesProcessor(
+        name="test",
+        config={"errors": {"images": {"on_decode_failure": "fail_fast"}}},
+    )
+    proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="fail_fast"))
+    error = ValueError("test error")
+    with pytest.raises(ValueError, match="test error"):
+        proc._check_image_fail_fast(error, "on_decode_failure")
+
+
+def test_check_image_fail_fast_silent_does_not_raise():
+    """Verify image silent_fail does not raise."""
+    proc = FeaturesProcessor(
+        name="test",
+        config={"errors": {"images": {"on_decode_failure": "silent_fail"}}},
+    )
+    proc.errors_config = ErrorsConfig(images=ImageErrorsConfig(on_decode_failure="silent_fail"))
+    proc._check_image_fail_fast(ValueError("test error"), "on_decode_failure")

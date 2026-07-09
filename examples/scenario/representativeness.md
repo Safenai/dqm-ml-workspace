@@ -43,6 +43,8 @@ metrics:
 dqm-ml process -p examples/config/scenario/representativeness.yaml
 ```
 
+> Config: [`examples/config/scenario/representativeness.yaml`](../config/scenario/representativeness.yaml)
+
 ## Output
 
 Representativeness test results are written to `examples/outputs/story_representativeness.parquet`:

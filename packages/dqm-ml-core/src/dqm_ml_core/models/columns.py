@@ -21,14 +21,14 @@ class ColumnsConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    input: list[str] | None = Field(
-        default=None,
-        description="Columns to read (fnmatch patterns supported). None reads all.",
+    input: list[str] = Field(
+        default=[],
+        description="Columns to read (fnmatch patterns supported). [] reads all.",
     )
     exclude: list[str] | None = Field(
         default=None,
         description="Columns to exclude (fnmatch patterns supported).",
     )
     rename: list[ColumnRename] | None = None
-    prefix: str | None = Field(default=None, description="Prefix prepended to each column name.")
-    suffix: str | None = Field(default=None, description="Suffix appended to each column name.")
+    prefix: str = Field(default="", description="Prefix prepended to each column name.")
+    suffix: str = Field(default="", description="Suffix appended to each column name.")

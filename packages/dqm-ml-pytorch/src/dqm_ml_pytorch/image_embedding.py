@@ -269,7 +269,7 @@ class ImageEmbeddingProcessor(ImageLoadingMixin, FeaturesProcessor):
 
         available = batch.schema.names
         cols = resolve_include_exclude(
-            self.input_columns or None,
+            self.input_columns,
             self.exclude_columns or None,
             available,
         )
