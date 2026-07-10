@@ -28,7 +28,9 @@ class Processor:
             config: Configuration dictionary (optional).
         """
         self.name = name
-        self.config = config or {}
+        config = config or {}
+        self.storage_raw = config.pop("storage", None)
+        self.config = config
         self.errors_config = None
         self.compute_device: str = "cpu"
         self.compute_seed: int | None = None

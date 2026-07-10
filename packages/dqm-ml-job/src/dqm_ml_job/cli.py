@@ -148,6 +148,7 @@ def _init_output_writer(
     columns: list[str] | None,
     outputs_registry: dict[str, Any],
     exclude: list[str] | None = None,
+    storage: dict[str, Any] | None = None,
 ) -> OutputWriter | None:
     """Initialize a single output writer from interface outputs config.
 
@@ -157,6 +158,7 @@ def _init_output_writer(
         columns: Optional list of columns to include.
         outputs_registry: Registry of available writer types.
         exclude: Optional list of columns to exclude.
+        storage: Storage config dict to inject into the writer (optional).
 
     Returns:
         An initialized OutputWriter instance, or None if no writer type is available.
@@ -166,6 +168,8 @@ def _init_output_writer(
         logger.warning("Output writer type '%s' not found in registry", writer_type)
         return None
     writer_config: dict[str, Any] = {"path_pattern": path, "columns": columns or [], "exclude": exclude or []}
+    if storage:
+        writer_config["storage"] = storage
     return cast(OutputWriter, outputs_registry[writer_type](name=name, config=writer_config))
 
 
@@ -173,6 +177,7 @@ def _init_interface_outputs(
     interface_config: FeaturesInterfaceConfig | MetricsInterfaceConfig | GapInterfaceConfig | None,
     outputs_registry: dict[str, Any],
     kind: str,
+    storage: dict[str, Any] | None = None,
 ) -> OutputWriter | None:
     """Initialize the output writer for a given interface.
 
@@ -180,6 +185,7 @@ def _init_interface_outputs(
         interface_config: The validated interface configuration.
         outputs_registry: Registry of available writer types.
         kind: The kind of interface ('features', 'metrics', or 'gap').
+        storage: Storage config dict to inject into the writer (optional).
 
     Returns:
         An initialized OutputWriter instance, or None.
@@ -193,7 +199,7 @@ def _init_interface_outputs(
     exclude: list[str] | None = None
     if hasattr(interface_config.outputs, "exclude") and interface_config.outputs.exclude:
         exclude = interface_config.outputs.exclude
-    return _init_output_writer(kind, path, columns, outputs_registry, exclude)
+    return _init_output_writer(kind, path, columns, outputs_registry, exclude, storage)
 
 
 def _resolve_compute_config(validated: JobConfig) -> ComputeConfig:
@@ -210,12 +216,17 @@ def _resolve_compute_config(validated: JobConfig) -> ComputeConfig:
     )
 
 
-def _init_processors_from_interface(interface: Any, registry: dict[str, Any]) -> dict[str, Any]:
+def _init_processors_from_interface(
+    interface: Any,
+    registry: dict[str, Any],
+    storage: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Initialize processors from an optional interface config.
 
     Args:
         interface: The validated interface config (or None).
         registry: The component registry.
+        storage: Storage config dict to inject into each processor (optional).
 
     Returns:
         A dict of name-to-processor instances (empty if interface is None).
@@ -223,6 +234,9 @@ def _init_processors_from_interface(interface: Any, registry: dict[str, Any]) ->
     if interface is None:
         return {}
     proc_dicts = [p.model_dump() for p in interface.processors]
+    if storage:
+        for proc_dict in proc_dicts:
+            proc_dict["storage"] = storage
     return _init_components_from_list(proc_dicts, registry, "processor")
 
 
@@ -286,19 +300,59 @@ def run(config: dict[str, Any]) -> None:
     # Initialize dataloaders from list format
     dataloader_dicts = [loader.model_dump() for loader in validated.dataloaders.loaders]
     compute = _resolve_compute_config(validated)
+    dl_storage = validated.dataloaders.storage.model_dump() if validated.dataloaders.storage else None
     for dl in dataloader_dicts:
         dl["threads"] = compute.threads
+        if dl_storage and not dl.get("storage"):
+            dl["storage"] = dl_storage
     dataloaders = _init_components_from_list(dataloader_dicts, dataloaders_registry, "dataloader")
 
+    # Resolve storage config: interface override takes precedence over job-level
+    def _resolve_storage(interface: Any) -> dict[str, Any] | None:
+        if interface and interface.storage:
+            result: dict[str, Any] = interface.storage.model_dump()
+            return result
+        if validated.storage:
+            result = validated.storage.model_dump()
+            return result
+        return None
+
     # Initialize processors from all interfaces
-    features_processors = _init_processors_from_interface(validated.features, features_registry)
-    metrics_processors = _init_processors_from_interface(validated.metrics, metrics_registry)
-    gap_processors = _init_processors_from_interface(validated.gap, gap_registry)
+    features_processors = _init_processors_from_interface(
+        validated.features,
+        features_registry,
+        _resolve_storage(validated.features),
+    )
+    metrics_processors = _init_processors_from_interface(
+        validated.metrics,
+        metrics_registry,
+        _resolve_storage(validated.metrics),
+    )
+    gap_processors = _init_processors_from_interface(
+        validated.gap,
+        gap_registry,
+        _resolve_storage(validated.gap),
+    )
 
     # Initialize output writers from interfaces
-    features_output = _init_interface_outputs(validated.features, outputs_registry, "features")
-    metrics_output = _init_interface_outputs(validated.metrics, outputs_registry, "metrics")
-    delta_output = _init_interface_outputs(validated.gap, outputs_registry, "delta")
+    features_output = _init_interface_outputs(
+        validated.features,
+        outputs_registry,
+        "features",
+        _resolve_storage(validated.features),
+    )
+    metrics_output = _init_interface_outputs(
+        validated.metrics,
+        outputs_registry,
+        "metrics",
+        _resolve_storage(validated.metrics),
+    )
+    delta_output = _init_interface_outputs(
+        validated.gap,
+        outputs_registry,
+        "delta",
+        _resolve_storage(validated.gap),
+    )
 
     # Configure logging based on compute.log_level
     if compute.log_level:

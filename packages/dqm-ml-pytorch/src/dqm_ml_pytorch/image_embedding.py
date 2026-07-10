@@ -78,7 +78,7 @@ class ImageEmbeddingProcessor(ImageLoadingMixin, FeaturesProcessor):
 
         # Storage filesystem support
         self.s3_fs = None
-        storage_cfg = self.config.get("storage")
+        storage_cfg = self.storage_raw
         if storage_cfg:
             from dqm_ml_core.models.global_ import StorageConfig
             from dqm_ml_job.utils import get_s3_filesystem

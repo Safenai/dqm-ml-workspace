@@ -188,32 +188,18 @@
         },
         "input": {
           "title": "Input",
-          "description": "Columns to read (fnmatch patterns supported). None reads all.",
-          "default": null,
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "description": "Columns to read (fnmatch patterns supported). [] reads all.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
         },
         "prefix": {
           "title": "Prefix",
           "description": "Prefix prepended to each column name.",
-          "default": null,
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "string",
+          "default": ""
         },
         "rename": {
           "title": "Rename",
@@ -233,15 +219,8 @@
         "suffix": {
           "title": "Suffix",
           "description": "Suffix appended to each column name.",
-          "default": null,
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "string",
+          "default": ""
         }
       }
     },

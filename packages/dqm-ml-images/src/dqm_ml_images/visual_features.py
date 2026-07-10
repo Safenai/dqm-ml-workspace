@@ -90,7 +90,7 @@ class VisualFeaturesProcessor(ImageLoadingMixin, FeaturesProcessor):
             cfg: Configuration dictionary.
         """
         self.s3_fs = None
-        storage_cfg = cfg.get("storage")
+        storage_cfg = self.storage_raw
         if not storage_cfg:
             return
 

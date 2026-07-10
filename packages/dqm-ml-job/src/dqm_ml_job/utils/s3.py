@@ -50,8 +50,11 @@ def _apply_simple_kwargs(storage_config: StorageConfig, kwargs: dict[str, Any]) 
     """Apply simple 1-to-1 config-attribute-to-kwargs mappings."""
     for attr, kwarg in _SIMPLE_KWARGS:
         val = getattr(storage_config, attr, None)
-        if val is not None:
-            kwargs[kwarg] = val if kwarg != "anonymous" else True
+        if kwarg == "anonymous":
+            if val:
+                kwargs[kwarg] = True
+        elif val is not None:
+            kwargs[kwarg] = val
 
 
 def _apply_role_kwargs(storage_config: StorageConfig, kwargs: dict[str, Any]) -> None:
