@@ -10,34 +10,53 @@ pip install dqm-ml-pytorch
 
 > **Note:** `dqm-ml-pytorch` provides **Gap Processors** (Domain Gap) and **Features Processors** (Image Embeddings) — no CLI or job orchestration. Use directly via Python or with `dqm-ml-job` for YAML config execution.
 
-## Usage
+## ImageEmbedding Processor
 
 ### Using Python Directly
 
+Extracts image embeddings using a pre-trained model (default: ResNet-50 from torchvision). Outputs fixed-size float32 arrays suitable for domain gap analysis or downstream ML tasks.
+
 ```python
+import io
 import numpy as np
-from dqm_ml_pytorch import DomainGapProcessor
+import pandas as pd
+from PIL import Image
+from dqm_ml_core import ProcessorRunner
+from dqm_ml_pytorch import ImageEmbeddingProcessor
 
-# Create source and target embeddings (example data)
-source_embeddings = np.random.randn(100, 2048).astype(np.float32)
-target_embeddings = np.random.randn(100, 2048).astype(np.float32)
+# Generate synthetic images inline
+images = []
+for i in range(4):
+    img_array = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+    img = Image.fromarray(img_array, mode="RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    images.append(buf.getvalue())
 
-# Create and configure the processor
-processor = DomainGapProcessor(
-    name="domain_drift",
+df = pd.DataFrame({"image_bytes": images})
+
+# Configure processor
+processor = ImageEmbeddingProcessor(
+    name="img_embed",
     config={
-        "columns": {"input": ["embedding"]},
-        "distance": {"metric": "mmd_linear"}
+        "columns": {"input": ["image_bytes"]},
+        "model": {
+            "arch": "resnet18",
+            "n_layer_feature": -2,  # layer index (second to last)
+            "device": "cpu"
+        },
+        "infer": {
+            "batch_size": 2,
+        }
     }
 )
 
-# Compute statistics for both datasets
-source_stats = processor.compute_batch_metric({"embedding": source_embeddings})
-target_stats = processor.compute_batch_metric({"embedding": target_embeddings})
+# Run using ProcessorRunner (high-level API)
+runner = ProcessorRunner()
+result = runner.run(df, [processor])
 
-# Compute the domain gap delta
-result = processor.compute_delta(source_stats, target_stats)
-print(f"Domain Gap (MMD): {result['domain_gap_mmd_linear']}")
+emb_col = "image_bytes_embedding"  # output column name
+print(f"Embeddings shape: {len(result[emb_col])} x {len(result[emb_col][0])}")  # 4 x 512
 ```
 
 ### With dqm-ml-job
@@ -48,62 +67,200 @@ For running from a YAML config, install together with `dqm-ml-job`:
 pip install dqm-ml-job dqm-ml-pytorch
 ```
 
-Then use this config:
+#### Generate test data
 
-```yaml
-gap:
-  processors:
-    - name: domain_drift
-      type: domain_gap
-      columns:
-        input: ["embedding"]
-      distance:
-        metric: "mmd_linear"
-```
-
-## Features Processors
-
-### ImageEmbeddingProcessor
-
-Extracts image embeddings using a pre-trained model (default: ResNet-50 from torchvision). Outputs fixed-size float32 arrays suitable for domain gap analysis or downstream ML tasks.
+Create `test_images.parquet` with 4 classes × 4 samples (32×32 synthetic PNG bytes) — **minimalist example with synthetic 32×32 images**:
 
 ```python
-from dqm_ml_pytorch import ImageEmbeddingProcessor
-import numpy as np
+# generate_data.py
+import io, numpy as np, pyarrow as pa, pyarrow.parquet as pq
+from PIL import Image
 
-# Sample image data (batch of images as bytes or arrays)
-images = np.random.randint(0, 255, (10, 224, 224, 3), dtype=np.uint8)
+np.random.seed(42)
+images = []
+classes = ["cat", "dog", "bird", "car"] * 4
+for c in classes:
+    img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
+    buf = io.BytesIO(); img.save(buf, format="PNG")
+    images.append(buf.getvalue())
 
-processor = ImageEmbeddingProcessor(
-    name="img_embed",
-    config={
-        "columns": {"input": ["image"]},
-        "model": "resnet50",
-        "batch_size": 32,
-        "output_dim": 2048
-    }
-)
-
-# Extract embeddings
-result = processor.compute_features({"image": images}, {})
-print(f"Embeddings shape: {result['image_embedding'].shape}")  # (10, 2048)
+table = pa.table({
+    "sample_id": np.arange(16, dtype=np.int64),
+    "class_name": classes,
+    "image_bytes": images,
+})
+pq.write_table(table, "test_images.parquet")
+print("Created test_images.parquet (16 rows, 4 classes)")
 ```
 
-### YAML Config (Features Interface)
+```bash
+python generate_data.py
+```
+
+#### Run ImageEmbeddingProcessor
 
 ```yaml
+dataloaders:
+  loaders:
+    - name: images
+      type: parquet
+      path: test_images.parquet   # ← generated file
+      batch_size: 32
+
 features:
+  outputs:
+    path: outputs/embeddings.parquet
+    include:
+      - sample_id
+      - class_name
   processors:
     - name: img_embeddings
       type: features_embeddings
       columns:
-        input: ["image"]
-      model: "resnet50"
-      batch_size: 32
-      output_dim: 2048
+        input: ["image_bytes"]
+      model:
+        arch: "resnet18"
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 32          # ← matches 32×32 generated images
+        height: 32
 ```
 
-Output column: `image_embedding` (pa.FixedSizeListArray<float32, 2048>)
+Output column: `image_bytes_embedding` (pa.FixedSizeListArray<float32, 512>)
+
+## Gap Processors
+
+### Using Python Directly
+
+#### From raw images (embeddings + gap in one call)
+
+```python
+import io
+import numpy as np
+import pandas as pd
+from PIL import Image
+from dqm_ml_core import ProcessorRunner
+from dqm_ml_pytorch import ImageEmbeddingProcessor, DomainGapProcessor
+
+# Generate synthetic images
+np.random.seed(42)
+source_images = []
+for _ in range(8):
+    img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+    buf = io.BytesIO(); img.save(buf, format="PNG")
+    source_images.append(buf.getvalue())
+
+target_images = []
+for _ in range(8):
+    img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+    buf = io.BytesIO(); img.save(buf, format="PNG")
+    target_images.append(buf.getvalue())
+
+source_df = pd.DataFrame({"image_bytes": source_images})
+target_df = pd.DataFrame({"image_bytes": target_images})
+
+# Compute embeddings + gap in one call
+runner = ProcessorRunner()
+result = runner.run_gap(
+    source_df, target_df,
+    DomainGapProcessor(
+        name="gap",
+        config={
+            "columns": {"input": ["image_bytes_embedding"]},
+            "distance": {"metric": "mmd_linear"},
+        },
+    ),
+    features=[
+        ImageEmbeddingProcessor(
+            name="embedding",
+            config={
+                "columns": {"input": ["image_bytes"]},
+                "model": {"arch": "resnet18", "n_layer_feature": -2, "device": "cpu"},
+                "infer": {"batch_size": 4},
+            },
+        )
+    ],
+)
+
+print(f"Domain Gap (MMD): {result['mmd_linear'][0].as_py():.4f}")
+```
+
+#### From pre-computed embeddings
+
+```python
+import numpy as np
+import pandas as pd
+from dqm_ml_core import ProcessorRunner
+from dqm_ml_pytorch import DomainGapProcessor
+
+np.random.seed(42)
+source_df = pd.DataFrame({"embedding": list(np.random.randn(100, 128).astype(np.float32))})
+target_df = pd.DataFrame({"embedding": list(np.random.randn(100, 128).astype(np.float32))})
+
+runner = ProcessorRunner()
+result = runner.run_gap(
+    source_df, target_df,
+    DomainGapProcessor(
+        name="gap",
+        config={
+            "columns": {"input": ["embedding"]},
+            "distance": {"metric": "mmd_linear"},
+        },
+    ),
+)
+
+print(f"Domain Gap (MMD): {result['mmd_linear'][0].as_py():.4f}")
+```
+
+### With dqm-ml-job
+
+Uses the same `test_images.parquet` generated above. The `split.by: class_name` creates one selection per class (cat/dog/bird/car), and `pairwise: true` computes FID between all 6 class pairs.
+
+```bash
+pip install dqm-ml-job dqm-ml-pytorch
+```
+
+```yaml
+dataloaders:
+  loaders:
+    - name: animals
+      type: parquet
+      path: test_images.parquet   # ← same file
+      batch_size: 32
+      split:
+        by: class_name  # auto-discover: cat, dog, bird, car
+
+features:
+  outputs:
+    path: outputs/features.parquet
+  processors:
+    - name: embedding
+      type: features_embeddings
+      columns:
+        input: ["image_bytes"]
+      model:
+        arch: "resnet18"
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 32
+        height: 32
+
+gap:
+  outputs:
+    path: outputs/gap.parquet
+    pairwise: true  # compare all class pairs
+  processors:
+    - name: fid_gap
+      type: domain_gap
+      columns:
+        input: ["image_bytes_embedding"]
+      distance:
+        metric: "fid"
+```
+
+Requires: Input parquet file must have `image_bytes` column with PNG/JPEG bytes and a `class_name` column for splitting.
 
 ## Gap Metrics
 

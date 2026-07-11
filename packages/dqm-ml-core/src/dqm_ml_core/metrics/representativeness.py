@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 from scipy import stats
-import torch
 
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
@@ -185,7 +184,12 @@ class RepresentativenessProcessor(MetricsProcessor):
     def _resolve_device(device: str) -> str:
         """Resolve ``"auto"`` to CUDA if available, else CPU."""
         if device == "auto":
-            return "cuda" if torch.cuda.is_available() else "cpu"
+            try:
+                import torch
+
+                return "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                return "cpu"
         return device
 
     @staticmethod
