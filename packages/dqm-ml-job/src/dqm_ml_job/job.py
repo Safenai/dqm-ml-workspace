@@ -766,7 +766,7 @@ class DatasetJob:
             return int(memory_str)
 
     def _inject_dataloader_column(self, selection_name: str, features: dict[str, Any]) -> None:
-        """Inject the dataloader column into a features dict when configured.
+        """Inject the dataloader column into a features dict.
 
         Adds the selection name as a column so the output parquet contains a
         ``dataloader`` column identifying which dataset each row originates from.
@@ -777,12 +777,8 @@ class DatasetJob:
         """
         if not self.features_output:
             return
-        if not getattr(self.features_output, "add_dataloader_column", False):
-            return
-
-        col = self.features_output.dataloader_column_name
         if not features:
             return
 
         sample = next(iter(features.values()))
-        features[col] = pa.array([selection_name] * len(sample))
+        features["dataloader"] = pa.array([selection_name] * len(sample))

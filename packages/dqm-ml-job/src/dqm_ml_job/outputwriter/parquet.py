@@ -47,9 +47,6 @@ class ParquetOutputWriter:
         self.name = name
         self.s3_filesystem = None
 
-        self.add_dataloader_column = cfg.add_dataloader_column
-        self.dataloader_column_name = cfg.dataloader_column_name
-
         self._accumulate = "{}" not in self.path_pattern
         self._accumulated_features: dict[str, list[pa.Array]] = {}
         storage_cfg = cfg.storage
