@@ -7,7 +7,7 @@ This directory contains example files used in the quickstart guide.
 | File | Description |
 |------|-------------|
 | `data.csv` | Sample CSV data with missing values (nulls) for completeness testing |
-| `completeness.yaml` | Configuration file for completeness metric |
+| `config.yaml` | Configuration file for completeness metric |
 | `README.md` | This file |
 
 ## Usage
@@ -18,10 +18,10 @@ These files are referenced in `docs/quickstart.md` for users to copy and try loc
 
 ```bash
 # From the repository root or any directory with these files
-dqm-ml process -p examples/getting_started/completeness.yaml
+dqm-ml process -p examples/getting_started/config.yaml
 ```
 
-> Configuration file: [`completeness.yaml`](completeness.yaml)
+> Configuration file: [`config.yaml`](config.yaml)
 
 ### Data Description
 

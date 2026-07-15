@@ -58,12 +58,17 @@ dataloaders:
   loaders:
     - name: my_data
       type: csv
-      path: ./data.csv
+      path: data.csv
 ```
 
 **3. Run the pipeline:**
 ```bash
 dqm-ml process -p config.yaml
+```
+
+**4. Read the results:**
+```bash
+python -c "import pandas as pd; print(pd.read_parquet('output_metrics.parquet').to_string())"
 ```
 
 > **Note:** Example files are available in [`examples/getting_started/`](../examples/getting_started/) in the repository.
@@ -98,16 +103,16 @@ result = processor.compute(batch_metrics)
 print(f"Overall completeness: {result['completeness_overall']}")
 ```
 
-### MetricRunner (Interactive)
+### ProcessorRunner (Interactive)
 
 For quick exploration in a notebook or script:
 
 ```python
 import pandas as pd
-from dqm_ml_core import CompletenessProcessor, MetricRunner
+from dqm_ml_core import CompletenessProcessor, ProcessorRunner
 
 df = pd.DataFrame({"a": [1, 2, None, 4], "b": [5, None, 7, 8]})
-runner = MetricRunner()
+runner = ProcessorRunner()
 
 results = runner.run(df, [CompletenessProcessor(config={"columns": {"input": ["a", "b"]}})])
 print(results)
