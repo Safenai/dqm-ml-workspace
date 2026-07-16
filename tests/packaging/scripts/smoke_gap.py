@@ -14,9 +14,9 @@ def test_domain_gap_mmd_linear():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import DomainGapProcessor
 
-    np.random.seed(42)
-    source_emb = np.random.randn(100, 128).astype(np.float32)
-    target_emb = np.random.randn(100, 128).astype(np.float32)
+    rng = np.random.default_rng(42)
+    source_emb = rng.standard_normal((100, 128)).astype(np.float32)
+    target_emb = rng.standard_normal((100, 128)).astype(np.float32)
 
     source_df = pd.DataFrame({"embedding": list(source_emb)})
     target_df = pd.DataFrame({"embedding": list(target_emb)})
@@ -35,9 +35,9 @@ def test_domain_gap_mmd_rbf():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import DomainGapProcessor
 
-    np.random.seed(42)
-    source_emb = np.random.randn(50, 128).astype(np.float32)
-    target_emb = np.random.randn(50, 128).astype(np.float32)
+    rng = np.random.default_rng(42)
+    source_emb = rng.standard_normal((50, 128)).astype(np.float32)
+    target_emb = rng.standard_normal((50, 128)).astype(np.float32)
 
     source_df = pd.DataFrame({"embedding": list(source_emb)})
     target_df = pd.DataFrame({"embedding": list(target_emb)})

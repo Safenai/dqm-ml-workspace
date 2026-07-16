@@ -16,10 +16,10 @@ def test_image_embedding():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import ImageEmbeddingProcessor
 
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     images = []
     for _ in range(4):
-        img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+        img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         images.append(buf.getvalue())

@@ -21,19 +21,19 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pathlib import Path
 
-np.random.seed(42)
+rng = np.random.default_rng(42)
 Path("data").mkdir(exist_ok=True)
 
 n = 1000
 # Completeness: numeric columns with ~20% missing values
-col_a = np.where(np.random.random(n) < 0.2, None, np.random.randint(0, 100, n))
-col_b = np.where(np.random.random(n) < 0.2, None, np.random.randint(0, 100, n))
+col_a = np.where(rng.random(n) < 0.2, None, rng.integers(0, 100, n))
+col_b = np.where(rng.random(n) < 0.2, None, rng.integers(0, 100, n))
 
 # Representativeness: normal distribution
-feature = np.random.normal(0, 1, n)
+feature = rng.normal(0, 1, n)
 
 # Diversity: categorical with 5 imbalanced classes
-categories = np.random.choice(["A", "B", "C", "D", "E"], n, p=[0.4, 0.25, 0.15, 0.12, 0.08])
+categories = rng.choice(["A", "B", "C", "D", "E"], n, p=[0.4, 0.25, 0.15, 0.12, 0.08])
 
 table = pa.table({"col_a": col_a, "col_b": col_b, "feature": feature, "category": categories})
 pq.write_table(table, "data/core_metrics.parquet")

@@ -37,10 +37,10 @@ def test_all_metrics_via_api():
     assert "completeness_col_a" in result
 
     # 2. Visual features
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     images = []
     for _ in range(4):
-        img = Image.fromarray(np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8))
+        img = Image.fromarray(rng.integers(0, 255, (100, 100, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         images.append(buf.getvalue())
@@ -65,7 +65,7 @@ def test_all_metrics_via_api():
     # 3. Embeddings
     images_big = []
     for _ in range(4):
-        img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+        img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         images_big.append(buf.getvalue())
@@ -86,8 +86,8 @@ def test_all_metrics_via_api():
     assert "image_bytes_embedding" in result
 
     # 4. Gap metrics (with pre-computed embeddings)
-    source_emb = np.random.randn(50, 128).astype(np.float32)
-    target_emb = np.random.randn(50, 128).astype(np.float32)
+    source_emb = rng.standard_normal((50, 128)).astype(np.float32)
+    target_emb = rng.standard_normal((50, 128)).astype(np.float32)
     source_df = pd.DataFrame({"embedding": list(source_emb)})
     target_df = pd.DataFrame({"embedding": list(target_emb)})
     result = runner.run_gap(
@@ -108,11 +108,11 @@ def test_all_via_yaml():
         tmpdir = Path(tmpdir)
 
         # Create test data
-        np.random.seed(42)
+        rng2 = np.random.default_rng(42)
         test_data = {
             "col_a": [1, 2, None, 4, 5, 6, 7, None, 9, 10],
             "col_b": [1, 2, 3, None, 5, 6, None, 8, 9, 10],
-            "feature": np.random.normal(0, 1, 10).tolist(),
+            "feature": rng2.normal(0, 1, 10).tolist(),
         }
         table = pa.table(test_data)
         parquet_path = tmpdir / "test_data.parquet"

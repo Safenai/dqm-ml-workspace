@@ -23,13 +23,13 @@ from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-np.random.seed(42)
+rng = np.random.default_rng(42)
 Path("data").mkdir(exist_ok=True)
 
 images = []
 for _ in range(5):
     # 50x50 RGB synthetic image
-    arr = np.random.randint(0, 255, (50, 50, 3), dtype=np.uint8)
+    arr = rng.integers(0, 255, (50, 50, 3), dtype=np.uint8)
     img = Image.fromarray(arr, mode="RGB")
     buf = io.BytesIO()
     img.save(buf, format="PNG")

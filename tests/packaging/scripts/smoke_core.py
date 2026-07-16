@@ -32,8 +32,8 @@ def test_completeness():
 def test_representativeness():
     from dqm_ml_core import RepresentativenessProcessor
 
-    np.random.seed(42)
-    data = {"feature": np.random.normal(0, 1, 1000)}
+    rng = np.random.default_rng(42)
+    data = {"feature": rng.normal(0, 1, 1000)}
     batch = pa.record_batch(data)
     processor = RepresentativenessProcessor(
         name="test",

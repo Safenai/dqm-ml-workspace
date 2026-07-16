@@ -22,7 +22,7 @@ def test_metrics_via_yaml():
         test_data = {
             "col_a": [1, 2, None, 4, 5, 6, 7, None, 9, 10],
             "col_b": [1, 2, 3, None, 5, 6, None, 8, 9, 10],
-            "feature": np.random.normal(0, 1, 10),
+            "feature": np.random.default_rng().normal(0, 1, 10),
         }
         table = pa.table(test_data)
         parquet_path = tmpdir / "test_data.parquet"

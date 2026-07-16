@@ -25,9 +25,10 @@ from dqm_ml_core import ProcessorRunner
 from dqm_ml_pytorch import ImageEmbeddingProcessor
 
 # Generate synthetic images inline
+rng = np.random.default_rng()
 images = []
 for i in range(4):
-    img_array = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+    img_array = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
     img = Image.fromarray(img_array, mode="RGB")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -76,11 +77,11 @@ Create `test_images.parquet` with 4 classes × 4 samples (32×32 synthetic PNG b
 import io, numpy as np, pyarrow as pa, pyarrow.parquet as pq
 from PIL import Image
 
-np.random.seed(42)
+rng = np.random.default_rng(42)
 images = []
 classes = ["cat", "dog", "bird", "car"] * 4
 for c in classes:
-    img = Image.fromarray(np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8))
+    img = Image.fromarray(rng.integers(0, 255, (32, 32, 3), dtype=np.uint8))
     buf = io.BytesIO(); img.save(buf, format="PNG")
     images.append(buf.getvalue())
 
@@ -144,16 +145,16 @@ from dqm_ml_core import ProcessorRunner
 from dqm_ml_pytorch import ImageEmbeddingProcessor, DomainGapProcessor
 
 # Generate synthetic images
-np.random.seed(42)
+rng = np.random.default_rng(42)
 source_images = []
 for _ in range(8):
-    img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+    img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
     buf = io.BytesIO(); img.save(buf, format="PNG")
     source_images.append(buf.getvalue())
 
 target_images = []
 for _ in range(8):
-    img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
+    img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
     buf = io.BytesIO(); img.save(buf, format="PNG")
     target_images.append(buf.getvalue())
 
@@ -194,9 +195,9 @@ import pandas as pd
 from dqm_ml_core import ProcessorRunner
 from dqm_ml_pytorch import DomainGapProcessor
 
-np.random.seed(42)
-source_df = pd.DataFrame({"embedding": list(np.random.randn(100, 128).astype(np.float32))})
-target_df = pd.DataFrame({"embedding": list(np.random.randn(100, 128).astype(np.float32))})
+rng = np.random.default_rng(42)
+source_df = pd.DataFrame({"embedding": list(rng.standard_normal((100, 128)).astype(np.float32))})
+target_df = pd.DataFrame({"embedding": list(rng.standard_normal((100, 128)).astype(np.float32))})
 
 runner = ProcessorRunner()
 result = runner.run_gap(

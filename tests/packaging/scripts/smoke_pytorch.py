@@ -17,10 +17,10 @@ import yaml
 
 
 def _generate_test_parquet(path: str, num_samples: int = 8, img_size: int = 32) -> None:
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     images = []
     for _ in range(num_samples):
-        img = Image.fromarray(np.random.randint(0, 255, (img_size, img_size, 3), dtype=np.uint8))
+        img = Image.fromarray(rng.integers(0, 255, (img_size, img_size, 3), dtype=np.uint8))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         images.append(buf.getvalue())
@@ -28,7 +28,7 @@ def _generate_test_parquet(path: str, num_samples: int = 8, img_size: int = 32) 
     table = pa.table(
         {
             "sample_id": np.arange(num_samples, dtype=np.int64),
-            "class_name": np.random.choice(["cat", "dog", "bird", "car"], num_samples),
+            "class_name": rng.choice(["cat", "dog", "bird", "car"], num_samples),
             "image_bytes": images,
         }
     )

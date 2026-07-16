@@ -21,10 +21,10 @@ def test_visual_features_via_yaml():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
 
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         images = []
         for _ in range(10):
-            img = Image.fromarray(np.random.randint(0, 255, (50, 50, 3), dtype=np.uint8))
+            img = Image.fromarray(rng.integers(0, 255, (50, 50, 3), dtype=np.uint8))
             buf = io.BytesIO()
             img.save(buf, format="PNG")
             images.append(buf.getvalue())
