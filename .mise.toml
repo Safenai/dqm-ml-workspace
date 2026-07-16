@@ -67,6 +67,16 @@ exec > >(tee "logs/test_${timestamp}.log") 2>&1
 uv run nox -s test
 """
 
+[tasks.test_packaging]
+description = "Run package-isolation tests"
+run = """
+#!/bin/bash
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/test_packaging_${timestamp}.log") 2>&1
+uv run nox -s test_packaging -- "$@"
+"""
+
 ########################################
 ##         Doc          ##
 ########################################

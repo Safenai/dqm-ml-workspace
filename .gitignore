@@ -18,6 +18,7 @@ __pycache__
 # Pytest report
 **/pytest_report.html
 docs/examples
+examples/outputs
 assets
 
 # Test images
@@ -40,3 +41,6 @@ docs/packages/
 
 # Test logs
 logs/
+
+# Pytest temp dir
+tmp/

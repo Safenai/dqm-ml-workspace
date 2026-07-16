@@ -5,6 +5,7 @@ and tests.utils packages for convenient use in tests.
 """
 
 from tests.fixtures.cli_fixtures import all_classes, coco_data_dir, coco_parquet_path  # noqa: F401
+from tests.fixtures.packaging_fixtures import isolated_venv, wheels_dir  # noqa: F401
 from tests.fixtures.test_fixtures import mock_parquet_dataset, sample_dataframe, temp_output_path  # noqa: F401
 from tests.integration.fixtures.config import tests_config  # noqa: F401
 from tests.integration.fixtures.data import (  # noqa: F401
