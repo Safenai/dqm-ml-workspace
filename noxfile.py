@@ -13,6 +13,7 @@ options.sessions = ["lint", "spell", "test", "type_check"]
 def compatibility(s: Session) -> None:
     """Run core unit tests and CLI tests across Python
     3.10-3.13 to verify cross-version compatibility."""
+    s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",
         "tests/unit/core",
@@ -33,6 +34,7 @@ def compatibility(s: Session) -> None:
 def test(s: Session) -> None:
     """Run full test suite (unit, integration, CLI)
     with coverage reporting for all 5 packages. Fails if coverage < 90%."""
+    s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",
         "--cov=packages/dqm-ml-job/src",
@@ -58,6 +60,7 @@ def test(s: Session) -> None:
 )
 def test_custom(s: Session) -> None:
     """Run pytest with arbitrary positional arguments — passthrough for ad-hoc test execution."""
+    s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",
         *s.posargs,
@@ -70,6 +73,7 @@ def test_custom(s: Session) -> None:
 )
 def benchmark(s: Session) -> None:
     """Run performance benchmark tests from tests/benchmark."""
+    s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",
         "tests/benchmark",
@@ -83,6 +87,7 @@ def benchmark(s: Session) -> None:
 )
 def test_packaging(s: Session) -> None:
     """Run package-isolation tests (builds wheels, creates isolated venvs, runs smoke scripts)."""
+    s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",
         "tests/packaging",

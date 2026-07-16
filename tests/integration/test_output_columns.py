@@ -12,6 +12,7 @@ from typing import Any
 from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
@@ -19,7 +20,7 @@ import yaml
 def config_path(output_path: Path) -> str:
     """Write a temporary visual_features config with include=[sample_id]."""
     config: dict[str, Any] = {
-        "compute": {"log_level": "debug", "seed": 42, "threads": 4},
+        "compute": {"log_level": "debug", "seed": get_test_seed(), "threads": 4},
         "dataloaders": {
             "loaders": [
                 {

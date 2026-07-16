@@ -8,6 +8,8 @@ from typing import Any
 
 import ruamel.yaml
 
+from tests.utils.seeds import get_test_seed
+
 # Domain gap infer parameters per metric: batch_size, width, height
 DOMAIN_GAP_INFER_PARAMS = {
     "fid": {"batch_size": 32, "width": 64, "height": 64},
@@ -509,6 +511,9 @@ def generate_job(
             _configure_domain_gap(full_config, processor_name, metric_name)
         _configure_metrics_processor(full_config, processor_name, test_name)
         _configure_output(full_config, output_category, config_name, output_path)
+
+        # Inject the test seed from environment (default 42)
+        full_config.setdefault("compute", {})["seed"] = get_test_seed()
 
         yaml_config = ruamel.yaml.YAML()
         yaml_config.indent(mapping=ind, sequence=ind, offset=bsi)

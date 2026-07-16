@@ -13,11 +13,12 @@ import pyarrow.parquet as pq
 import pytest
 from tests.utils.files import write_path_list_to_parquet
 from tests.utils.plots import plot_histograms
+from tests.utils.seeds import get_test_seed
 
 OUTPUT_PLOTS = "outputs/plots"
 OUTPUT_DATA = "outputs/data"
 
-_rng = np.random.default_rng()
+_rng = np.random.default_rng(get_test_seed())
 
 
 def _get_test_path() -> str:
@@ -35,7 +36,7 @@ def _generate_synthetic_domain_images(
     output_dir: Path,
     n_per_set: int = 250,
     img_size: int = 64,
-    seed: int = 42,
+    seed: int = get_test_seed(),
 ) -> tuple[list[Path], list[str], list[Path], list[str]]:
     """Generate synthetic images for domain gap testing.
 
@@ -134,7 +135,7 @@ def coco_data(test_path: str) -> list[Path]:
 
     source_paths, source_classes, target_paths, target_classes = _generate_synthetic_domain_images(gen_path)
 
-    domain_rng = np.random.default_rng(12345)
+    domain_rng = np.random.default_rng(get_test_seed())
     source_domains = ["indoor" if domain_rng.random() < 0.5 else "outdoor" for _ in source_paths]
     target_domains = ["indoor" if domain_rng.random() < 0.5 else "outdoor" for _ in target_paths]
 
@@ -239,7 +240,7 @@ def coco_data_real(test_path: str) -> list[Path]:
         target_classes.append(class_name)
         target_paths.append(f)
 
-    domain_rng = np.random.default_rng(12345)
+    domain_rng = np.random.default_rng(get_test_seed())
     source_domains = ["indoor" if domain_rng.random() < 0.5 else "outdoor" for _ in source_files]
     target_domains = ["indoor" if domain_rng.random() < 0.5 else "outdoor" for _ in target_files]
 
@@ -287,7 +288,7 @@ def completeness_data(test_path: str) -> None:
     if path.exists():
         return
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n = 1000
     col1 = rng.random(n).astype(float)
     col3 = rng.random(n).astype(float)
@@ -334,7 +335,7 @@ def domain_gap_bytes_data(test_path: str) -> None:
         img_dir,
         n_per_set=5,
         img_size=64,
-        seed=42,
+        seed=get_test_seed(),
     )
 
     pq.write_table(
@@ -370,7 +371,7 @@ def visual_features_data(test_path: str) -> None:
     if bytes_path.exists() and path_path.exists():
         return
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     class_names = ["cat", "dog", "bird", "fish", "horse", "cow", "sheep", "pig", "rabbit", "duck"]
     sources = ["studio", "zoo", "outdoor"]
     rows_bytes: list[dict[str, Any]] = []
@@ -494,7 +495,7 @@ def diversity_data(test_path: str) -> Any:
     if path.exists():
         return
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n = 200
     pa_table = pa.table(
         {
@@ -598,7 +599,7 @@ def full_story_data(test_path: str) -> Path:
 
     n = 1200
     img_size = 32
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
 
     class_names = ["elephant", "lion", "giraffe", "zebra"]
     sources = ["safari", "reserve", "zoo"]
@@ -672,7 +673,7 @@ def batch_invariance_data(test_path: str) -> Path:
     if parquet_path.exists():
         return parquet_path
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n = 1000
     sources = ["safari", "reserve"]
     class_names = ["elephant", "lion"]
@@ -726,7 +727,7 @@ def large_tabular_data(test_path: str) -> Path:
     if parquet_path.exists():
         return parquet_path
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n = 1_000_000
     sources = ["safari", "reserve", "zoo"]
     class_names = ["elephant", "lion", "giraffe", "zebra"]

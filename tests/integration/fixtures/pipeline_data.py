@@ -11,6 +11,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 
 OUTPUT_DATA = "outputs/data"
 _CLASS_NAMES = ["cat", "dog", "bird", "fish", "horse", "cow", "sheep", "pig", "rabbit", "duck"]
@@ -78,7 +79,7 @@ def pipeline_data(test_path: str) -> Path:
         return parquet_path
 
     img_dir = gen_path / "img" / "pipeline"
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n = 500
 
     image_bytes_list, image_path_list = _generate_pipeline_images(img_dir, n, rng)

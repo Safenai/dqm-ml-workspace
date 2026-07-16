@@ -11,6 +11,7 @@ import tempfile
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+from tests.utils.seeds import get_test_seed
 
 
 def test_metrics_via_yaml():
@@ -22,7 +23,7 @@ def test_metrics_via_yaml():
         test_data = {
             "col_a": [1, 2, None, 4, 5, 6, 7, None, 9, 10],
             "col_b": [1, 2, 3, None, 5, 6, None, 8, 9, 10],
-            "feature": np.random.default_rng().normal(0, 1, 10),
+            "feature": np.random.default_rng(get_test_seed()).normal(0, 1, 10),
         }
         table = pa.table(test_data)
         parquet_path = tmpdir / "test_data.parquet"

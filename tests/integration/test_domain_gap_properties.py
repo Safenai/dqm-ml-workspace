@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
@@ -37,7 +38,7 @@ _N_IMAGES = 50
 
 def _generate_controlled_images(
     output_dir: Path,
-    seed: int = 42,
+    seed: int = get_test_seed(),
     n: int = _N_IMAGES,
 ) -> dict[str, tuple[list[Path], list[Path]]]:
     """Generate controlled synthetic image pairs for domain gap testing.
@@ -254,7 +255,7 @@ class TestDomainGapProperties:
         config: dict[str, Any] = {
             "compute": {
                 "log_level": "debug",
-                "seed": 42,
+                "seed": get_test_seed(),
                 "progress_bar": True,
                 "threads": 4,
             },

@@ -14,6 +14,7 @@ import pandas as pd
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
+from tests.utils.seeds import get_test_seed
 
 
 def test_all_metrics_via_api():
@@ -37,7 +38,7 @@ def test_all_metrics_via_api():
     assert "completeness_col_a" in result
 
     # 2. Visual features
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     images = []
     for _ in range(4):
         img = Image.fromarray(rng.integers(0, 255, (100, 100, 3), dtype=np.uint8))
@@ -108,7 +109,7 @@ def test_all_via_yaml():
         tmpdir = Path(tmpdir)
 
         # Create test data
-        rng2 = np.random.default_rng(42)
+        rng2 = np.random.default_rng(get_test_seed())
         test_data = {
             "col_a": [1, 2, None, 4, 5, 6, 7, None, 9, 10],
             "col_b": [1, 2, 3, None, 5, 6, None, 8, 9, 10],

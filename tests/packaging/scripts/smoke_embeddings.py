@@ -10,13 +10,14 @@ import sys
 import numpy as np
 import pandas as pd
 from PIL import Image
+from tests.utils.seeds import get_test_seed
 
 
 def test_image_embedding():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import ImageEmbeddingProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     images = []
     for _ in range(4):
         img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))

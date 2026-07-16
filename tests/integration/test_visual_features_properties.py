@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageFilter
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
@@ -77,7 +78,7 @@ def _run_vf_job(
     config: dict[str, Any] = {
         "compute": {
             "log_level": "debug",
-            "seed": 42,
+            "seed": get_test_seed(),
             "progress_bar": True,
             "threads": 4,
         },
@@ -224,7 +225,7 @@ def test_blur_sharp_vs_blurry(output_path: Path, test_path: str, behavioral_dir:
     config_name = "vf_prop_blur_pair"
     out_file = output_path / "metrics_vf_prop_blur_pair.parquet"
     config: dict[str, Any] = {
-        "compute": {"log_level": "debug", "seed": 42, "progress_bar": True, "threads": 4},
+        "compute": {"log_level": "debug", "seed": get_test_seed(), "progress_bar": True, "threads": 4},
         "dataloaders": {
             "loaders": [
                 {
@@ -270,7 +271,7 @@ def test_blur_sharp_vs_blurry(output_path: Path, test_path: str, behavioral_dir:
 
 def test_entropy_random(output_path: Path, test_path: str, behavioral_dir: Path) -> None:
     """Test entropy feature on random noise image (expected > 5.0)."""
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     arr = rng.integers(0, 256, (70, 100), dtype=np.uint8)
     img = Image.fromarray(arr, mode="L")
     pq_path = _bytes_parquet([_png_bytes(img)], "entropy_random", behavioral_dir)

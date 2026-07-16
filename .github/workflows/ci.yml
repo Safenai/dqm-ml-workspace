@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compatibility with Nox
-        run: uv run nox -s compatibility-${{ matrix.python-version }}
+        run: TQDM_DISABLE=1 uv run nox -s compatibility-${{ matrix.python-version }}
 
   test:
     runs-on: ubuntu-24.04
@@ -61,7 +61,7 @@ jobs:
           key: dqm-test-resnet
 
       - name: Test with Nox
-        run: uv run nox -s test-${{ matrix.python-version }}
+        run: TQDM_DISABLE=1 uv run nox -s test-${{ matrix.python-version }}
 
       - uses: actions/upload-artifact@v4
         with:

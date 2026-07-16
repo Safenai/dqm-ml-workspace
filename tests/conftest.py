@@ -4,6 +4,8 @@ This module re-exports all fixtures from tests.integration.fixtures, tests.fixtu
 and tests.utils packages for convenient use in tests.
 """
 
+import pytest
+
 from tests.fixtures.cli_fixtures import all_classes, coco_data_dir, coco_parquet_path  # noqa: F401
 from tests.fixtures.packaging_fixtures import isolated_venv, wheels_dir  # noqa: F401
 from tests.fixtures.test_fixtures import mock_parquet_dataset, sample_dataframe, temp_output_path  # noqa: F401
@@ -35,3 +37,10 @@ from tests.integration.fixtures.jobs import (  # noqa: F401
 )
 from tests.integration.fixtures.paths import output_path, test_path  # noqa: F401
 from tests.integration.fixtures.pipeline_data import pipeline_data  # noqa: F401
+from tests.utils.seeds import get_test_seed
+
+
+@pytest.fixture(scope="session")
+def test_seed() -> int:
+    """Test seed from DQM_ML_TEST_SEED env var, default 42."""
+    return get_test_seed()

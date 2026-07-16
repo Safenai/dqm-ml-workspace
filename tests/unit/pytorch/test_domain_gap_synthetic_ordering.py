@@ -9,6 +9,7 @@ from dqm_ml_pytorch.domain_gap import DomainGapProcessor
 import numpy as np
 import pyarrow as pa
 import pytest
+from tests.utils.seeds import get_test_seed
 
 N_SAMPLES = 500
 EMBED_DIM = 32
@@ -119,7 +120,7 @@ METRIC_CONFIGS = {
 @pytest.mark.parametrize("metric", list(METRIC_CONFIGS.keys()))
 def test_domain_gap_monotonic_synthetic(metric: str) -> None:
     """Verify monotonic ordering for a domain gap metric with controlled shift."""
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     n, d = N_SAMPLES, EMBED_DIM
 
     proc = DomainGapProcessor(name="test", config=METRIC_CONFIGS[metric])

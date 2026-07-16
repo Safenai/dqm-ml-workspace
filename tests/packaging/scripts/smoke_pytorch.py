@@ -13,11 +13,12 @@ import numpy as np
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
 def _generate_test_parquet(path: str, num_samples: int = 8, img_size: int = 32) -> None:
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     images = []
     for _ in range(num_samples):
         img = Image.fromarray(rng.integers(0, 255, (img_size, img_size, 3), dtype=np.uint8))

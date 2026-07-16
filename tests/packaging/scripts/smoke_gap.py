@@ -8,13 +8,14 @@ import sys
 
 import numpy as np
 import pandas as pd
+from tests.utils.seeds import get_test_seed
 
 
 def test_domain_gap_mmd_linear():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import DomainGapProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     source_emb = rng.standard_normal((100, 128)).astype(np.float32)
     target_emb = rng.standard_normal((100, 128)).astype(np.float32)
 
@@ -35,7 +36,7 @@ def test_domain_gap_mmd_rbf():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_pytorch import DomainGapProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     source_emb = rng.standard_normal((50, 128)).astype(np.float32)
     target_emb = rng.standard_normal((50, 128)).astype(np.float32)
 

@@ -11,13 +11,14 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import pyarrow as pa
+from tests.utils.seeds import get_test_seed
 
 
 def test_visual_features_runner():
     from dqm_ml_core import ProcessorRunner
     from dqm_ml_images import VisualFeaturesProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     images = []
     for _ in range(5):
         img = Image.fromarray(rng.integers(0, 255, (100, 100, 3), dtype=np.uint8))
@@ -45,7 +46,7 @@ def test_visual_features_runner():
 def test_visual_features_direct():
     from dqm_ml_images import VisualFeaturesProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     images = []
     for _ in range(3):
         img = Image.fromarray(rng.integers(0, 255, (50, 50, 3), dtype=np.uint8))

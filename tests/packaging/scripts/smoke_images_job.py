@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
+from tests.utils.seeds import get_test_seed
 
 
 def test_visual_features_via_yaml():
@@ -21,7 +22,7 @@ def test_visual_features_via_yaml():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
 
-        rng = np.random.default_rng(42)
+        rng = np.random.default_rng(get_test_seed())
         images = []
         for _ in range(10):
             img = Image.fromarray(rng.integers(0, 255, (50, 50, 3), dtype=np.uint8))

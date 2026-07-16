@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+from tests.utils.seeds import get_test_seed
 
 
 def test_completeness():
@@ -32,7 +33,7 @@ def test_completeness():
 def test_representativeness():
     from dqm_ml_core import RepresentativenessProcessor
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     data = {"feature": rng.normal(0, 1, 1000)}
     batch = pa.record_batch(data)
     processor = RepresentativenessProcessor(

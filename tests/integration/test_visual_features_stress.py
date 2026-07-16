@@ -15,6 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 from tests.fixtures.stress_images import generate_stress_images
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
@@ -87,7 +88,7 @@ def test_visual_features_stress(
     config: dict[str, Any] = {
         "compute": {
             "log_level": "debug",
-            "seed": 42,
+            "seed": get_test_seed(),
             "progress_bar": True,
             "threads": 4,
         },
