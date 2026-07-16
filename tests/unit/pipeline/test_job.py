@@ -146,19 +146,9 @@ class TestInjectDataloaderColumn:
         job._inject_dataloader_column("selection", features)
         assert "dataloader" not in features
 
-    def test_add_dataloader_column_disabled(self):
-        """Verify no column added when add_dataloader_column is False."""
-        writer = MagicMock()
-        writer.add_dataloader_column = False
-        job = DatasetJob(dataloaders={}, features_output=writer)
-        features = {"col1": pa.array([1, 2])}
-        job._inject_dataloader_column("selection", features)
-        assert "dataloader" not in features
-
     def test_add_dataloader_column_empty_features(self):
         """Verify no column added when features dict is empty."""
         writer = MagicMock()
-        writer.add_dataloader_column = True
         job = DatasetJob(dataloaders={}, features_output=writer)
         features = {}
         job._inject_dataloader_column("selection", features)
@@ -167,8 +157,6 @@ class TestInjectDataloaderColumn:
     def test_add_dataloader_column_success(self):
         """Verify dataloader column added with correct values."""
         writer = MagicMock()
-        writer.add_dataloader_column = True
-        writer.dataloader_column_name = "dataloader"
         job = DatasetJob(dataloaders={}, features_output=writer)
         features = {"col1": pa.array([1, 2])}
         job._inject_dataloader_column("selection", features)
@@ -266,7 +254,6 @@ class TestMaybeFlushFeatures:
     def test_flush_when_threshold_exceeded(self):
         """Verify flush occurs when feature array size exceeds threshold."""
         writer = MagicMock()
-        writer.add_dataloader_column = False
         job = DatasetJob(dataloaders={}, features_output=writer)
         features_accumulator = {"col1": [pa.array([1.0]), pa.array([2.0])]}
         result = job._maybe_flush_features(

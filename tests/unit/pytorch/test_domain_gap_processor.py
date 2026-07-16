@@ -12,6 +12,7 @@ from dqm_ml_pytorch.domain_gap import DomainGapProcessor, _mmd_poly, _mmd_rbf
 import numpy as np
 import pyarrow as pa
 import pytest
+from tests.utils.seeds import get_test_seed
 
 
 class TestMmdFunctions:
@@ -395,7 +396,7 @@ class TestDomainGapExtremeValues:
         embed_dim = 3
         n_src = 5
         n_tgt = 5
-        src_emb = np.random.default_rng(42).normal(size=(n_src, embed_dim))
+        src_emb = np.random.default_rng(get_test_seed()).normal(size=(n_src, embed_dim))
         tgt_emb = np.random.default_rng(99).normal(size=(n_tgt, embed_dim))
         src = {
             "count": pa.array([n_src], type=pa.int64()),

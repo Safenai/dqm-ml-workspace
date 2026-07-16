@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+from tests.utils.seeds import get_test_seed
 
 # --- Batch Metric Computation Tests ---
 
@@ -59,19 +60,20 @@ def test_compute_batch_metric_non_numeric_column(caplog):
 
 def test_compute_seed_is_used():
     """Verify compute_batch_metric produces deterministic results with same seed."""
+    seed = get_test_seed()
     proc1 = RepresentativenessProcessor(
         name="test",
         config={"columns": {"input": ["col1"]}},
     )
-    proc1.compute_seed = 42
-    proc1._rng = np.random.default_rng(42)
+    proc1.compute_seed = seed
+    proc1._rng = np.random.default_rng(seed)
 
     proc2 = RepresentativenessProcessor(
         name="test",
         config={"columns": {"input": ["col1"]}},
     )
-    proc2.compute_seed = 42
-    proc2._rng = np.random.default_rng(42)
+    proc2.compute_seed = seed
+    proc2._rng = np.random.default_rng(seed)
 
     data = pa.array([1.0, 2.0, 3.0, 4.0, 5.0])
     features = {"col1": data}

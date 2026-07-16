@@ -6,6 +6,7 @@ correctly orchestrates metric computation on DataFrames.
 
 from unittest.mock import MagicMock
 
+from dqm_ml_core.api.gap_processor import GapProcessor
 from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.utils.processor_runner import ProcessorRunner
 import pandas as pd
@@ -69,3 +70,68 @@ def test_processor_runner_overwrite_behavior(sample_dataframe):
 
     # Verify the final result content
     assert result == {"final": 1}
+
+
+def test_run_gap_with_mock_processor(sample_dataframe):
+    """Test that run_gap correctly runs GapProcessor on two DataFrames."""
+    runner = ProcessorRunner()
+
+    mock_gap = MagicMock(spec=GapProcessor)
+    mock_gap.select_features.return_value = {"emb": pa.array([1, 2, 3])}
+    mock_gap.compute_batch_metric.return_value = {"stats": pa.array([10])}
+    mock_gap.compute.return_value = {"source_stats": "val"}
+    mock_gap.compute_delta.return_value = {"mmd_linear": pa.array([0.5])}
+
+    result = runner.run_gap(sample_dataframe, sample_dataframe, mock_gap)
+
+    assert "mmd_linear" in result
+    assert "selection_source" in result
+    assert "selection_target" in result
+    assert mock_gap.select_features.call_count == 2
+    assert mock_gap.compute_batch_metric.call_count == 2
+    assert mock_gap.compute.call_count == 2
+    mock_gap.compute_delta.assert_called_once()
+
+
+def test_run_gap_empty_dataframes():
+    """Test that run_gap returns empty dict for empty DataFrames."""
+    runner = ProcessorRunner()
+    mock_gap = MagicMock(spec=GapProcessor)
+
+    empty_df = pd.DataFrame()
+    result = runner.run_gap(empty_df, empty_df, mock_gap)
+
+    assert result == {}
+    mock_gap.select_features.assert_not_called()
+
+
+def test_run_gap_with_features():
+    """Test that run_gap runs feature processors before gap computation."""
+    from dqm_ml_core.api.features_processor import FeaturesProcessor
+
+    runner = ProcessorRunner()
+
+    # Mock feature processor that adds an "embedding" column
+    mock_feature = MagicMock(spec=FeaturesProcessor)
+    mock_feature.compute_features.return_value = {
+        "embedding": pa.FixedSizeListArray.from_arrays(pa.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]), 3)
+    }
+
+    # Mock gap processor
+    mock_gap = MagicMock(spec=GapProcessor)
+    mock_gap.select_features.return_value = {"embedding": pa.array([1, 2, 3])}
+    mock_gap.compute_batch_metric.return_value = {"stats": pa.array([10])}
+    mock_gap.compute.return_value = {"source_stats": "val"}
+    mock_gap.compute_delta.return_value = {"mmd_linear": pa.array([0.5])}
+
+    source_df = pd.DataFrame({"a": [1, 2]})
+    target_df = pd.DataFrame({"a": [3, 4]})
+
+    result = runner.run_gap(source_df, target_df, mock_gap, features=[mock_feature])
+
+    # Verify feature processor was called for both DataFrames
+    assert mock_feature.compute_features.call_count == 2
+
+    # Verify gap processor still ran
+    assert "mmd_linear" in result
+    mock_gap.compute_delta.assert_called_once()

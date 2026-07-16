@@ -12,6 +12,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +40,7 @@ def prefix_test_data(test_path: str, output_path: str) -> dict:
             "output": str(gen_path),
         }
 
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     rows: list[dict] = []
     for i in range(5):
         img = Image.new("RGB", (100, 70), (0, 0, 0))
@@ -73,7 +74,7 @@ def test_path_prefix_resolves_images(prefix_test_data: dict, test_path: str) -> 
     config = f"""---
 compute:
   log_level: "warning"
-  seed: 42
+  seed: {get_test_seed()}
   threads: 4
 
 dataloaders:

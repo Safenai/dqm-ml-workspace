@@ -15,9 +15,10 @@ of statistics (chi-sq, KS D, GRTE) rather than pass/fail interpretations.
 from dqm_ml_core.metrics.representativeness import RepresentativenessProcessor
 import numpy as np
 import pyarrow as pa
+from tests.utils.seeds import get_test_seed
 
 N_SAMPLES = 100_000
-RNG_SEED = 42
+RNG_SEED = get_test_seed()
 
 
 def _run_repr(

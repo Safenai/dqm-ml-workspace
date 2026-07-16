@@ -201,8 +201,6 @@ An OutputWriter persists computed features or metrics to a storage backend.
 class OutputWriter(Protocol):
     columns: list[str]
     name: str
-    add_dataloader_column: bool
-    dataloader_column_name: str
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None: ...
     def write_table(self, name: str, table: Any, part_index: int | None = None) -> None: ...
@@ -231,8 +229,6 @@ class CsvOutputWriter:
         self.name = name
         self.path_pattern = cfg.path_pattern
         self.columns = list(cfg.columns)
-        self.add_dataloader_column = cfg.add_dataloader_column
-        self.dataloader_column_name = cfg.dataloader_column_name
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         pass  # simplified — write all rows per selection

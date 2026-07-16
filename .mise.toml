@@ -58,6 +58,7 @@ uv run nox -s test_custom -- "$@"
 description = "Run tests with coverage"
 run = """
 #!/bin/bash
+export DQM_ML_TEST_SEED=42
 if [ ! -f examples/data/large_test_2m.parquet ]; then
   uv run python examples/script/generate_data.py
 fi
@@ -65,6 +66,17 @@ mkdir -p logs
 timestamp=$(date +%Y%m%d_%H%M%S)
 exec > >(tee "logs/test_${timestamp}.log") 2>&1
 uv run nox -s test
+"""
+
+[tasks.test_packaging]
+description = "Run package-isolation tests"
+run = """
+#!/bin/bash
+export DQM_ML_TEST_SEED=42
+mkdir -p logs
+timestamp=$(date +%Y%m%d_%H%M%S)
+exec > >(tee "logs/test_packaging_${timestamp}.log") 2>&1
+uv run nox -s test_packaging -- "$@"
 """
 
 ########################################

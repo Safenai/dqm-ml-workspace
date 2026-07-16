@@ -13,6 +13,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from tests.utils.seeds import get_test_seed
 import yaml
 
 
@@ -68,7 +69,7 @@ def _run_div_job(
     config: dict[str, Any] = {
         "compute": {
             "log_level": "debug",
-            "seed": 42,
+            "seed": get_test_seed(),
             "progress_bar": True,
             "threads": 4,
         },
@@ -140,13 +141,13 @@ def _run_div_job(
         ),
         pytest.param(
             "many_balanced",
-            list(map(float, np.random.default_rng(42).integers(0, 100, 1000))),
+            list(map(float, np.random.default_rng(get_test_seed()).integers(0, 100, 1000))),
             {"gini_simpson": 0.95, "richness": 90},
             id="many_balanced",
         ),
         pytest.param(
             "many_skewed",
-            [0.0] * 900 + list(map(float, np.random.default_rng(43).integers(1, 11, 100))),
+            [0.0] * 900 + list(map(float, np.random.default_rng(get_test_seed() + 1).integers(1, 11, 100))),
             {"gini_simpson": 0.19, "richness": 11},
             id="many_skewed",
         ),

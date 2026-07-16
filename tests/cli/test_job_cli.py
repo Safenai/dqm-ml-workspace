@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 from dqm_ml_job.cli import _init_components_from_list, _merge_errors, execute, parse_args, run
 import pytest
+from tests.utils.seeds import get_test_seed
 import yaml
 
 test_cases = [
@@ -119,7 +120,7 @@ class TestRunEdgeCases:
     def test_run_with_valid_config(self):
         config = {
             "dataloaders": {"loaders": [{"path": "dummy.parquet"}]},
-            "compute": {"seed": 42},
+            "compute": {"seed": get_test_seed()},
         }
         with patch("dqm_ml_job.cli.PluginLoadedRegistry.get_dataloaders_registry") as mock_dl_reg:
             mock_dl_reg.return_value = {}

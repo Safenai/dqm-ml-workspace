@@ -9,6 +9,8 @@ import io
 import numpy as np
 from PIL import Image, ImageDraw
 
+from tests.utils.seeds import get_test_seed
+
 
 def _jpg_bytes(img: Image.Image, quality: int = 95) -> bytes:
     buf = io.BytesIO()
@@ -132,7 +134,7 @@ def generate_stress_images() -> list[bytes]:
 
     Composes the individual generators above with a shared RNG seed.
     """
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(get_test_seed())
     return [
         *uniform_series(),
         checkerboard(),

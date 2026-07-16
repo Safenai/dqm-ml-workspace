@@ -32,8 +32,6 @@ theme:
     # GitHub specific.
     repo: fontawesome/brands/github
   favicon: static/math-integral-box.png
-  mermaid:
-    version: 9.4.0
   features:
     - content.code.annotate
     - content.code.copy
@@ -61,8 +59,14 @@ markdown_extensions:
   - footnotes
   - pymdownx.details
   - pymdownx.keys
-  - pymdownx.highlight
-  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
@@ -88,7 +92,7 @@ plugins:
   - offline:
       enabled: !ENV [MKDOCS_MATERIAL_OFFLINE, false]
   - mermaid2:
-      version: "9.4.0"
+      version: 11.16.0
   - mkdocstrings:
       handlers:
         python:
@@ -144,6 +148,7 @@ nav:
       - Gap: configuration/gap.md
       - Data Selection: configuration/data_selection.md
       - Global: configuration/global.md
+      - JSON Schema: schema/schema.md
     - YAML Basics: yaml_basics.md
   - Metrics: 
     - Overview: metrics.md
@@ -176,6 +181,8 @@ nav:
   - Developer Guide:
     - What to consider: developer.md
     - Contributing: contributing.md
+    - Testing: testing.md
+    - Packaging Tests: packaging-tests.md
     - Roadmap: ROADMAP.md
     - Packages:
       - Core: packages/dqm-ml-core.md

@@ -24,8 +24,31 @@ jobs:
             echo "is_on_dev=false" >> "$GITHUB_OUTPUT"
           fi
 
-  publish-test-pypi:
+  test-packaging:
     needs: check-dev
+    if: needs.check-dev.outputs.is_on_dev == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup
+
+      - name: Validate tag format
+        run: |
+          TAG="${{ github.ref_name }}"
+          if ! echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-?(rc|a)[0-9]+)?$'; then
+            echo "Invalid tag format: $TAG"
+            exit 1
+          fi
+
+      - name: Run packaging tests
+        run: TQDM_DISABLE=1 mise test_packaging
+
+  publish-test-pypi:
+    needs: [check-dev, test-packaging]
     if: needs.check-dev.outputs.is_on_dev == 'true'
     runs-on: ubuntu-24.04
     environment: test-pypi
