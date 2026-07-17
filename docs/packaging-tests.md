@@ -18,142 +18,48 @@ DQM-ML is split into optional packages so users only install what they need:
 
 Installing `dqm-ml-images` should **not** pull in `torch` or `torchvision` unless explicitly requested. These tests verify that invariant.
 
-## Contributor Workflow
+## Test Scripts
 
-When modifying code in `packages/`, test your changes locally before creating a Pull Request. Since your updated packages are not yet published to PyPI, you must build wheels locally and install from those wheels.
+Four shell scripts cover different package sources. Each runs all 9 scenarios (or a single one by number).
 
-### 1. Build all wheels
+| Script | Package Source | When to Use |
+|--------|---------------|-------------|
+| `scripts/packaging/test_local.sh` | Locally built wheels | Before PR — tests your local changes |
+| `scripts/packaging/test_pypi_prerelease.sh` | PyPI pre-release | After push to dev — tests rc/alpha from PyPI |
+| `scripts/packaging/test_testpypi_prerelease.sh` | test.pypi.org pre-release | After push to dev — tests rc/alpha from test-pypi |
+| `scripts/packaging/test_pypi_release.sh` | PyPI release | After release — tests stable version |
 
-```bash
-uv build --package dqm-ml-core --wheel --out-dir ./tmp/wheels
-uv build --package dqm-ml-images --wheel --out-dir ./tmp/wheels
-uv build --package dqm-ml-job --wheel --out-dir ./tmp/wheels
-uv build --package dqm-ml-pytorch --wheel --out-dir ./tmp/wheels
-uv build --package dqm-ml --wheel --out-dir ./tmp/wheels
-```
-
-### 2. Create an isolated venv and install from local wheels
+### Usage
 
 ```bash
-python3 -m venv ./tmp/test-scenario && source ./tmp/test-scenario/bin/activate
-pip install ./tmp/wheels/dqm_ml_core-*.whl   # install only what you need
+# Run all 9 scenarios
+scripts/packaging/test_local.sh
+
+# Run a single scenario (e.g., scenario 3: dqm-ml-core + dqm-ml-job)
+scripts/packaging/test_local.sh 3
 ```
 
-### 3. Run the smoke test script
+All scripts:
 
-```bash
-python3 tests/packaging/scripts/smoke_core.py
-deactivate
-```
+- Create isolated venvs with `uv venv --python 3.12`
+- Set `TMPDIR=scripts/packaging/tmp` to avoid disk quota issues on `/tmp`
+- Print full uv/pip output for easy debugging
+- Report pass/fail per scenario with color output
+- Exit non-zero if any scenario fails
 
-### 4. Clean up
+## Scenarios
 
-```bash
-rm -rf ./tmp/test-scenario ./tmp/wheels
-```
-
-Each scenario below follows this same pattern: build → venv → install from wheels → run script.
-
-## Package Scenarios
-
-### 1. dqm-ml-core only (metrics, no torch)
-
-```bash
-python3 -m venv ./tmp/test-core && source ./tmp/test-core/bin/activate
-pip install ./tmp/wheels/dqm_ml_core-*.whl
-python3 tests/packaging/scripts/smoke_core.py
-deactivate
-```
-
-Tests completeness and representativeness via the Python API. No job, no images, no pytorch.
-
-### 2. dqm-ml-core + dqm-ml-images (visual features)
-
-```bash
-python3 -m venv ./tmp/test-images && source ./tmp/test-images/bin/activate
-pip install ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_images-*.whl
-python3 tests/packaging/scripts/smoke_images.py
-deactivate
-```
-
-Tests `VisualFeaturesProcessor` via ProcessorRunner and direct API. No job.
-
-### 3. dqm-ml-core + dqm-ml-job (metrics via YAML pipeline)
-
-```bash
-python3 -m venv ./tmp/test-job && source ./tmp/test-job/bin/activate
-pip install ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_job-*.whl
-python3 tests/packaging/scripts/smoke_core_job.py
-deactivate
-```
-
-Tests that completeness metrics can be executed through `dqm-ml-job` CLI with a YAML config.
-
-### 4. dqm-ml-core + dqm-ml-images + dqm-ml-job (visual features via YAML)
-
-```bash
-python3 -m venv ./tmp/test-images-job && source ./tmp/test-images-job/bin/activate
-pip install ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_images-*.whl ./tmp/wheels/dqm_ml_job-*.whl
-python3 tests/packaging/scripts/smoke_images_job.py
-deactivate
-```
-
-Tests that visual features can be executed through `dqm-ml-job` CLI with a YAML config.
-
-### 5. dqm-ml-core + dqm-ml-pytorch (embedding features)
-
-```bash
-python3 -m venv ./tmp/test-embeddings && source ./tmp/test-embeddings/bin/activate
-pip install --extra-index-url https://download.pytorch.org/whl/cpu ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_pytorch-*.whl
-python3 tests/packaging/scripts/smoke_embeddings.py
-deactivate
-```
-
-Tests `ImageEmbeddingProcessor` via ProcessorRunner. No gap, no job.
-
-### 6. dqm-ml-core + dqm-ml-pytorch (gap metrics)
-
-```bash
-python3 -m venv ./tmp/test-gap && source ./tmp/test-gap/bin/activate
-pip install --extra-index-url https://download.pytorch.org/whl/cpu ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_pytorch-*.whl
-python3 tests/packaging/scripts/smoke_gap.py
-deactivate
-```
-
-Tests `DomainGapProcessor` with pre-computed embeddings (MMD linear and RBF). No job.
-
-### 7. dqm-ml-core + dqm-ml-pytorch + dqm-ml-job (embeddings + gap via YAML)
-
-```bash
-python3 -m venv ./tmp/test-pytorch && source ./tmp/test-pytorch/bin/activate
-pip install --extra-index-url https://download.pytorch.org/whl/cpu ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_pytorch-*.whl ./tmp/wheels/dqm_ml_job-*.whl
-python3 tests/packaging/scripts/smoke_pytorch.py
-deactivate
-```
-
-Tests embeddings and gap metrics through YAML config with `dqm-ml-job`.
-
-### 8. dqm-ml-core + dqm-ml-images + dqm-ml-pytorch + dqm-ml-job (all metrics, no notebooks)
-
-```bash
-python3 -m venv ./tmp/test-all && source ./tmp/test-all/bin/activate
-pip install --extra-index-url https://download.pytorch.org/whl/cpu ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_images-*.whl ./tmp/wheels/dqm_ml_pytorch-*.whl ./tmp/wheels/dqm_ml_job-*.whl
-python3 tests/packaging/scripts/smoke_all.py
-deactivate
-```
-
-Tests all metric types: completeness, representativeness, visual features, embeddings, and gap metrics.
-
-### 9. All packages including dqm-ml (all metrics + notebooks)
-
-```bash
-python3 -m venv ./tmp/test-notebooks && source ./tmp/test-notebooks/bin/activate
-pip install --extra-index-url https://download.pytorch.org/whl/cpu ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_images-*.whl ./tmp/wheels/dqm_ml_pytorch-*.whl ./tmp/wheels/dqm_ml_job-*.whl "$(ls ./tmp/wheels/dqm_ml-*.whl)[notebooks]"
-python3 tests/packaging/scripts/smoke_notebooks.py
-deactivate
-```
-
-Tests that all packages import correctly and notebook dependencies (jupyter, plotly, matplotlib) are available.
+| # | Name | Packages | Smoke Script | Tests |
+|---|------|----------|-------------|-------|
+| 1 | Core only | dqm-ml-core | smoke_core.py | Completeness, representativeness via Python API |
+| 2 | Images | dqm-ml-core, dqm-ml-images | smoke_images.py | VisualFeaturesProcessor via ProcessorRunner |
+| 3 | Job | dqm-ml-core, dqm-ml-job | smoke_core_job.py | Completeness metrics through CLI with YAML config |
+| 4 | Images + Job | dqm-ml-core, dqm-ml-images, dqm-ml-job | smoke_images_job.py | Visual features through CLI with YAML config |
+| 5 | Embeddings | dqm-ml-core, dqm-ml-pytorch | smoke_embeddings.py | ImageEmbeddingProcessor via ProcessorRunner |
+| 6 | Gap | dqm-ml-core, dqm-ml-pytorch | smoke_gap.py | DomainGapProcessor with pre-computed embeddings (MMD) |
+| 7 | PyTorch + Job | dqm-ml-core, dqm-ml-pytorch, dqm-ml-job | smoke_pytorch.py | Embeddings and gap metrics through YAML config |
+| 8 | All | dqm-ml-core, dqm-ml-images, dqm-ml-pytorch, dqm-ml-job | smoke_all.py | All metric types: completeness, visual, embeddings, gap |
+| 9 | Notebooks | dqm-ml-core, dqm-ml-images, dqm-ml-pytorch, dqm-ml-job, dqm-ml[notebooks] | smoke_notebooks.py | All packages + notebook dependencies (jupyter, plotly, matplotlib) |
 
 ## CI/CD Lifecycle
 
@@ -169,40 +75,51 @@ flowchart LR
     D -.- D1["pypi.org"]
 ```
 
-### Local development
+## Manual Testing
 
-Build wheels from your local branch and test as described above. Your packages are not on any index yet — you install exclusively from local wheel files.
+For quick one-off tests without running all scenarios via scripts.
 
-### After PR merge to dev
+### Local wheels
 
-The CI pipeline builds wheels and pushes them to [test.pypi.org](https://test.pypi.org). You can now re-run the same scenarios using the test index instead of local wheels. Replace:
+Build wheels locally, install in an isolated venv, and run a smoke test.
 
 ```bash
-pip install ./tmp/wheels/dqm_ml_core-*.whl
+export TMPDIR=$(pwd)/tmp
+
+# Build all wheels
+uv build --package dqm-ml-core --wheel --out-dir ./tmp/wheels
+uv build --package dqm-ml-images --wheel --out-dir ./tmp/wheels
+uv build --package dqm-ml-job --wheel --out-dir ./tmp/wheels
+uv build --package dqm-ml-pytorch --wheel --out-dir ./tmp/wheels
+uv build --package dqm-ml --wheel --out-dir ./tmp/wheels
+
+# Test scenario 3: dqm-ml-core + dqm-ml-job
+uv venv --python 3.12 ./tmp/test-job
+uv pip install --python ./tmp/test-job/bin/python ./tmp/wheels/dqm_ml_core-*.whl ./tmp/wheels/dqm_ml_job-*.whl
+./tmp/test-job/bin/python scripts/packaging/smoke/smoke_core_job.py
+
+# Cleanup
+rm -rf ./tmp
 ```
 
-with:
+### PyPI pre-release
+
+Install and test a pre-release version directly from PyPI.
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ dqm-ml-core
-```
+export TMPDIR=$(pwd)/tmp
 
-!!! note
-    `--extra-index-url` is needed because test-pypi may not host all transitive dependencies (e.g. `torch`). The extra index lets pip fall back to regular PyPI for those.
+# Scenario 1: dqm-ml-core
+uv venv --python 3.12 ./tmp/test-core
+uv pip install --python ./tmp/test-core/bin/python --pre dqm-ml-core
+./tmp/test-core/bin/python scripts/packaging/smoke/smoke_core.py
 
-For example, to re-run scenario 1 (metrics only) from test-pypi:
+# Scenario 6: dqm-ml-core + dqm-ml-pytorch (gap)
+PYPI_FLAGS="--prerelease=allow --extra-index-url https://download.pytorch.org/whl/cpu"
+uv venv --python 3.12 ./tmp/test-gap
+uv pip install --python ./tmp/test-gap/bin/python $PYPI_FLAGS dqm-ml-core dqm-ml-pytorch
+./tmp/test-gap/bin/python scripts/packaging/smoke/smoke_gap.py
 
-```bash
-python3 -m venv ./tmp/test-core && source ./tmp/test-core/bin/activate
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ dqm-ml-core
-python3 tests/packaging/scripts/smoke_core.py
-deactivate
-```
-
-### After dev merge to main
-
-The CI pipeline pushes to [pypi.org](https://pypi.org). Packages are now publicly available:
-
-```bash
-pip install dqm-ml-core
+# Cleanup
+rm -rf ./tmp
 ```

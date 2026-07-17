@@ -24,32 +24,9 @@ jobs:
             echo "is_on_main=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # TEMPORARY, remove before final release
-  check-dev:
-    runs-on: ubuntu-24.04
-    outputs:
-      is_on_dev: ${{ steps.check.outputs.is_on_dev }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check if tag commit is on dev
-        id: check
-        run: |
-          git fetch origin +refs/heads/dev:refs/remotes/origin/dev --depth=1
-          if git merge-base --is-ancestor "${{ github.sha }}" origin/dev; then
-            echo "is_on_dev=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_on_dev=false" >> "$GITHUB_OUTPUT"
-          fi
-
   publish-pypi:
-    # TEMPORARY: Switched from check-main to check-dev for testing.
-    # Restore before final release: 
-    # needs: check-main
-    # if: needs.check-main.outputs.is_on_main == 'true'
-    needs: check-dev
-    if: needs.check-dev.outputs.is_on_dev == 'true'
+    needs: check-main
+    if: needs.check-main.outputs.is_on_main == 'true'
     runs-on: ubuntu-24.04
     environment: release
     permissions:

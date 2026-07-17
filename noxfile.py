@@ -81,23 +81,6 @@ def benchmark(s: Session) -> None:
     )
 
 
-@session(
-    python=["3.12"],
-    uv_groups=["test"],
-)
-def test_packaging(s: Session) -> None:
-    """Run package-isolation tests (builds wheels, creates isolated venvs, runs smoke scripts)."""
-    s.env["DQM_ML_TEST_SEED"] = "42"
-    s.run(
-        "pytest",
-        "tests/packaging",
-        "-m",
-        "packaging",
-        "--html=docs/reports/pytest/packaging_report.html",
-        *s.posargs,
-    )
-
-
 # For some sessions, set venv_backend="none" to simply execute scripts within the existing outer
 # uv-generated virtual environment, rather than have nox create a new one for each session. This
 # makes commonly repeated sessions execute faster.

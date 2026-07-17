@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-from tests.utils.seeds import get_test_seed
+from utils import get_test_seed
 
 
 def test_completeness():

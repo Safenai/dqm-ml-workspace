@@ -12,7 +12,7 @@ flowchart TB
         U[Unit Tests\n tests/unit]
         I[Integration Tests\n tests/integration]
         C[CLI Tests\n tests/cli]
-        P[Packaging Tests\n tests/packaging]
+        P[Packaging Tests\n scripts/packaging]
         B[Benchmark Tests\n tests/benchmark]
     end
     
@@ -65,10 +65,6 @@ tests/
 │   ├── test_domain_gap.py
 │   ├── test_visual_features.py
 │   └── test_pandas_welding.py
-├── packaging/               # Package isolation tests
-│   ├── conftest.py         # Wheel build & venv fixtures
-│   ├── test_package_isolation.py  # Parametrized isolation tests
-│   └── scripts/            # Smoke-test scripts for each scenario
 ├── benchmark/               # Benchmark tests (record metric values)
 │   └── test_benchmark_domain_gap.py
 └── cli/                     # CLI end-to-end tests
@@ -139,8 +135,8 @@ uv run pytest tests/unit/
 # Run with coverage for specific package
 uv run pytest --cov=packages/dqm-ml-core tests/
 
-# Run only packaging isolation tests
-uv run pytest -m packaging tests/packaging/
+# Run only packaging isolation tests (shell scripts, not pytest)
+scripts/packaging/test_local.sh
 ```
 
 ## Adding a New Test
@@ -149,7 +145,7 @@ uv run pytest -m packaging tests/packaging/
     - **Unit tests**: `tests/unit/package_name/` - fast, isolated tests of classes and functions
     - **Integration tests**: `tests/integration/` - tests that call `dqm-ml process` with YAML configs on synthetic data
     - **CLI tests**: `tests/cli/` - end-to-end tests of command-line usage
-    - **Packaging tests**: `tests/packaging/` - package-isolation tests that verify subsets of packages work independently (see [Packaging Tests](packaging-tests.md))
+    - **Packaging tests**: `scripts/packaging/` - shell scripts that verify subsets of packages work independently in isolated venvs (see [Packaging Tests](packaging-tests.md))
     - **Benchmark tests**: `tests/benchmark/` - compute metrics on open-source datasets (COCO) to compare metric values between [v1](https://github.com/IRT-SystemX/dqm-ml) and v2 (this repo); no pass/fail assertions, records results for manual inspection
 
 2. **Follow naming conventions**:

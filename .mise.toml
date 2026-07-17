@@ -76,7 +76,7 @@ export DQM_ML_TEST_SEED=42
 mkdir -p logs
 timestamp=$(date +%Y%m%d_%H%M%S)
 exec > >(tee "logs/test_packaging_${timestamp}.log") 2>&1
-uv run nox -s test_packaging -- "$@"
+scripts/packaging/test_local.sh "$@"
 """
 
 ########################################

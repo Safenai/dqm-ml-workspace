@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
-from tests.utils.seeds import get_test_seed
+from utils import get_test_seed
 
 
 def test_visual_features_via_yaml():

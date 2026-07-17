@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import pyarrow as pa
-from tests.utils.seeds import get_test_seed
+from utils import get_test_seed
 
 
 def test_visual_features_runner():
