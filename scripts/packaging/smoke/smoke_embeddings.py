@@ -10,7 +10,7 @@ import sys
 import numpy as np
 import pandas as pd
 from PIL import Image
-from tests.utils.seeds import get_test_seed
+from utils import get_test_seed
 
 
 def test_image_embedding():
