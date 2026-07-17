@@ -163,8 +163,8 @@ flowchart LR
     B --> C[dev branch]
     C --> D[main branch]
 
-    A -.- A1["Build wheels<br>test locally"]
-    B -.- B1["CI runs<br>unit/int tests"]
+    A -.- A1["Build wheels\n test locally"]
+    B -.- B1["CI runs\n unit/int tests"]
     C -.- C1["test.pypi.org"]
     D -.- D1["pypi.org"]
 ```

@@ -4,6 +4,8 @@ Get up and running with DQM-ML in minutes.
 
 > **See also:** [Concepts](formal_concepts.md) for definitions of **Sample**, **Metric**, **Processor**, and related terminology used throughout this page.
 
+> **What's new?** See the [Release Notes](./RELEASE.md) for the latest features and improvements.
+
 ## Installation
 
 ```bash

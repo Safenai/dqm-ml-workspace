@@ -26,6 +26,7 @@ You don't need to write code to contribute to DQM-ML!
 - 📝 **Examples & tutorials** - Add example scripts or notebooks showing DQM-ML usage
 - 🧪 **Better tests** - Make the project more robust
 - 🎨 **Website & docs design** - Improve mkdocs config, CSS, theme, documentation layout, mermaid diagrams
+- 📋 **Changelog** - Update CHANGELOG.md with your changes following the existing format
 
 ## Code Contribution Workflow
 

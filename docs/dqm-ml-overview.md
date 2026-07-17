@@ -2,7 +2,11 @@
 
 This page is for developers who want to understand how DQM-ML is structured and how to work with the codebase. For a general introduction to what DQM-ML does, check out the [Home](index.md) page.
 
-> **See also:** [Concepts](formal_concepts.md) for definitions of **Metric**, **Batch Metric**, **Data Selection**, **Processor**, and related terminology used throughout this page.
+> **See also:** 
+
+> [Concepts](formal_concepts.md) for definitions of **Metric**, **Batch Metric**, **Data Selection**, **Processor**, and related terminology used throughout this page.
+
+> For the full developer guide, see [Developer Guide](developer.md).
 
 ## Package Architecture
 
@@ -27,10 +31,10 @@ Here's how the packages relate to each other:
 
 ```mermaid
 flowchart TB
-    job[dqm-ml-job<br/>Orchestration] --> core[dqm-ml-core<br/>Core API]
-    images[dqm-ml-images<br/>Visual Features] --> core
-    pytorch[dqm-ml-pytorch<br/>PyTorch Metrics] --> core
-    cli[dqm-ml<br/>CLI Wrapper] --> job
+    job[dqm-ml-job\nOrchestration] --> core[dqm-ml-core\nCore API]
+    images[dqm-ml-images\nVisual Features] --> core
+    pytorch[dqm-ml-pytorch\nPyTorch Metrics] --> core
+    cli[dqm-ml\nCLI Wrapper] --> job
     cli --> core
     cli --> images
     cli --> pytorch
