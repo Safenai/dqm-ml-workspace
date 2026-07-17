@@ -9,6 +9,15 @@
 
 The [Roadmap](./ROADMAP.md), do not hesitate to propose adjustments
 
+## Changelog
+
+For a detailed list of changes, see the [Changelog](./CHANGELOG.md).
+
+## Testing
+
+- [Testing Strategy](./testing.md) — Test organization, directory structure, and how to add new tests
+- [Packaging Tests](./packaging-tests.md) — Tests that validate package installation in isolated environments
+
 ## Packages documentations
 
 - [Core](./packages/dqm-ml-core.md)

@@ -66,7 +66,11 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets:
       check_paths: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - pymdownx.tabbed:
       alternate_style: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
@@ -93,6 +97,9 @@ plugins:
       enabled: !ENV [MKDOCS_MATERIAL_OFFLINE, false]
   - mermaid2:
       version: 11.16.0
+      arguments:
+        securityLevel: loose
+        htmlLabels: false
   - mkdocstrings:
       handlers:
         python:
@@ -149,7 +156,8 @@ nav:
       - Data Selection: configuration/data_selection.md
       - Global: configuration/global.md
       - JSON Schema: schema/schema.md
-    - YAML Basics: yaml_basics.md
+      - YAML Basics: yaml_basics.md
+    - Release Notes: RELEASE.md
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
@@ -184,6 +192,7 @@ nav:
     - Testing: testing.md
     - Packaging Tests: packaging-tests.md
     - Roadmap: ROADMAP.md
+    - Changelog: CHANGELOG.md
     - Packages:
       - Core: packages/dqm-ml-core.md
       - Job: packages/dqm-ml-job.md

@@ -76,6 +76,7 @@ Install individual packages based on your needs:
 * **[Website version](https://safenai.github.io/dqm-ml-workspace/)**
 
 * **[Quick Start](./docs/quickstart.md)**: Get started in 5 minutes.
+* **[Release Notes](./RELEASE.md)**: What's new in the latest version.
 * **[Architecture & Rational](./docs/dqm-ml-v2.md)**: The "why" and "how" of V2.
 * **[Project Overview](./docs/dqm-ml-overview.md)** — Package structure and development conventions
 * **[Metrics Guide](./docs/metrics.md)**: Detailed list of available metrics and their configurations.

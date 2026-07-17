@@ -9,18 +9,18 @@ flowchart TB
 
     subgraph "Test Types"
   
-        U[Unit Tests<br/>tests/unit]
-        I[Integration Tests<br/>tests/integration]
-        C[CLI Tests<br/>tests/cli]
-        P[Packaging Tests<br/>tests/packaging]
-        B[Benchmark Tests<br/>tests/benchmark]
+        U[Unit Tests\n tests/unit]
+        I[Integration Tests\n tests/integration]
+        C[CLI Tests\n tests/cli]
+        P[Packaging Tests\n tests/packaging]
+        B[Benchmark Tests\n tests/benchmark]
     end
     
     subgraph "Test Pyramid"
-        TP[Unit Tests - Fast, isolated<br/>Core logic, processors]
-        TI[Integration Tests - Real data<br/>Pipelines, loaders, metrics]
-        TC[CLI Tests - End-to-end<br/>Commands, config files]
-        PP[Packaging Tests - Isolated venvs<br/>Package installation scenarios]
+        TP[Unit Tests - Fast, isolated\n Core logic, processors]
+        TI[Integration Tests - Real data\n Pipelines, loaders, metrics]
+        TC[CLI Tests - End-to-end\n Commands, config files]
+        PP[Packaging Tests - Isolated venvs\n Package installation scenarios]
     end
     
     U --> TP
@@ -28,12 +28,12 @@ flowchart TB
     C --> TC
     P --> PP
 
-    F[Fixtures - Shared test data<br/>tests/fixtures/ and tests/integration/fixtures/]
+    F[Fixtures - Shared test data\n tests/fixtures/ and tests/integration/fixtures/]
     TP --> F
     TI --> F
     B --> F
 
-    B -.-> BN[Compares v1 IRT-SystemX/dqm-ml<br/>and v2 this repo metric values<br/>on open-source datasets]
+    B -.-> BN[Compares v1 IRT-SystemX/dqm-ml\n and v2 this repo metric values\n on open-source datasets]
 ```
 
 ## Test Directory Structure

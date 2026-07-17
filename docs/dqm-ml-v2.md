@@ -71,13 +71,6 @@ flowchart LR
         V2c["..."]
         V2agg["Aggregate all batch stats"]
     end
-    
-    style V1 fill:#ffcdd2
-    style V2a fill:#c8e6c9
-    style V2p1 fill:#c8e6c9
-    style V2b fill:#c8e6c9
-    style V2p2 fill:#c8e6c9
-    style V2c fill:#c8e6c9
 ```
 
 

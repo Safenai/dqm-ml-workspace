@@ -1,6 +1,48 @@
 # Changelog
 
-## 2.0.0 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation
+## 2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds
+
+This release addresses review feedback from 2.0.0-rc3, enhancing ProcessorRunner with direct image-to-domain-gap support, adding package isolation smoke tests, and introducing configurable test seeds.
+
+### ProcessorRunner Enhancements
+
+* `ProcessorRunner.run_gap()` now accepts raw images directly via optional `features` parameter — compute domain gaps from image bytes without manual embedding extraction.
+* New `_df_to_record_batch()` helper for robust DataFrame-to-PyArrow conversion, handling `FixedSizeListArray` for embeddings.
+* Renamed `metrics_processors` parameter to `processors` in `run()` for clarity.
+* Separated `select_columns` intermediate results from final `batch_features` to avoid metric pollution.
+
+### Package Isolation Testing
+
+* New `tests/packaging/` directory with smoke tests for all 5 packages: dqm-ml, dqm-ml-core, dqm-ml-images, dqm-ml-job, dqm-ml-pytorch.
+* Smoke scripts verify imports, basic functionality, and YAML-based execution in isolated virtual environments.
+* New `tests/fixtures/packaging_fixtures.py` with `isolated_venv` and `wheels_dir` fixtures.
+* New `docs/packaging-tests.md` and `docs/testing.md` documentation.
+
+### Configurable Test Seeds
+
+* New `tests/utils/seeds.py` with `get_test_seed()` function reading `DQM_ML_TEST_SEED` env var (default 42).
+* Session-scoped `test_seed` fixture in `tests/conftest.py`.
+* Updated ~35 test files and YAML templates to use configurable seeds instead of hardcoded values.
+* Seeds injected via `tests/utils/jobs.py:generate_job()` for YAML template generation.
+
+### CI Improvements
+
+* tqdm progress bars suppressed in CI via `TQDM_DISABLE=1` in GitHub Actions and GitLab CI.
+* `noxfile.py` now sets `DQM_ML_TEST_SEED=42` in all test sessions.
+* `.mise.toml` exports `DQM_ML_TEST_SEED=42` for local development.
+
+### Documentation
+
+* New `docs/testing.md` with test organization, directory structure, and adding tests guide.
+* New `docs/packaging-tests.md` with package isolation testing documentation.
+* Improved READMEs for dqm-ml-core (+134 lines), dqm-ml-images (+100 lines), dqm-ml-pytorch (+252 lines).
+
+### Bug Fixes
+
+* S3 support fixes in CLI and processor (`dqm_ml_job.cli`, `dqm_ml_job.utils.s3`).
+* CI tag regex and PyPI publish workflow fixes.docs/index.md 
+
+## 2.0.0-rc3 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation
 
 This release introduces a consistent configuration with Pydantic models and validation, adds a topological processor DAG, example notebooks and a user guide, improves domain-gap algorithms and image embedding, and refactors tests to generate synthetic data inline.
 

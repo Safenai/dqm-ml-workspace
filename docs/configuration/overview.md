@@ -6,17 +6,17 @@ DQM-ML pipelines are configured using **YAML** files. This guide explains how to
 
 ```mermaid
 flowchart TB
-    subgraph "config.yaml"
-        subgraph "features"
+    subgraph config["config.yaml"]
+        subgraph feat["features"]
             F1["outputs + processors"]
         end
-        subgraph "metrics"
+        subgraph met["metrics"]
             M1["outputs + processors"]
         end
-        subgraph "gap"
+        subgraph g["gap"]
             G1["outputs + processors"]
         end
-        subgraph "dataloaders"
+        subgraph dl["dataloaders"]
             DL1["loaders: [parquet, csv, ...]"]
         end
     end

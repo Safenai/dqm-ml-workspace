@@ -17,7 +17,7 @@ __pycache__
 .venv
 # Pytest report
 **/pytest_report.html
-docs/examples
+
 examples/outputs
 assets
 
@@ -37,6 +37,9 @@ output
 docs/index.md
 docs/AGENTS.md
 docs/packages/
+docs/examples
+docs/RELEASE.md
+docs/CHANGELOG.md
 .github/workflows/tests_act.yml
 
 # Test logs
