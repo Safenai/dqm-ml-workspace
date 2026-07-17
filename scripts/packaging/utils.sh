@@ -95,6 +95,22 @@ summary() {
     fi
 }
 
+# run_scenarios <scenario>
+#   Run scenarios matching <scenario> (0 = all).
+#   Requires $CORE, $IMAGES, $JOB, $PYTORCH to be set by the caller.
+run_scenarios() {
+    local scenario="${1:-0}"
+    if [[ "$scenario" == "0" || "$scenario" == "1" ]]; then run_scenario "1_core_only"      "smoke_core.py"       "$CORE"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "2" ]]; then run_scenario "2_images"          "smoke_images.py"     "$CORE" "$IMAGES"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "3" ]]; then run_scenario "3_job"             "smoke_core_job.py"   "$CORE" "$JOB"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "4" ]]; then run_scenario "4_images_job"      "smoke_images_job.py" "$CORE" "$IMAGES" "$JOB"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "5" ]]; then run_scenario "5_embeddings"      "smoke_embeddings.py" "$CORE" "$PYTORCH"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "6" ]]; then run_scenario "6_gap"             "smoke_gap.py"        "$CORE" "$PYTORCH"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "7" ]]; then run_scenario "7_pytorch_job"     "smoke_pytorch.py"    "$CORE" "$PYTORCH" "$JOB"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "8" ]]; then run_scenario "8_all"             "smoke_all.py"        "$CORE" "$IMAGES" "$PYTORCH" "$JOB"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "9" ]]; then run_scenario "9_notebooks"       "smoke_notebooks.py"  "$CORE" "$IMAGES" "$PYTORCH" "$JOB" "dqm-ml[notebooks]"; fi
+}
+
 # parse_scenario_arg <arg> <total>
 #   Returns scenario number or 0 for "all".
 parse_scenario_arg() {
