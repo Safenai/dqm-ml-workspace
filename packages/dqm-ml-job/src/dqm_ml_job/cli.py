@@ -93,7 +93,12 @@ def execute(arg_list: list[str] | None = None) -> None:
     for config_file in args.process_config:
         logger.debug("Executing job from config file: %s", config_file)
 
-        with Path(config_file).open() as stream:
+        config_path = Path(config_file).resolve()
+        if not config_path.is_file():
+            logger.error("Config file does not exist: %s", config_file)
+            return
+
+        with config_path.open() as stream:
             try:
                 config_content = yaml.safe_load(stream)
                 config.update(config_content)
@@ -107,7 +112,9 @@ def execute(arg_list: list[str] | None = None) -> None:
     # Optionally save the resolved configuration
     if args.save_config:
         logger.debug("Saving resolved configuration to: %s", args.save_config)
-        with Path(args.save_config).open("w") as stream:
+        save_path = Path(args.save_config).resolve()
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        with save_path.open("w") as stream:
             yaml.safe_dump(config, stream)
 
     run(config)

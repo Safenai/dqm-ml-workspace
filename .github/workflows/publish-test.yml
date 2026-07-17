@@ -8,6 +8,8 @@ on:
 jobs:
   check-dev:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       is_on_dev: ${{ steps.check.outputs.is_on_dev }}
     steps:
@@ -28,6 +30,8 @@ jobs:
     needs: check-dev
     if: needs.check-dev.outputs.is_on_dev == 'true'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:

@@ -8,6 +8,8 @@ on:
 jobs:
   check-main:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       is_on_main: ${{ steps.check.outputs.is_on_main }}
     steps:
