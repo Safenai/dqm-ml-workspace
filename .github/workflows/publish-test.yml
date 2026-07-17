@@ -45,7 +45,7 @@ jobs:
           fi
 
       - name: Run packaging tests
-        run: TQDM_DISABLE=1 mise test_packaging
+        run: TQDM_DISABLE=1 uv run nox -s test_packaging
 
   publish-test-pypi:
     needs: [check-dev, test-packaging]
