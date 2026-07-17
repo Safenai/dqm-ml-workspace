@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Diversity — measure class balance and category spread across sources
+##
+## Uses Simpson, Gini-Simpson, Shannon Entropy, and Richness to
+## describe how evenly samples are distributed across categories.
+## Useful for detecting class imbalance before training.
+##
+## Before running, first compute visual features:
+##     dqm-ml process -p examples/config/scenario/visual_features.yaml
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/diversity.yaml
+##
+## See also: docs/metrics/diversity.md
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/outputs/story_visual_features.parquet
+      batch_size: 10000
+
+metrics:
+  outputs:
+    path: examples/outputs/story_diversity.parquet
+  processors:
+    - name: diversity
+      type: diversity
+      columns:
+        input: [class_name, source]
+      metrics: [simpson, gini, shannon, richness]

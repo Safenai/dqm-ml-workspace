@@ -1,0 +1,30 @@
+name: Setup workspace
+description: uv + Python — shared by all jobs (checkout must run first)
+
+inputs:
+  python-version:
+    description: Python version (omit to use .python-version file)
+    required: false
+    default: ''
+  uv-version:
+    description: uv version to install
+    required: false
+    default: "0.8.17"
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v7
+      with:
+        version: ${{ inputs.uv-version }}
+        enable-cache: true
+
+    - if: ${{ !inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+
+    - if: ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}

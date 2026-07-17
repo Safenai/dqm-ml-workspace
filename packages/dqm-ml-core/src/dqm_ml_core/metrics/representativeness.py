@@ -17,12 +17,13 @@ from scipy import stats
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core.api.data_processor import DatametricProcessor
+from dqm_ml_core.api.metrics_processor import MetricsProcessor
+from dqm_ml_core.models.processors import RepresentativenessProcessorConfig
 
 logger = logging.getLogger(__name__)
 
 
-class RepresentativenessProcessor(DatametricProcessor):
+class RepresentativenessProcessor(MetricsProcessor):
     """
     Evaluates how well the dataset represents a target statistical distribution.
 
@@ -87,61 +88,67 @@ class RepresentativenessProcessor(DatametricProcessor):
         """
         super().__init__(name, config)
         self.name = name
+        cfg = RepresentativenessProcessorConfig.model_validate({**self.config, "name": self.name})
+        self._init_from_cfg(cfg)
 
-        cfg = self.config
-        self.metrics: list[str] = list(
-            cfg.get(
-                "metrics",
-                ["chi-square", "grte", "kolmogorov-smirnov", "shannon-entropy"],
-            )
-        )
+        # Use device from compute config if available
+        compute_device = getattr(self, "compute_device", None)
+        self.device = self._resolve_device(compute_device) if compute_device else self._resolve_device("cpu")
 
-        self.bins: int = int(cfg.get("bins", 10))
-        self.distribution: str = str(cfg.get("distribution", "normal")).lower()
+        # Use seed from compute config if available
+        compute_seed = getattr(self, "compute_seed", None)
+        if compute_seed is not None:
+            self._rng = np.random.default_rng(compute_seed)
+        else:
+            self._rng = np.random.default_rng()
 
-        # Load configurable constants from config or use defaults
-        self.alpha: float = float(cfg.get("alpha", self.DEFAULT_ALPHA))
-        self.shannon_entropy_threshold: float = float(
-            cfg.get(
-                "shannon_entropy_threshold",
-                self.DEFAULT_SHANNON_ENTROPY_THRESHOLD,
-            )
-        )
-        self.grte_threshold: float = float(cfg.get("grte_threshold", self.DEFAULT_GRTE_THRESHOLD))
-        self.ks_sample_size: int = int(cfg.get("ks_sample_size", self.DEFAULT_KS_SAMPLE_SIZE))
-        self.ks_min_sample_size: int = int(cfg.get("ks_min_sample_size", self.DEFAULT_KS_MIN_SAMPLE_SIZE))
-        self.ks_sample_divisor: int = int(cfg.get("ks_sample_divisor", self.DEFAULT_KS_SAMPLE_DIVISOR))
-        self.epsilon: float = float(cfg.get("epsilon", self.DEFAULT_EPSILON))
-
-        # Load interpretation thresholds from config or use defaults
-        self.interpretation_thresholds: dict[str, str] = cfg.get(
-            "interpretation_thresholds", self.DEFAULT_INTERPRETATION_THRESHOLDS
-        )
-
-        # Handle distribution_params properly - it can be None or a dict
-        dist_params_raw = cfg.get("distribution_params")
-
-        self.dist_params: dict[str, Any] = {}
-        if dist_params_raw is not None:
-            self.dist_params = dict(dist_params_raw)
-
-        # Avoid redundant config validation (pipeline already validates)
-        if not self.input_columns:
-            raise ValueError(f"[{self.name}] 'input_columns' must be provided")
-        if any(m not in self.SUPPORTED_METRICS for m in self.metrics):
-            raise ValueError(f"[{self.name}] unsupported metric; supported: {self.SUPPORTED_METRICS}")
-        if self.distribution not in self.SUPPORTED_DISTS:
-            raise ValueError(f"[{self.name}] 'distribution' must be in {self.SUPPORTED_DISTS}")
-        if self.bins < 2:
-            raise ValueError(f"[{self.name}] 'bins' must be >= 2")
-        if self.alpha <= 0 or self.alpha >= 1:
-            raise ValueError(f"[{self.name}] 'alpha' must be between 0 and 1")
-        if self.epsilon <= 0:
-            raise ValueError(f"[{self.name}] 'epsilon' must be positive")
-
-        self._rng = np.random.default_rng()
         self._bin_edges: dict[str, np.ndarray] = {}
+        self._bin_params: dict[str, dict[str, float]] = {}  # caching for _compute_expected_counts
         self._initialized: bool = False
+
+    def _set_optional_subconfig(self, cfg: RepresentativenessProcessorConfig) -> None:
+        self.bins = cfg.histogram.bins if cfg.histogram else 10
+        self.shannon_entropy_threshold = (
+            cfg.shannon.threshold if cfg.shannon else self.DEFAULT_SHANNON_ENTROPY_THRESHOLD
+        )
+        self.grte_threshold = cfg.grte.threshold if cfg.grte else self.DEFAULT_GRTE_THRESHOLD
+        self.grte_scaling_factor = cfg.grte.scaling_factor if cfg.grte else -2.0
+        self.ks_sample_size = cfg.ks.sample_size if cfg.ks else self.DEFAULT_KS_SAMPLE_SIZE
+        self.ks_min_sample_size = cfg.ks.min_sample_size if cfg.ks else self.DEFAULT_KS_MIN_SAMPLE_SIZE
+        self.ks_sample_divisor = cfg.ks.sample_divisor if cfg.ks else self.DEFAULT_KS_SAMPLE_DIVISOR
+        self.interpretation_thresholds = (
+            dict(cfg.interpretation.model_dump()) if cfg.interpretation else self.DEFAULT_INTERPRETATION_THRESHOLDS
+        )
+
+    @staticmethod
+    def _parse_distribution_params(
+        cfg: RepresentativenessProcessorConfig,
+    ) -> dict[str, dict[str, float]]:
+        dist_params: dict[str, dict[str, float]] = {}
+        if not cfg.distribution_params:
+            return dist_params
+        for p in cfg.distribution_params:
+            dd: dict[str, float] = {}
+            if p.mean is not None:
+                dd["mean"] = p.mean
+            if p.std is not None:
+                dd["std"] = p.std
+            if p.min is not None:
+                dd["min"] = p.min
+            if p.max is not None:
+                dd["max"] = p.max
+            dist_params[p.column] = dd
+        return dist_params
+
+    def _init_from_cfg(self, cfg: RepresentativenessProcessorConfig) -> None:
+        self.metrics = list(cfg.metrics)
+        self._set_optional_subconfig(cfg)
+        self.distribution = cfg.distribution
+        self.mean_std_estimation = cfg.mean_std_estimation
+        self.expected_counts_method = cfg.expected_counts_method
+        self.alpha = cfg.alpha
+        self.epsilon = cfg.epsilon
+        self.dist_params = self._parse_distribution_params(cfg)
 
     @override
     def generated_metrics(self) -> list[str]:
@@ -171,6 +178,19 @@ class RepresentativenessProcessor(DatametricProcessor):
                 metrics.append(f"{col}_grte_interpretation")
 
         return metrics
+
+    # utils functions
+    @staticmethod
+    def _resolve_device(device: str) -> str:
+        """Resolve ``"auto"`` to CUDA if available, else CPU."""
+        if device == "auto":
+            try:
+                import torch
+
+                return "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                return "cpu"
+        return device
 
     @staticmethod
     def _convert_column_to_numeric(feature_array: pa.Array) -> pd.Series | None:
@@ -203,11 +223,14 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         sample_per_batch = min(
             self.ks_sample_size,
-            max(self.ks_min_sample_size, len(numeric_values) // self.ks_sample_divisor),
+            max(
+                self.ks_min_sample_size,
+                len(numeric_values) // self.ks_sample_divisor,
+            ),
         )
         if len(numeric_values) > sample_per_batch:
             sample_indices = self._rng.choice(len(numeric_values), sample_per_batch, replace=False)
-            return np.asarray(numeric_values[sample_indices])
+            return np.asarray(numeric_values.iloc[sample_indices])
         return np.asarray(numeric_values)
 
     @override
@@ -256,26 +279,50 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         return batch_metrics
 
-    def _initialize_bin_edges(self, sample_data: np.ndarray, col: str) -> None:
-        """
-        Initialize bin edges for a column based on sample data and target distribution.
-
-        Args:
-            sample_data: Data array used to infer parameters if not provided in config.
-            col: Name of the column.
-        """
-        if self.distribution == "normal":
-            mean = float(self.dist_params.get("mean", np.mean(sample_data)))
-            std = float(self.dist_params.get("std", np.std(sample_data, ddof=0)))
-            std = std if std > 0.0 else self.epsilon
-            edges = self._bin_edges_normal(mean, std, self.bins, sample_data)
+    def _get_normal_init_params(self, col: str, sample_data: np.ndarray) -> tuple[float, float]:
+        col_params = self.dist_params.get(col, {})
+        if self.mean_std_estimation == "user_provided":
+            if "mean" not in col_params or "std" not in col_params:
+                raise ValueError(
+                    f"[{self.name}] user_provided strategy requires 'mean' and 'std' "
+                    f"in distribution_params for column '{col}'"
+                )
+            mean = float(col_params["mean"])
+            std = float(col_params["std"])
         else:
-            min_val = float(self.dist_params.get("min", np.min(sample_data)))
-            max_val = float(self.dist_params.get("max", np.max(sample_data)))
-            if max_val <= min_val:
-                max_val = min_val + self.epsilon
-            edges = self._bin_edges_uniform(min_val, max_val, self.bins, sample_data)
+            mean = float(col_params.get("mean", np.mean(sample_data)))
+            std = float(col_params.get("std", np.std(sample_data, ddof=0)))
+        std = std if std > 0.0 else self.epsilon
+        return mean, std
 
+    def _get_uniform_init_params(self, col: str, sample_data: np.ndarray) -> tuple[float, float]:
+        col_params = self.dist_params.get(col, {})
+        if self.mean_std_estimation == "user_provided":
+            if "min" not in col_params or "max" not in col_params:
+                raise ValueError(
+                    f"[{self.name}] user_provided strategy requires 'min' and 'max' "
+                    f"in distribution_params for column '{col}'"
+                )
+            min_val = float(col_params["min"])
+            max_val = float(col_params["max"])
+        else:
+            min_val = float(col_params.get("min", np.min(sample_data)))
+            max_val = float(col_params.get("max", np.max(sample_data)))
+        if max_val <= min_val:
+            max_val = min_val + self.epsilon
+        return min_val, max_val
+
+    def _initialize_bin_edges(self, sample_data: np.ndarray, col: str) -> None:
+        sample_data = sample_data[np.isfinite(sample_data)]
+        if len(sample_data) == 0:
+            sample_data = np.array([0.0])
+        if self.distribution == "normal":
+            mean, std = self._get_normal_init_params(col, sample_data)
+            edges = self._bin_edges_normal(mean, std, self.bins, sample_data)
+            self._bin_params[col] = {"mean": mean, "std": std}
+        else:
+            min_val, max_val = self._get_uniform_init_params(col, sample_data)
+            edges = self._bin_edges_uniform(min_val, max_val, self.bins, sample_data)
         self._bin_edges[col] = edges
 
     def _aggregate_column_metrics(
@@ -317,6 +364,27 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         return total_count, obs_counts, self._bin_edges[col]
 
+    def _resolve_normal_params(self, col: str, batch_metrics: dict[str, pa.Array]) -> tuple[float, float]:
+        if self.mean_std_estimation == "from_first_batch":
+            params = self._bin_params.get(col)
+            if params is not None:
+                return params["mean"], params["std"]
+            return self._estimate_normal_params(col, batch_metrics)
+        if self.mean_std_estimation == "per_batch":
+            return self._estimate_normal_params(col, batch_metrics)
+        if self.mean_std_estimation == "user_provided":
+            col_params = self.dist_params.get(col, {})
+            if "mean" not in col_params or "std" not in col_params:
+                raise ValueError(
+                    f"[{self.name}] user_provided strategy requires 'mean' and 'std' "
+                    f"in distribution_params for column '{col}'"
+                )
+            std = float(col_params["std"])
+            return float(col_params["mean"]), std if std > 0.0 else self.epsilon
+        raise NotImplementedError(
+            f"[{self.name}] from_all_data strategy requires two-pass processing and is not yet implemented"
+        )
+
     def _compute_expected_counts(
         self,
         col: str,
@@ -324,25 +392,41 @@ class RepresentativenessProcessor(DatametricProcessor):
         total_count: int,
         edges: np.ndarray,
     ) -> np.ndarray:
-        """Generate expected counts under the configured distribution.
-
-        Args:
-            col: Column name.
-            batch_metrics: Batch-level metrics dict (used for KS samples to estimate params).
-            total_count: Total number of samples.
-            edges: Bin edges for histogram.
-
-        Returns:
-            Expected frequency counts per bin.
-        """
         if self.distribution == "normal":
-            mean, std = self._estimate_normal_params(col, batch_metrics)
+            mean, std = self._resolve_normal_params(col, batch_metrics)
+            if self.expected_counts_method == "cdf":
+                expected_probs = stats.norm.cdf(edges[1:], mean, std) - stats.norm.cdf(edges[:-1], mean, std)
+                return np.asarray((expected_probs * total_count).astype(np.float64))
             expected_values = self._rng.normal(mean, std, total_count)
         else:
-            min_val = float(self.dist_params.get("min", edges[0]))
-            max_val = float(self.dist_params.get("max", edges[-1]))
+            col_params = self.dist_params.get(col, {})
+            min_val = float(col_params.get("min", edges[0]))
+            max_val = float(col_params.get("max", edges[-1]))
+            if self.expected_counts_method == "cdf":
+                expected_probs = stats.uniform.cdf(edges[1:], min_val, max_val - min_val) - stats.uniform.cdf(
+                    edges[:-1], min_val, max_val - min_val
+                )
+                return np.asarray((expected_probs * total_count).astype(np.float64))
             expected_values = self._rng.uniform(min_val, max_val, total_count)
         return np.histogram(expected_values, bins=edges)[0].astype(np.float64)
+
+    def _estimate_from_samples(
+        self,
+        col_params: dict[str, Any],
+        sample_key: str,
+        batch_metrics: dict[str, pa.Array],
+    ) -> tuple[float, float]:
+        """Estimate normal params from KS sample data or fall back to defaults."""
+        if sample_key in batch_metrics:
+            sample_arrays = batch_metrics[sample_key].to_numpy()
+            if sample_arrays.ndim > 1:
+                sample_arrays = sample_arrays.flatten()
+            mean = float(col_params.get("mean", np.mean(sample_arrays)))
+            std = float(col_params.get("std", np.std(sample_arrays, ddof=0)))
+        else:
+            mean = float(col_params.get("mean", 0.0))
+            std = float(col_params.get("std", 1.0))
+        return mean, std
 
     def _estimate_normal_params(self, col: str, batch_metrics: dict[str, pa.Array]) -> tuple[float, float]:
         """Estimate normal distribution parameters from config or KS samples.
@@ -354,16 +438,18 @@ class RepresentativenessProcessor(DatametricProcessor):
         Returns:
             Tuple of (mean, std).
         """
-        sample_key = f"{col}_ks_sample"
-        if sample_key in batch_metrics:
-            sample_arrays = batch_metrics[sample_key].to_numpy()
-            if sample_arrays.ndim > 1:
-                sample_arrays = sample_arrays.flatten()
-            mean = float(self.dist_params.get("mean", np.mean(sample_arrays)))
-            std = float(self.dist_params.get("std", np.std(sample_arrays, ddof=0)))
+        col_params = self.dist_params.get(col, {})
+        if self.mean_std_estimation == "user_provided":
+            if "mean" not in col_params or "std" not in col_params:
+                raise ValueError(
+                    f"[{self.name}] user_provided strategy requires 'mean' and 'std' "
+                    f"in distribution_params for column '{col}'"
+                )
+            mean = float(col_params["mean"])
+            std = float(col_params["std"])
         else:
-            mean = float(self.dist_params.get("mean", 0.0))
-            std = float(self.dist_params.get("std", 1.0))
+            sample_key = f"{col}_ks_sample"
+            mean, std = self._estimate_from_samples(col_params, sample_key, batch_metrics)
         std = std if std > 0.0 else self.epsilon
         return mean, std
 
@@ -387,12 +473,6 @@ class RepresentativenessProcessor(DatametricProcessor):
 
         obs_sum = obs_counts[mask].sum()
         exp_sum = exp_counts[mask].sum()
-        if exp_sum <= 0:
-            return {
-                "p_value": float("nan"),
-                "statistic": float("nan"),
-                "interpretation": "no_expected_counts",
-            }
 
         exp_counts_normalized = exp_counts[mask] * (obs_sum / exp_sum)
         try:
@@ -445,8 +525,9 @@ class RepresentativenessProcessor(DatametricProcessor):
             mean, std = self._estimate_normal_params(col, batch_metrics)
             ks = stats.kstest(ks_samples, stats.norm.cdf, args=(mean, std))
         else:
-            min_val = float(self.dist_params.get("min", np.min(ks_samples)))
-            max_val = float(self.dist_params.get("max", np.max(ks_samples)))
+            col_params = self.dist_params.get(col, {})
+            min_val = float(col_params.get("min", np.min(ks_samples)))
+            max_val = float(col_params.get("max", np.max(ks_samples)))
             if max_val <= min_val:
                 max_val = min_val + self.epsilon
             ks = stats.kstest(ks_samples, stats.uniform.cdf, args=(min_val, max_val - min_val))
@@ -496,7 +577,7 @@ class RepresentativenessProcessor(DatametricProcessor):
         p_exp = exp_counts / exp_counts.sum()
         h_obs = float(stats.entropy(p_obs))
         h_exp = float(stats.entropy(p_exp))
-        grte = float(np.exp(-2.0 * abs(h_exp - h_obs)))
+        grte = float(np.exp(self.grte_scaling_factor * abs(h_exp - h_obs)))
         is_high = grte > self.grte_threshold
         return {
             "grte_value": grte,
@@ -552,9 +633,9 @@ class RepresentativenessProcessor(DatametricProcessor):
         for key, value in col_res.items():
             if isinstance(value, dict):
                 for prop, content in value.items():
-                    results[f"{key}_{col}_{prop}"] = content
+                    results[f"{col}_{key}_{prop}"] = content
             else:
-                results[f"{key}_{col}"] = value
+                results[f"{col}_{key}"] = value
 
     def _compute_column_results(
         self,
@@ -621,16 +702,18 @@ class RepresentativenessProcessor(DatametricProcessor):
         results["_metadata"] = self._build_compute_metadata(
             total_samples,
             batch_metrics,
-            self.input_columns,
+            self.input_columns or [],
             self.distribution,
             self.metrics,
             self.bins,
         )
         return results
 
+    @override
     def reset(self) -> None:
         """Reset processor state for new processing run."""
         self._bin_edges = {}
+        self._bin_params = {}
         self._initialized = False
 
     # utils methods for bin edge calculation

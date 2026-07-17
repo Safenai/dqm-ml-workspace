@@ -7,10 +7,9 @@ correctly parses arguments, displays version, and lists available plugins.
 import shlex
 import subprocess
 
-import pytest
-
 from dqm_ml.__main__ import execute, parse_args
 from dqm_ml_core._version_ import version
+import pytest
 
 test_cases = [
     ("version", f"DQML version : {version}"),  # no args
@@ -20,9 +19,9 @@ test_cases = [
         "- completeness - <class 'dqm_ml_core.metrics.completeness.CompletenessProcessor'>\n"
         "- diversity - <class 'dqm_ml_core.metrics.diversity.DiversityProcessor'>\n"
         "- representativeness - <class 'dqm_ml_core.metrics.representativeness.RepresentativenessProcessor'>\n"
-        "- visual_metric - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
+        "- image_features - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
         "- domain_gap - <class 'dqm_ml_pytorch.domain_gap.DomainGapProcessor'>\n"
-        "- image_embedding - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
+        "- features_embeddings - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
         "Available data loaders\n"
         "- csv - <class 'dqm_ml_job.dataloaders.pandas.PandasDataLoader'>\n"
         "- parquet - <class 'dqm_ml_job.dataloaders.parquet.ParquetDataLoader'>\n"

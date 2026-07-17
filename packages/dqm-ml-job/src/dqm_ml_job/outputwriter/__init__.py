@@ -23,8 +23,6 @@ class OutputWriter(Protocol):
 
     columns: list[str]
     name: str
-    add_dataloader_column: bool
-    dataloader_column_name: str
 
     def write_metrics_dict(self, metrics_dict: dict[str, dict[str, Any]]) -> None:
         """Persist computed metrics for all selections.

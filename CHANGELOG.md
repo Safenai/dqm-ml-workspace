@@ -1,5 +1,109 @@
 # Changelog
 
+## 2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds
+
+This release addresses review feedback from 2.0.0-rc3, enhancing ProcessorRunner with direct image-to-domain-gap support, adding package isolation smoke tests, and introducing configurable test seeds.
+
+### ProcessorRunner Enhancements
+
+* `ProcessorRunner.run_gap()` now accepts raw images directly via optional `features` parameter — compute domain gaps from image bytes without manual embedding extraction.
+* New `_df_to_record_batch()` helper for robust DataFrame-to-PyArrow conversion, handling `FixedSizeListArray` for embeddings.
+* Renamed `metrics_processors` parameter to `processors` in `run()` for clarity.
+* Separated `select_columns` intermediate results from final `batch_features` to avoid metric pollution.
+
+### Package Isolation Testing
+
+* New `tests/packaging/` directory with smoke tests for all 5 packages: dqm-ml, dqm-ml-core, dqm-ml-images, dqm-ml-job, dqm-ml-pytorch.
+* Smoke scripts verify imports, basic functionality, and YAML-based execution in isolated virtual environments.
+* New `tests/fixtures/packaging_fixtures.py` with `isolated_venv` and `wheels_dir` fixtures.
+* New `docs/packaging-tests.md` and `docs/testing.md` documentation.
+
+### Configurable Test Seeds
+
+* New `tests/utils/seeds.py` with `get_test_seed()` function reading `DQM_ML_TEST_SEED` env var (default 42).
+* Session-scoped `test_seed` fixture in `tests/conftest.py`.
+* Updated ~35 test files and YAML templates to use configurable seeds instead of hardcoded values.
+* Seeds injected via `tests/utils/jobs.py:generate_job()` for YAML template generation.
+
+### CI Improvements
+
+* tqdm progress bars suppressed in CI via `TQDM_DISABLE=1` in GitHub Actions and GitLab CI.
+* `noxfile.py` now sets `DQM_ML_TEST_SEED=42` in all test sessions.
+* `.mise.toml` exports `DQM_ML_TEST_SEED=42` for local development.
+
+### Documentation
+
+* New `docs/testing.md` with test organization, directory structure, and adding tests guide.
+* New `docs/packaging-tests.md` with package isolation testing documentation.
+* Improved READMEs for dqm-ml-core (+134 lines), dqm-ml-images (+100 lines), dqm-ml-pytorch (+252 lines).
+
+### Bug Fixes
+
+* S3 support fixes in CLI and processor (`dqm_ml_job.cli`, `dqm_ml_job.utils.s3`).
+* CI tag regex and PyPI publish workflow fixes.docs/index.md 
+
+## 2.0.0-rc3 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation
+
+This release introduces a consistent configuration with Pydantic models and validation, adds a topological processor DAG, example notebooks and a user guide, improves domain-gap algorithms and image embedding, and refactors tests to generate synthetic data inline.
+
+### Issue ticket number and link
+
+* fix: [#13](https://github.com/Safenai/dqm-ml-workspace/issues/13) - Example Notebooks
+* fix: [#10](https://github.com/Safenai/dqm-ml-workspace/issues/10) - User guide
+
+### Pipeline Refactoring
+
+* Topological sort for processor DAG — generators before consumers — with configurable execution order via `DatasetJob.execute()` → `topological_sort()`.
+* Accumulate-then-flush mode for single-path output patterns.
+* Memory-threshold parsing and configurable `compute_max_memory`.
+
+### Configuration Models (Pydantic)
+
+* New `dqm_ml_core.models` package with Pydantic models for processor, output, dataloader, and global configs.
+* Refactored parquet output writer to use Pydantic config with column exclude list, S3 path-prefix fallback, and `FixedSizeListArray` metric filtering.
+* Refactored S3 filesystem with `StorageConfig` model, retry strategies, role-based access, env-var fallback, and checksum validation.
+
+### Domain Gap Improvements
+
+* KLMVN variance-eps dampening and FID epsilon regularization.
+* PAD with `CalibratedClassifierCV`.
+* CMD multi-channel spatial moments.
+* Wildcard embedding column patterns and per-selection path-prefix injection.
+* New `dqm_ml_core.utils.matching` with include/exclude pattern resolution.
+
+### Image Embedding
+
+* Multi-input-column support, lazy model loading, auto device resolution.
+* Column prefix/suffix, S3 per-column path prefixes, configurable failure handling with rate thresholds.
+
+### Representativeness
+
+* Mean-std estimation, expected-counts method, per-column distribution parameters, improved model validation, path-prefix for sample paths.
+
+### Documentation & Examples
+
+* Restructured docs: flat files → `docs/configuration/*.md`, new metrics documentation, formal concepts page.
+* Added scenario example configs, debug pipeline script, and example notebooks for each metric.
+* Updated user guide in README with installation, metrics, configuration, and usage sections.
+* Schema generation utilities and `docs/schema/config.json`.
+* Google-format docstrings across source packages and test files.
+
+### Testing
+
+* New integration tests: batch invariance, pipeline ordering, pipeline scenarios, path prefix, output columns, pipeline data flow, full story, features embeddings.
+* New unit tests: matching, registry, representativeness, error policy, output configs, job, pandas loader, embedding edge cases, visual feature columns, domain gap processor, domain gap synthetic ordering.
+* New property-based tests: diversity, domain gap, representativeness, and visual features properties, plus visual features stress.
+* Stress image fixtures, expanded expected output YAML.
+* Updated config templates and benchmark stability improvements.
+
+### Code Quality
+
+* Tests refactored to reduce cognitive complexity
+* Synthetic data generated by tests at runtime, replacing 36 stale LFS-tracked test data files (parquet + JPGs).
+* Type checking improvments.
+* Removed LFS caching steps from CI workflows.
+* Cleaned up legacy CLI tests, stale example configs, and outdated documentation.
+
 ## 2.0.0-rc2 (2026-06-03) - S3 support, pipeline refactoring, new algorithms, code quality
 
 This release adds S3 filesystem support, refactors the metric pipeline with dependency ordering, introduces diversity metrics and 4 new domain gap algorithms, and improves code quality.

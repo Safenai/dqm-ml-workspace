@@ -2,6 +2,10 @@
 
 Get up and running with DQM-ML in minutes.
 
+> **See also:** [Concepts](formal_concepts.md) for definitions of **Sample**, **Metric**, **Processor**, and related terminology used throughout this page.
+
+> **What's new?** See the [Release Notes](./RELEASE.md) for the latest features and improvements.
+
 ## Installation
 
 ```bash
@@ -31,7 +35,7 @@ That's it! The CLI reads a simple YAML configuration file and outputs your metri
 
 ### CLI Example with Config File
 
-Here's a complete example matching the Python API below:
+Here's a complete example below:
 
 **1. Create a data file (`data.csv`):**
 ```csv
@@ -43,22 +47,20 @@ Diana,,0.6
 
 **2. Create a config file (`config.yaml`):**
 ```yaml
-config:
-  dataloaders:
-    my_data:
-      type: csv
-      path: ./data.csv
-
-  metrics_processor:
-    completeness:
-      type: completeness
-      input_columns: [name, age, score]
-
+metrics:
   outputs:
-    metrics:
-      type: parquet
-      path_pattern: output_metrics.parquet
-      columns: []
+    path: output_metrics.parquet
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [name, age, score]
+
+dataloaders:
+  loaders:
+    - name: my_data
+      type: csv
+      path: data.csv
 ```
 
 **3. Run the pipeline:**
@@ -66,7 +68,12 @@ config:
 dqm-ml process -p config.yaml
 ```
 
-> **Note:** Example files are available in `tests/fixtures/getting_started/` in the repository.
+**4. Read the results:**
+```bash
+python -c "import pandas as pd; print(pd.read_parquet('output_metrics.parquet').to_string())"
+```
+
+> **Note:** Example files are available in [`examples/getting_started/`](../examples/getting_started/) in the repository.
 
 ### Python API
 
@@ -74,6 +81,7 @@ Want more control? Use the Python API directly:
 
 ```python
 import pandas as pd
+import pyarrow as pa
 from dqm_ml_core import CompletenessProcessor
 
 # Create a sample dataset
@@ -83,38 +91,41 @@ df = pd.DataFrame({
     "score": [0.9, 0.8, 0.7, 0.6]
 })
 
-# Create and run the completeness processor
+# Create the completeness processor
 processor = CompletenessProcessor(
     name="my_completeness",
-    config={"input_columns": ["name", "age", "score"]}
+    config={"columns": {"input": ["name", "age", "score"]}}
 )
 
-# Get the results
-result = processor.compute({})
-print(f"Overall completeness: {result['overall_completeness']}")
+# Run the full pipeline: features -> batch metrics -> aggregated results
+batch = pa.RecordBatch.from_pandas(df)
+features = processor.compute_features(batch)
+batch_metrics = processor.compute_batch_metric(features)
+result = processor.compute(batch_metrics)
+print(f"Overall completeness: {result['completeness_overall']}")
 ```
 
-### MetricRunner (Interactive)
+### ProcessorRunner (Interactive)
 
 For quick exploration in a notebook or script:
 
 ```python
 import pandas as pd
-from dqm_ml_core import CompletenessProcessor, MetricRunner
+from dqm_ml_core import CompletenessProcessor, ProcessorRunner
 
 df = pd.DataFrame({"a": [1, 2, None, 4], "b": [5, None, 7, 8]})
-runner = MetricRunner()
+runner = ProcessorRunner()
 
-results = runner.run(df, [CompletenessProcessor(config={"input_columns": ["a", "b"]})])
+results = runner.run(df, [CompletenessProcessor(config={"columns": {"input": ["a", "b"]}})])
 print(results)
 ```
 
-> **Tip:** For interactive exploration, check out our [Jupyter notebook example](https://github.com/Safenai/dqm-ml-workspace/tree/main/examples/multiple_metrics_tests_v2.ipynb).
+> **Tip:** For interactive exploration, check out our [Jupyter notebook example](../examples/notebooks/multiple_metrics_tests_v2.ipynb).
 
 ## Next Steps
 
 - Learn about [available metrics](metrics.md)
-- Understand [configuration](configuration.md) options
+- Understand [configuration](configuration/overview.md) options
 - Read [CLI Reference](cli.md) for command details
 - Explore [package-specific documentation](dqm-ml-overview.md#packages)
 

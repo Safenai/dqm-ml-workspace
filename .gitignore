@@ -17,7 +17,8 @@ __pycache__
 .venv
 # Pytest report
 **/pytest_report.html
-docs/examples
+
+examples/outputs
 assets
 
 # Test images
@@ -36,7 +37,13 @@ output
 docs/index.md
 docs/AGENTS.md
 docs/packages/
+docs/examples
+docs/RELEASE.md
+docs/CHANGELOG.md
 .github/workflows/tests_act.yml
 
 # Test logs
 logs/
+
+# Pytest temp dir
+tmp/

@@ -1,13 +1,15 @@
 # Domain Gap Metric
 
-The Domain Gap metric measures the statistical distance between a source and a target distribution based on image embeddings. It is used to quantify drift or differences between datasets.
+The **Domain Gap** **Metric** measures the statistical distance between a source and a target distribution based on image **Embeddings**. It is used to quantify distribution differences between two datasets.
+
+> **See also:** [Concepts](../formal_concepts.md) for definitions of **Domain Gap**, **Metric**, **Embedding**, and related terminology.
 
 ## What It Measures
 
 Domain Gap measures how different two datasets are from each other. Use it to:
 
 - **Compare train/test distributions** — Ensure test data resembles training data
-- **Detect data drift over time** — Monitor distribution shifts in production
+- **Compare acquisition subsets** — Determine if different batches, sessions, or sources share the same distribution
 - **Validate data augmentation** — Check if augmented data maintains original characteristics
 
 ### Available Distance Metrics
@@ -26,9 +28,9 @@ Domain Gap measures how different two datasets are from each other. Use it to:
 ### Use Cases
 
 - Validate train/test split quality
-- Monitor data drift in production pipelines
 - Compare different data versions
 - Evaluate data augmentation strategies
+- Compare acquisition sessions for consistency
 
 ## Processor Information
 
@@ -65,12 +67,23 @@ Accumulates per-batch raw moments (`sum(X^j)`) for each embedding layer, then de
 
 ## Configuration Parameters
 
-### `input`
+### `columns`
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `embedding_col` | string | `"embedding"` | Column containing pre-computed feature embeddings |
-| `embedding_cols` | list[string] | `[embedding_col]` | List of embedding columns for CMD (multi-layer) |
+| `input` | list[string] | `["embedding"]` | Column(s) containing pre-computed feature embeddings |
+
+### `distance`
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `metric` | string | `"klmvn_diag"` | Target metric name (see supported metrics above) |
+| `k` | int | 5 | Number of moments (CMD only) |
+| `feature_weights` | list[float] | `[1.0, ...]` | Per-layer weights, one per `columns.input` entry (CMD only) |
+| `kernel_params` | dict | `{}` | Kernel parameters for MMD-RBF (`gamma`) and MMD-Poly (`degree`, `gamma`, `coefficient0`) |
+| `evaluator` | string | `"mse"` | Error metric for PAD: `"mse"` or `"mae"` (PAD only) |
+| `epsilon` | float | `1e-6` | Regularization epsilon for covariance-based metrics (FID). Increase if you encounter singular matrix warnings. |
+| `klmvn_var_eps` | float | `0.0` | Variance regularization for klmvn_diag. When > 0, var is replaced by `var + klmvn_var_eps * mean(var)`. Set to e.g. `1e-6` when comparing datasets with near-constant embedding dimensions. |
 
 ### `summary`
 
@@ -85,21 +98,6 @@ Accumulates per-batch raw moments (`sum(X^j)`) for each embedding layer, then de
 
 Auto-detection: `collect_sum_outer`, `collect_hist_1d`, and `store_embeddings` default to `true` automatically when the selected metric requires them. Explicitly setting them overrides the auto-detection.
 
-### `delta`
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `metric` | string | `"klmvn_diag"` | Target metric name (see supported metrics above) |
-| `k` | int | 5 | Number of moments (CMD only) |
-| `feature_weights` | list[float] | `[1.0, ...]` | Per-layer weights, one per `embedding_cols` entry (CMD only) |
-| `kernel_params` | dict | `{}` | Kernel parameters for MMD-RBF (`gamma`) and MMD-Poly (`degree`, `gamma`, `coefficient0`) |
-
-### `method`
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `evaluator` | string | `"mse"` | Error metric for PAD: `"mse"` or `"mae"` |
-
 ## Algorithm Details
 
 ### MMD-RBF
@@ -113,6 +111,64 @@ Uses **non-squared** Euclidean distance (matching `torch.cdist(p=2.0)`) and the 
 
 Default `gamma`: `1.0`.
 
+### Practical Effect of `gamma`
+
+The RBF kernel bandwidth `gamma` determines how "wide" the similarity window is. To build intuition:
+
+> **Small gamma** = squint your eyes — only coarse structure visible.
+> **Large gamma** = magnifying glass — tiny differences get amplified.
+> **Default (1.0)** = typical ResNet-18 embedding scale.
+
+#### Effect on common data quality tasks
+
+**1. Comparing classes to find regroupable clusters**
+
+You want to know which classes are similar enough to merge into one model.
+
+| `gamma` | Behavior | What it tells you |
+|---------|----------|-------------------|
+| 0.01–0.1 | Classes must be very different to register a gap | Over-merges — distinct classes look similar |
+| 1.0 (default) | Good separation at typical embedding scales | Reliable class hierarchy |
+| 10–100 | Even minor differences register | Splits classes that could be safely merged |
+
+*Tip:* Start at 1.0, then lower `gamma` slightly (0.1) to see which class pairs stay close — those are your best merge candidates.
+
+**2. Comparing acquisition subsets to detect environmental drift**
+
+Your dataset was collected across different sessions, cameras, or lighting conditions. You want to know if those subsets drifted apart.
+
+- Keep `gamma` at **1.0** — the absolute value doesn't matter; you only care about the **ranking** of subset pairs (subset A vs B vs C).
+- A rising gap over acquisition order suggests hardware drift (e.g. sensor degradation).
+- A high gap between day/night subsets confirms lighting is a confounder — consider balancing or re-collecting.
+
+**3. Comparing synthetic vs real data for augmentation candidates**
+
+You have a synthetic dataset (rendered, GAN-generated, etc.) and want to know if it's close enough to real data to be useful for training.
+
+| `gamma` | Scenario | Result | Action |
+|---------|----------|--------|--------|
+| 1.0 | Synthetic too different from real | MMD > 0.3 | Synthetic data may hurt accuracy |
+| 1.0 | Synthetic close to real | MMD < 0.1 | Safe to augment |
+| Sweep [0.01, 0.1, 1, 10] | Synthetic similar on coarse scale only | Small gap at 0.01, large at 10 | Good for low-level features, bad for high-level semantics |
+
+#### Choosing `gamma` in practice
+
+1. Start with `gamma: 1.0`.
+2. If MMD-RBF ≈ MMD-Linear (poor separation), `gamma` is too small. Try `gamma: 0.1` or scale embeddings.
+3. If MMD-RBF is near-constant for all pairs, `gamma` is too large. Try `gamma: 10`.
+4. *Heuristic:* sample 500 embeddings, compute median pairwise Euclidean distance → `gamma ≈ 1 / median`. For ResNet-18 avgpool, this is usually ~1.0.
+5. Once chosen, **lock `gamma`** — the ranking of scores is what matters, not the absolute value.
+
+#### Interpretation rules of thumb
+
+| MMD-RBF range vs reference | What it suggests |
+|----------------------------|------------------|
+| **< 0.05** | Distributions are nearly identical — safe to merge / augment |
+| **0.05 – 0.2** | Moderate gap — investigate further; may still be usable |
+| **> 0.2** | Significant gap — separate models or data filtering recommended |
+
+> **Important:** These thresholds are guidelines for typical ResNet-18 embeddings at `gamma=1.0`. The absolute values depend on your embedding model, embedding dimension, and `gamma`. Always calibrate thresholds on a known-good vs known-bad pair from your own pipeline.
+
 ### MMD-Poly
 
 ```
@@ -122,12 +178,63 @@ MMD² = mean(K_xx) + mean(K_yy) - 2 · mean(K_xy)
 
 Same biased estimator as MMD-RBF. Defaults: `degree=3.0`, `gamma=1.0`, `coefficient0=1.0`.
 
+### Practical Effect of `degree`, `gamma` and `coefficient0`
+
+The polynomial kernel `(γ·⟨a,b⟩ + c)^d` has three knobs with distinct roles:
+
+| Parameter | Effect | Low value | High value |
+|-----------|--------|-----------|------------|
+| `degree` | Polynomial order of feature interactions | ~ linear (d=1) — coarse grouping | Captures complex interactions but emphasises large dot products (d≥4) — noise-prone |
+| `gamma` | Dot-product scaling (same name, different meaning from MMD-RBF) | Kernel response compressed — may under-estimate gaps | Kernel response amplified — may over-estimate gaps |
+| `coefficient0` | Additive bias term | Only angular similarity matters (c=0) — sensitive to direction only | All similarities amplified, even tiny dot products (c>0) — less discriminative |
+
+#### Effect on common data quality tasks
+
+**1. Comparing classes for regrouping**
+
+| `degree` | Behavior | Best for |
+|----------|----------|----------|
+| 2 | Quadratic interactions — captures pairwise feature correlations | Broad class grouping, rough hierarchy |
+| 3 (default) | Cubic interactions — good balance | General class separation |
+| 4+ | Very high-order interactions | Rarely useful — tends to over-emphasise large-magnitude outliers |
+
+*Tip:* Run with degree=2 and degree=3. If the ranking is similar, the extra polynomial order doesn't matter for your data. If degree=3 separates pairs that degree=2 considers identical, those pairs differ in higher-order feature interactions.
+
+**2. Comparing acquisition subsets**
+
+- Keep `degree=3` (default) — changing it rarely helps for drift detection.
+- If you suspect the drift is a simple brightness/contrast shift (linear transformation), try `degree=1`: it acts like MMD-Linear but with an intercept term.
+- `coefficient0=0` removes the bias, making the kernel purely angle-based — useful when you want to ignore magnitude differences (e.g. comparing normalised vs unnormalised data).
+
+**3. Comparing synthetic vs real data**
+
+- If the gap is large at degree=3 but small at degree=2, the synthetic data matches real data on pairwise feature correlations but differs on triple-wise interactions. Check if those interactions matter for your task.
+- Defaults (`degree=3`, `gamma=1.0`, `coefficient0=1.0`) are a reasonable starting point.
+
+#### Choosing MMD-Poly parameters in practice
+
+1. Start with defaults (`degree=3.0`, `gamma=1.0`, `coefficient0=1.0`).
+2. If results are too noisy, try `degree=2` — fewer interaction terms, smoother.
+3. If results lack discrimination, try `degree=4` — but verify on known-different pairs that the gap is real, not driven by outliers.
+4. `gamma` and `coefficient0` are best left at defaults unless you have a specific reason to change them (e.g. `coefficient0=0` for angle-only comparison).
+
 ### PAD (Proxy A-Distance)
 
 1. Concatenate source and target embeddings with labels (0 = source, 1 = target).
 2. Train `sklearn.svm.SVC(C=1, kernel="linear", probability=True, random_state=42)`.
 3. Compute error (MSE or MAE) between predicted probabilities and one-hot labels.
 4. `PAD = 2 · (1 - 2 · error)`.
+
+### Practical Effect of `evaluator`
+
+PAD trains a linear SVM to distinguish source from target, then measures how well it fails. The `evaluator` controls how prediction error is computed.
+
+| Evaluator | Sensitive to | Best for |
+|-----------|-------------|----------|
+| `"mse"` (default) | Squared errors → penalises confident mistakes heavily | Detecting any separable difference, even subtle |
+| `"mae"` | Absolute errors → more robust to outliers | Noisy embedding spaces; when a few extreme points differ but the bulk is similar |
+
+*Tip:* If PAD with `"mse"` gives a large gap but you suspect it's driven by a handful of outlier samples, re-run with `"mae"`. If the gap stays large, the drift is pervasive and real. If it shrinks significantly, the gap was outlier-driven and may not matter for training.
 
 ### CMD (Central Moment Discrepancy)
 
@@ -148,121 +255,269 @@ Same biased estimator as MMD-RBF. Defaults: `degree=3.0`, `gamma=1.0`, `coeffici
 
 This single-pass streaming approach is mathematically equivalent to the standard two-pass centered computation and is numerically stable for typical ResNet embedding magnitudes.
 
+### Practical Effect of `k`
+
+The number of moments `k` controls how much distributional shape information is captured.
+
+> **Small k (= 2)** = compare only mean and spread — like describing a mountain by its position and width.
+> **Large k (= 10)** = also capture finer shape — peak sharpness, tail heaviness, asymmetry.
+
+Internally, each embedding column (e.g. a ResNet layer) is treated as per-channel spatial maps, sigmoid is applied (mapping values to 0–1), and power sums for orders 1..k are accumulated. Central moments are derived via binomial expansion, then averaged across channels via RMSE.
+
+#### Effect on common data quality tasks
+
+**1. Comparing classes for regrouping**
+
+| `k` | What it captures | Impact on class hierarchy |
+|-----|------------------|---------------------------|
+| 2 | Mean + variance only | May over-merge classes with similar position/width but different shape |
+| 5 (default) | Up to 5th moment (skewness, kurtosis) | Good balance — classes with different tail behavior stay separated |
+| 10 | Very fine shape details | May split semantically similar classes differing only in rare extreme values |
+
+*Tip:* Run at k=2 and k=5. If the ranking stays the same, higher moments don't add information for your data. If it changes, those extra moments capture meaningful differences.
+
+**2. Comparing acquisition subsets for environmental drift**
+
+| Drift type | Moments affected | Recommendation |
+|---|---|---|
+| Brightness shift (mean) | k=1–2 enough | Low `k` sufficient |
+| Contrast change (variance) | k=2 captures it | `k=3` safe |
+| Color cast / white balance (skewness) | k=3+ needed | Keep default `k=5` |
+| Sensor noise (tail behavior) | k=4–5 | Stick with `k=5+` |
+
+For general drift detection, `k=5` (default) is a safe catch-all.
+
+**3. Comparing synthetic vs real data**
+
+Synthetic data often matches real data on mean and variance (k=2) but differs on higher-order moments (k=5+). Run with both k=2 and k=5: if the gap is small at k=2 but large at k=5, your synthetic data captures the "main shape" but not fine texture — useful for augmenting coarse features, risky for fine-grained tasks.
+
+#### Choosing `k` in practice
+
+1. Start with `k=5` (default).
+2. If comparisons seem too noisy (expected-similar pairs look different), try `k=3`.
+3. If comparisons seem too coarse (expected-different pairs look similar), try `k=7`.
+4. For dataset selection, lock `k` — the ranking matters, not the absolute value.
+
+### Practical Effect of `feature_weights`
+
+CMD can operate on multiple embedding columns simultaneously (e.g. five ResNet layers). Each layer is assigned a weight in the final weighted average.
+
+| `feature_weights` pattern | Effect |
+|---|---|
+| `[1.0, 1.0, 1.0, 1.0, 1.0]` (default) | All layers equally important — balanced multi-scale view |
+| `[0.0, 1.0, 1.0, 1.0, 1.0]` | Exclude early layer (maxpool: edges and textures) |
+| `[0.5, 0.5, 0.5, 1.0, 1.0]` | Down-weight early layers, emphasize deep semantic features |
+| `[0.0, 0.0, 0.0, 0.0, 1.0]` | Only deepest layer — pure semantics, ignoring texture |
+
+*Tip:* Run once with all weights = 1.0, inspect per-layer losses, then re-weight to focus on the layers that matter for your task (e.g. deeper layers for semantic differences, earlier layers for texture/acquisition differences).
+
+### Wasserstein-1D
+
+The 1D Wasserstein distance (Earth Mover's Distance) measures how much probability mass must be moved to turn one distribution into another. For high-dimensional embeddings, it is computed per dimension and averaged — like slicing the embedding space into 1D projections and measuring each separately.
+
+1. For each of the first `hist_dims` embedding dimensions, build a 1D histogram with `hist_bins` equal-width bins spanning `[hist_range[0], hist_range[1]]`.
+2. Normalise counts to probability distributions.
+3. Compute cumulative distribution functions (CDFs).
+4. Per-dimension Wasserstein = `sum(|CDF_src - CDF_tgt|) · bin_width`.
+5. Final score: mean across all non-empty dimensions.
+
+Histograms are accumulated per batch and aggregated at the end (summary mode, no raw embeddings stored). Values outside `hist_range` are silently assigned to the outermost bins.
+
+### Practical Effect of histogram parameters
+
+> **`hist_bins`** = how fine-grained your measurement ruler is.
+> **`hist_range`** = where you place the ruler — values outside it land in the edge bins without warning.
+> **`hist_dims`** = how many of the 512 embedding dimensions you measure.
+
+#### Effect on common data quality tasks
+
+**1. Comparing classes for regrouping**
+
+| `hist_bins` | Effect on class separation |
+|---|---|
+| 8–16 | Coarse — only big differences register; may over-merge fine-grained classes |
+| 32 (default) | Good resolution for typical ResNet embeddings |
+| 64–128 | Finer discrimination — needs enough samples per bin for reliable estimation |
+
+*Heuristic:* With < 100 samples per class, keep `hist_bins ≤ 16`. With > 1000 samples per class, `hist_bins=64` is safe.
+
+**2. Comparing acquisition subsets (critical: `hist_range`)**
+
+This is the most important parameter — and the most common trap:
+
+| `hist_range` scenario | Result |
+|---|---|
+| Too narrow (e.g. `[-1, 1]` for `[-5, 5]` data) | Values crammed into edge bins → **falsely small gap** — "clipping collapse" |
+| Too wide (e.g. `[-10, 10]` for `[-1, 1]` data) | Bins are coarse → **underestimates the gap** — "resolution starved" |
+| Default `[-3.0, 3.0]` appropriate | Typical for ResNet-18 avgpool embeddings |
+
+*Critical:* If your embedding model produces different scales (e.g. ViT, CLIP), you **must** adjust `hist_range`. Run `min()` / `max()` on a sample of embeddings to verify. If values overflow, the metric silently degrades without warning.
+
+**How to set `hist_range` correctly:**
+
+1. Compute embeddings for a sample (100–1000 images).
+2. Find global min and max across all dimensions.
+3. Set `hist_range: [min - 0.5, max + 0.5]` (add a margin).
+4. Or use percentiles: `[p1, p99]` to clip extreme outliers.
+
+**3. Comparing synthetic vs real data**
+
+Synthetic data often has narrower distributions than real data:
+
+| Parameter | Risk | Mitigation |
+|---|---|---|
+| `hist_range` too narrow | Both distributions look clipped → gap under-estimated | Use wide enough range to cover both |
+| `hist_bins` too low | Both look similar to bin resolution | Increase until the gap stabilises |
+
+*Tip:* Double `hist_bins` and see if the Wasserstein distance changes significantly. If not, your bin count is adequate.
+
+#### Choosing Wasserstein-1D parameters in practice
+
+1. Start with defaults (`hist_dims=64`, `hist_bins=32`, `hist_range=[-3.0, 3.0]`).
+2. Validate `hist_range` against actual embedding values. Adjust if needed.
+3. Quick convergence check: run with 16, 32, and 64 bins. If the value stabilises, you're fine. If it keeps changing, increase further.
+4. `hist_dims` at 64 is sufficient for most purposes — beyond that, extra dimensions add marginal information at linear compute cost.
+5. Lock all parameters once chosen — the ranking matters, not the absolute value.
+
+#### Interpretation rules of thumb
+
+| Wasserstein-1D range | What it suggests |
+|---|---|
+| **< 0.05** | Nearly identical per-dimension distributions — safe to merge / augment |
+| **0.05 – 0.3** | Moderate gap — investigate further; may still be usable |
+| **> 0.3** | Significant gap — separate models or data filtering recommended |
+
+> **Important:** These thresholds are guidelines for typical ResNet-18 embeddings at `hist_bins=32`, `hist_range=[-3.0, 3.0]`. Calibrate on known-good vs known-bad pairs from your own pipeline.
+
 ## YAML Configuration Examples
 
 ### FID (summary-based, outer products)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "fid"
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "fid"
+        epsilon: 1e-6
 ```
 
 ### MMD-RBF (full-embedding with kernel params)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "mmd_rbf"
-      kernel_params:
-        gamma: 1.0
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "mmd_rbf"
+        kernel_params:
+          gamma: 1.0
 ```
 
 ### MMD-Poly (full-embedding with kernel params)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "mmd_poly"
-      kernel_params:
-        degree: 3.0
-        gamma: 1.0
-        coefficient0: 1.0
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "mmd_poly"
+        kernel_params:
+          degree: 3.0
+          gamma: 1.0
+          coefficient0: 1.0
 ```
 
 ### PAD (full-embedding with evaluator)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "pad"
-    method:
-      evaluator: "mse"
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "pad"
+        evaluator: "mse"
 ```
 
 ### CMD (multi-layer streaming)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_cols: ["emb_layer1", "emb_layer2", "emb_layer3"]
-    delta:
-      metric: "cmd"
-      k: 5
-      feature_weights: [1.0, 0.5, 0.5]
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["emb_layer1", "emb_layer2", "emb_layer3"]
+      distance:
+        metric: "cmd"
+        k: 5
+        feature_weights: [1.0, 0.5, 0.5]
 ```
 
 ### Wasserstein-1D (summary-based, histograms)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      hist_dims: 64
-      hist_bins: 32
-    delta:
-      metric: "wasserstein_1d"
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        hist_dims: 64
+        hist_bins: 32
+      distance:
+        metric: "wasserstein_1d"
 ```
 
 ### KLMVN-Diag (summary-based)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "klmvn_diag"
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "klmvn_diag"
 ```
+
+### Limitations
+
+**klmvn_diag is unstable when either dataset has near-constant embedding dimensions.** The diagonal-covariance KL divergence divides by target variance and computes variance ratios. If any dimension is nearly constant (e.g. small synthetic images, highly compressed crops, or post-processed data), these terms dominate the metric with arbitrarily large values. The result is unreliable when `klmvn_diag` returns values > 1e6 — this indicates variance collapse.
+
+**Remedy:** Set `klmvn_var_eps` to a small positive value (e.g. `1e-6`) to regularize near-zero variances towards the global mean variance. See the `klmvn_var_eps` parameter in the `distance` table.
 
 ### MMD-Linear (summary-based)
 
 ```yaml
-metrics_processor:
-  domain_gap:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "mmd_linear"
+gap:
+  processors:
+    - name: domain_gap
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "mmd_linear"
 ```
 
 ### All Metrics in One Config
@@ -285,122 +540,126 @@ The following example runs all eight domain gap metrics in a single pipeline, sh
 Values will differ from the per-metric examples above because all metrics here use ResNet-18 (e.g. FID normally uses Inception-v3). This config demonstrates pipeline structure, not exact equivalence.
 
 ```yaml
-metrics_processor:
-  image_embedding:
-    type: image_embedding
-    data:
-      image_column: "image_path"
-      mode: "path"
-    model:
-      arch: resnet18
-      n_layer_feature: -2
-      device: cpu
-    infer:
-      batch_size: 32
-      width: 224
-      height: 224
-      norm_mean: [0.485, 0.456, 0.406]
-      norm_std: [0.229, 0.224, 0.225]
+dataloaders:
+  loaders:
+    - name: source
+      type: parquet
+      path: data/source.parquet
 
-  image_embedding_cmd:
-    type: image_embedding
-    data:
-      image_column: "image_path"
-      mode: "path"
-    model:
-      arch: resnet18
-      n_layer_feature:
-        - maxpool
-        - layer1.1.relu_1
-        - layer2.1.relu_1
-        - layer3.1.relu_1
-        - layer4.1.relu_1
-      device: cpu
-    infer:
-      batch_size: 32
-      width: 224
-      height: 224
-      norm_mean: [0.485, 0.456, 0.406]
-      norm_std: [0.229, 0.224, 0.225]
+features:
+  processors:
+    - name: image_embedding
+      type: features_embeddings
+      columns:
+        input: ["image_path"]
+      model:
+        arch: resnet18
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 224
+        height: 224
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
 
-  domain_gap_fid:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "fid"
+    - name: image_embedding_cmd
+      type: features_embeddings
+      columns:
+        input: ["image_path"]
+      model:
+        arch: resnet18
+        n_layer_feature:
+          - maxpool
+          - layer1.1.relu_1
+          - layer2.1.relu_1
+          - layer3.1.relu_1
+          - layer4.1.relu_1
+      infer:
+        batch_size: 32
+        width: 224
+        height: 224
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
 
-  domain_gap_mmd_linear:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "mmd_linear"
+gap:
+  processors:
+    - name: domain_gap_fid
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "fid"
 
-  domain_gap_mmd_rbf:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "mmd_rbf"
-      kernel_params:
-        gamma: 1.0
+    - name: domain_gap_mmd_linear
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "mmd_linear"
 
-  domain_gap_mmd_poly:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "mmd_poly"
-      kernel_params:
-        degree: 3.0
-        gamma: 1.0
-        coefficient0: 1.0
+    - name: domain_gap_mmd_rbf
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "mmd_rbf"
+        kernel_params:
+          gamma: 1.0
 
-  domain_gap_wasserstein_1d:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "wasserstein_1d"
+    - name: domain_gap_mmd_poly
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "mmd_poly"
+        kernel_params:
+          degree: 3.0
+          gamma: 1.0
+          coefficient0: 1.0
 
-  domain_gap_klmvn_diag:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    delta:
-      metric: "klmvn_diag"
+    - name: domain_gap_wasserstein_1d
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "wasserstein_1d"
 
-  domain_gap_pad:
-    type: domain_gap
-    input:
-      embedding_col: "embedding"
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "pad"
-    method:
-      evaluator: "mse"
+    - name: domain_gap_klmvn_diag
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      distance:
+        metric: "klmvn_diag"
 
-  domain_gap_cmd:
-    type: domain_gap
-    input:
-      embedding_cols:
-        - emb_maxpool
-        - emb_layer1_1_relu_1
-        - emb_layer2_1_relu_1
-        - emb_layer3_1_relu_1
-        - emb_layer4_1_relu_1
-    summary:
-      store_embeddings: true
-    delta:
-      metric: "cmd"
-      k: 5
-      feature_weights: [1.0, 1.0, 1.0, 1.0, 1.0]
+    - name: domain_gap_pad
+      type: domain_gap
+      columns:
+        input: ["embedding"]
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "pad"
+        evaluator: "mse"
+
+    - name: domain_gap_cmd
+      type: domain_gap
+      columns:
+        input:
+          - emb_maxpool
+          - emb_layer1_1_relu_1
+          - emb_layer2_1_relu_1
+          - emb_layer3_1_relu_1
+          - emb_layer4_1_relu_1
+      summary:
+        store_embeddings: true
+      distance:
+        metric: "cmd"
+        k: 5
+        feature_weights: [1.0, 1.0, 1.0, 1.0, 1.0]
 ```
 
 ## Output

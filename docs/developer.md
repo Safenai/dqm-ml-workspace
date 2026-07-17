@@ -1,13 +1,22 @@
-# Developper guide 
+# Developer guide 
 
 
-## how to modify and or contribute to dqm-ml 
+## Setup dev environment, and contribute to DQM-ML
 
-[Contributin Guide](./contributing.md)
+[Setup and Contribution Guide](./contributing.md)
 
 ## What is currently planned
 
 The [Roadmap](./ROADMAP.md), do not hesitate to propose adjustments
+
+## Changelog
+
+For a detailed list of changes, see the [Changelog](./CHANGELOG.md).
+
+## Testing
+
+- [Testing Strategy](./testing.md) — Test organization, directory structure, and how to add new tests
+- [Packaging Tests](./packaging-tests.md) — Tests that validate package installation in isolated environments
 
 ## Packages documentations
 
@@ -21,4 +30,4 @@ The [Roadmap](./ROADMAP.md), do not hesitate to propose adjustments
 
 - [Results](./reports/pytest/pytest_report.html)
 - [Coverage](./reports/htmlcov/coverage_report.html)
-- [Performance](./TBD2.md)
+- [Performance](./TBD1.md)

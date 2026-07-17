@@ -7,10 +7,13 @@ blur, and entropy.
 
 import io
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
+from dqm_ml_core import FeaturesProcessor
+from dqm_ml_core.models.columns import ColumnsConfig
+from dqm_ml_core.models.processors import _LUMINOSITY_STANDARDS, ImageFeaturesProcessorConfig
+from dqm_ml_core.utils.image_loading import ImageLoadingMixin
 import numpy as np
 from PIL import Image
 import pyarrow as pa
@@ -19,12 +22,10 @@ from scipy import signal
 # COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
 from typing_extensions import override
 
-from dqm_ml_core import DatametricProcessor
-
 logger = logging.getLogger(__name__)
 
 
-class VisualFeaturesProcessor(DatametricProcessor):
+class VisualFeaturesProcessor(ImageLoadingMixin, FeaturesProcessor):
     """
     Computes basic image quality features per sample.
 
@@ -42,14 +43,16 @@ class VisualFeaturesProcessor(DatametricProcessor):
     (per-sample).
     """
 
-    DEFAULT_OUTPUTS = {
-        "luminosity": "m_luminosity",
-        "contrast": "m_contrast",
-        "blur": "m_blur_level",
-        "entropy": "m_entropy",
+    DEFAULT_OUTPUTS: dict[str, str] = {
+        "luminosity": "luminosity",
+        "contrast": "contrast",
+        "blur": "blur",
+        "entropy": "entropy",
     }
 
-    def __init__(self, name: str = "visual_metric", config: dict[str, Any] | None = None) -> None:
+    output_features: dict[str, str]
+
+    def __init__(self, name: str = "image_features", config: dict[str, Any] | None = None) -> None:
         """
         Initialize the visual features processor.
 
@@ -63,13 +66,19 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 - entropy_bins: Number of bins for entropy calculation.
                 - clip_percentiles: Tuple of (low, high) percentiles.
                 - laplacian_kernel: Laplacian kernel size ('3x3' or '5x5').
-                - dataset_root_path: Root directory for relative paths.
+                - path_prefix: Base directory for resolving relative paths
+                  (set via dataloader ``mode`` config instead).
         """
         super().__init__(name, config)
-        cfg = self.config or {}
 
-        self.dataset_root_path = cfg.get("dataset_root_path", None)
-        self._configure_storage(cfg)
+        self.columns_config: ColumnsConfig | None = None
+        raw_columns = self.config.get("columns")
+        if isinstance(raw_columns, dict):
+            self.columns_config = ColumnsConfig.model_validate(raw_columns)
+
+        cfg = ImageFeaturesProcessorConfig.model_validate({**self.config, "name": self.name})
+
+        self._configure_storage(self.config)
         self._configure_columns(cfg)
         self._configure_params(cfg)
         self._validate_output_features()
@@ -81,85 +90,116 @@ class VisualFeaturesProcessor(DatametricProcessor):
             cfg: Configuration dictionary.
         """
         self.s3_fs = None
-        storage_cfg = cfg.get("storage")
+        storage_cfg = self.storage_raw
         if not storage_cfg:
             return
 
+        from dqm_ml_core.models.global_ import StorageConfig
         from dqm_ml_job.utils import get_s3_filesystem
 
-        if storage_cfg is True:
-            self.s3_fs = get_s3_filesystem()
-        elif isinstance(storage_cfg, dict) and storage_cfg.get("type") == "s3":
-            self.s3_fs = get_s3_filesystem(
-                access_key=storage_cfg.get("access_key"),
-                secret_key=storage_cfg.get("secret_key"),
-                endpoint=storage_cfg.get("endpoint_override"),
-                region=storage_cfg.get("region"),
-            )
+        storage_config = StorageConfig.model_validate(storage_cfg)
+        if storage_config.type == "s3":
+            self.s3_fs = get_s3_filesystem(storage_config)
 
-    def _configure_columns(self, cfg: dict[str, Any]) -> None:
+    def _configure_columns(self, cfg: ImageFeaturesProcessorConfig) -> None:
         """Configure input and output columns.
 
         Args:
             cfg: Configuration dictionary.
         """
-        if not hasattr(self, "input_columns") or not self.input_columns:
+        if not hasattr(self, "input_columns") or "input" not in (self.config.get("columns") or {}):
             self.input_columns = ["image_bytes"]
 
         if not hasattr(self, "output_features") or not self.output_features:
-            cfg_outputs = cfg.get("output_features") if isinstance(cfg.get("output_features"), dict) else None
-            self.output_features: Any = (
-                cfg_outputs.copy() if isinstance(cfg_outputs, dict) else self.DEFAULT_OUTPUTS.copy()
-            )
+            self.output_features = self.DEFAULT_OUTPUTS.copy()
 
-    def _configure_params(self, cfg: dict[str, Any]) -> None:
+    def _configure_params(self, cfg: ImageFeaturesProcessorConfig) -> None:
         """Configure processing parameters.
 
         Args:
             cfg: Configuration dictionary.
         """
-        self.grayscale: bool = bool(cfg.get("grayscale", True))
-        self.normalize: bool = bool(cfg.get("normalize", True))
-        self.entropy_bins: int = int(cfg.get("entropy_bins", 256))
-
-        if cfg.get("clip_percentiles") is not None:
-            self.clip_percentiles = tuple(cfg.get("clip_percentiles"))  # type: ignore
+        self.grayscale: bool = cfg.grayscale
+        self.normalize: bool = cfg.normalize
+        self.entropy_bins: int = cfg.histogram.bins if cfg.histogram else 256
+        self.clip_percentiles = cfg.clip_percentiles
+        self.laplacian_kernel: str = cfg.laplacian_kernel
+        raw = cfg.luminosity_weights
+        if isinstance(raw, str):
+            self._luminosity_weights = _LUMINOSITY_STANDARDS[raw]
         else:
-            self.clip_percentiles = None  # type: ignore
-
-        self.laplacian_kernel: str = str(cfg.get("laplacian_kernel", "3x3"))
+            self._luminosity_weights = raw if raw is not None else _LUMINOSITY_STANDARDS["bt709"]
 
     def _validate_output_features(self) -> None:
-        """Validate output features configuration."""
+        """Validate and populate default output features configuration.
+
+        Ensures output_features is a dict and fills in missing feature keys
+        with defaults.
+
+        Raises:
+            ValueError: If output_features is not a dictionary.
+        """
         if not isinstance(self.output_features, dict):
             raise ValueError(f"[{self.name}] 'output_features' must be a dict of metric->column_name")
         for k in ("luminosity", "contrast", "blur", "entropy"):
             if k not in self.output_features:
                 self.output_features[k] = self.DEFAULT_OUTPUTS[k]
 
-    def _process_single_image(self, idx: int, v: Any) -> np.ndarray | None:
+    def _apply_clip_and_normalize(self, gray: np.ndarray) -> np.ndarray:
+        """Apply percentile clipping and optional normalization to a grayscale array.
+
+        Args:
+            gray: Input grayscale array.
+
+        Returns:
+            Clipped and optionally normalized array.
+        """
+        if self.clip_percentiles is None:
+            return gray
+        p_lo, p_hi = self.clip_percentiles
+        lo = np.percentile(gray, p_lo)
+        hi = np.percentile(gray, p_hi)
+        if hi <= lo:
+            return gray
+        gray = np.clip(gray, lo, hi)
+        if self.normalize:
+            gray = (gray - lo) / max(1e-12, (hi - lo))
+        return gray
+
+    def _handle_image_error(self, exc: Exception, idx: int) -> None:
+        """Check error config and either raise or record the failure.
+
+        Increments failure counters and checks failure rate threshold.
+
+        rate against
+        configured maximum.
+
+        Args:
+            exc: The exception that occurred.
+            idx: Sample index for logging.
+        """
+        self._check_image_fail_fast(exc, "on_transform_error", "on_unsupported_format")
+        self._failure_count += 1
+        self._total_count += 1
+        self._check_failure_rate()
+        logger.exception(f"[{self.name}] failed to process sample {idx}: {exc}")
+
+    def _process_single_image(self, idx: int, v: Any, column: str | None = None) -> np.ndarray | None:
         """Convert a raw image value to a grayscale numpy array, applying clipping.
 
         Args:
             idx: Position index for error logging.
             v: Raw image value (bytes, path, PIL Image, or ndarray).
+            column: The input column name (used to resolve path prefix).
 
         Returns:
             Grayscale numpy array or None if processing fails.
         """
         try:
-            gray = self._to_gray_np(v)
-            if self.clip_percentiles is not None:
-                p_lo, p_hi = self.clip_percentiles
-                lo = np.percentile(gray, p_lo)
-                hi = np.percentile(gray, p_hi)
-                if hi > lo:
-                    gray = np.clip(gray, lo, hi)
-                    if self.normalize:
-                        gray = (gray - lo) / max(1e-12, (hi - lo))
-            return gray
+            gray = self._to_gray_np(v, column=column)
+            return self._apply_clip_and_normalize(gray)
         except Exception as e:
-            logger.exception(f"[{self.name}] failed to process sample {idx}: {e}")
+            self._handle_image_error(e, idx)
             return None
 
     @staticmethod
@@ -186,16 +226,52 @@ class VisualFeaturesProcessor(DatametricProcessor):
                 values.append(float("nan"))
         return pa.array(values, type=pa.float32())
 
+    def _output_column_name(self, col: str, feature_key: str) -> str:
+        """Generate output column name for a feature with rename/prefix/suffix.
+
+        Args:
+            col: Input column name.
+            feature_key: Feature key (luminosity, contrast, blur, entropy).
+
+        Returns:
+            Fully qualified output column name with rename, prefix, and suffix applied.
+        """
+        name = self.output_features.get(feature_key, feature_key)
+        if self.columns_config and self.columns_config.rename:
+            for r in self.columns_config.rename:
+                if r.from_ == feature_key:
+                    name = r.to
+                    break
+        return super()._resolve_output_name(col, name)
+
+    @override
+    def generated_features(self) -> list[str]:
+        """Return list of feature column names this processor will generate.
+
+        Combines each input column with each feature key (luminosity, contrast,
+        blur, entropy) applying column modifiers (prefix, suffix, rename).
+
+        Returns:
+            List of output feature column names.
+        """
+        if not self.input_columns:
+            return []
+        return [
+            self._output_column_name(col, fk)
+            for col in self.input_columns
+            for fk in ("luminosity", "contrast", "blur", "entropy")
+        ]
+
     @override
     def compute_features(
         self,
         batch: pa.RecordBatch,
         prev_features: dict[str, pa.Array] | None = None,
     ) -> dict[str, pa.Array]:
-        """Compute per-sample image features.
+        """Compute per-sample image features for all configured input columns.
 
         Args:
-            batch: Input batch of data containing image column.
+            batch: Input batch of data containing image columns.
             prev_features: Previously computed features (not used in this processor).
 
         Returns:
@@ -205,68 +281,39 @@ class VisualFeaturesProcessor(DatametricProcessor):
             logger.warning(f"[{self.name}] no input_columns configured")
             return {}
 
-        image_column = self.input_columns[0]
-        if image_column not in batch.schema.names:
-            logger.warning(f"[{self.name}] column '{image_column}' not found in batch")
-            return {}
+        result: dict[str, pa.Array] = {}
+        for image_column in self.input_columns:
+            if image_column not in batch.schema.names:
+                logger.warning(f"[{self.name}] column '{image_column}' not found in batch")
+                continue
 
-        values = batch.column(image_column).to_pylist()
-        gray_images = [self._process_single_image(idx, v) for idx, v in enumerate(values)]
+            values = batch.column(image_column).to_pylist()
+            gray_images = [self._process_single_image(idx, v, column=image_column) for idx, v in enumerate(values)]
 
-        return {
-            self.output_features["luminosity"]: self._compute_scalar_feature(gray_images, np.mean, self.normalize),
-            self.output_features["contrast"]: self._compute_scalar_feature(gray_images, np.std, self.normalize),
-            self.output_features["blur"]: self._compute_scalar_feature(gray_images, self._variance_of_laplacian, True),
-            self.output_features["entropy"]: self._compute_scalar_feature(gray_images, self._entropy, True),
-        }
+            for fk in ("luminosity", "contrast", "blur", "entropy"):
+                func = {"luminosity": np.mean, "contrast": np.std}.get(fk)
+                if fk == "blur":
+                    arr = self._compute_scalar_feature(gray_images, self._variance_of_laplacian, True)
+                elif fk == "entropy":
+                    arr = self._compute_scalar_feature(gray_images, self._entropy, True)
+                else:
+                    arr = self._compute_scalar_feature(gray_images, func, self.normalize)
+                result[self._output_column_name(image_column, fk)] = arr
 
-    @override
-    def compute_batch_metric(self, features: dict[str, pa.Array]) -> dict[str, pa.Array]:
-        """No-op aggregation: metrics are image-level only.
-
-        Returns:
-            Empty dictionary as this processor computes features only.
-        """
-        return {}
+        return result
 
     @override
-    def compute(self, batch_metrics: dict[str, pa.Array] | None = None) -> dict[str, pa.Array]:
-        """No dataset-level aggregation required for this processor.
-
-        Returns:
-            Empty dictionary as features are computed at batch level.
-        """
-        return {}
-
     def reset(self) -> None:
-        """Reset processor state for new processing run."""
+        """Reset processor state for new processing run.
+
+        Resets failure counters and total count for fresh processing.
+        """
+        self._failure_count = 0
+        self._total_count = 0
 
     # --- helpers --------------------------------------------------------------
 
-    def _is_s3_path(self, path: str) -> bool:
-        """Check if a path is an S3 path.
-
-        Args:
-            path: The path to check.
-
-        Returns:
-            True if the path is an S3 path, False otherwise.
-        """
-        return path.startswith("s3://") or ("/" in path and not Path(path).is_absolute())
-
-    def _get_s3_path(self, file_path: str) -> str:
-        """Construct an S3 path by combining the bucket name with a file path.
-
-        Args:
-            file_path: The file path within the bucket.
-
-        Returns:
-            str: The full S3 path in format "bucket_name/file_path".
-        """
-        bucket_name = os.getenv("S3_BUCKET_NAME", "")
-        return bucket_name + "/" + file_path
-
-    def _to_gray_np(self, image_data: Any) -> np.ndarray:
+    def _to_gray_np(self, image_data: Any, column: str | None = None) -> np.ndarray:
         """Convert various input types to a 2D grayscale numpy array.
 
         If `self.normalize` is True, returns float32 in [0,1].
@@ -274,45 +321,55 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
         Args:
             image_data: Input data (PIL Image, bytes, string path, or numpy array).
+            column: The input column name (used to resolve path prefix).
 
         Returns:
-            2D numpy array in grayscale.
+            2D grayscale array in grayscale.
         """
         if isinstance(image_data, Image.Image):
             return self._pil_to_gray(image_data)
         if isinstance(image_data, (bytes, bytearray)):
             return self._pil_to_gray(Image.open(io.BytesIO(image_data)))
         if isinstance(image_data, str):
-            return self._pil_to_gray(self._load_image_from_path(image_data))
+            image = self._load_image_from_path(image_data, column=column)
+            if image is None:
+                raise ValueError(f"Failed to load image from path: {image_data}")
+            return self._pil_to_gray(image)
         if isinstance(image_data, np.ndarray):
             return self._ndarray_to_gray(image_data)
         raise ValueError(f"Unsupported type for image input: {type(image_data)}")
 
-    def _load_image_from_path(self, path: str) -> Image.Image:
+    def _load_image_from_path(self, path: str, column: str | None = None) -> Image.Image | None:
         """Load a PIL Image from a string path (S3 or local).
+
+        Resolves relative paths by looking up the prefix for the configured
+        input column from ``self.current_path_prefix`` (set by the job for
+        each selection).
 
         Args:
             path: File path or relative path.
+            column: The input column name (used to resolve the path prefix).
 
         Returns:
             PIL Image object.
 
         Raises:
-            ValueError: If the S3 path does not exist.
+            ValueError: If the file does not exist and ``fail_fast`` is configured.
         """
-        if self.s3_fs:
-            s3_key = f"{self.dataset_root_path}/{path}" if self.dataset_root_path is not None else path
-            bucket_name = os.getenv("S3_BUCKET_NAME", "")
-            s3_path = f"{bucket_name}/{s3_key}"
-            with self.s3_fs.open_input_stream(s3_path) as f:
-                loaded = Image.open(io.BytesIO(f.read()))
-                img = loaded.copy()
+        img = super()._open_image_from_path(path, column)
+        if img is not None:
             return img
 
-        img_path = Path(self.dataset_root_path) / path if self.dataset_root_path is not None else Path(path)
-        if not img_path.is_file():
+        # File not found — check error configuration
+        if (
+            self.errors_config
+            and self.errors_config.tabular
+            and self.errors_config.tabular.on_file_not_found == "fail_fast"
+        ):
+            prefix = self._current_image_prefix(column)
+            img_path = Path(prefix) / path if prefix else Path(path)
             raise ValueError(f"Path does not exist: {img_path}")
-        return Image.open(img_path)
+        return None
 
     def _pil_to_gray(self, img: Image.Image) -> np.ndarray:
         """Convert a PIL Image to a 2D grayscale numpy array.
@@ -330,7 +387,8 @@ class VisualFeaturesProcessor(DatametricProcessor):
 
         gray_np = np.array(img)
         if gray_np.ndim == 3:
-            gray_np = 0.2126 * gray_np[..., 0] + 0.7152 * gray_np[..., 1] + 0.0722 * gray_np[..., 2]
+            r, g, b = self._luminosity_weights
+            gray_np = r * gray_np[..., 0] + g * gray_np[..., 1] + b * gray_np[..., 2]
 
         return self._to_float01(gray_np) if self.normalize else gray_np.astype(np.uint8)
 
@@ -350,7 +408,8 @@ class VisualFeaturesProcessor(DatametricProcessor):
             gray = arr
         elif arr.ndim == 3 and arr.shape[2] in (3, 4):
             rgb = arr[..., :3].astype(np.float32)
-            gray = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
+            r, g, b = self._luminosity_weights
+            gray = r * rgb[..., 0] + g * rgb[..., 1] + b * rgb[..., 2]
         else:
             raise ValueError(f"Unsupported ndarray shape {arr.shape}")
 

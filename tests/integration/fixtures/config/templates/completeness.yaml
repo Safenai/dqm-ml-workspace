@@ -1,41 +1,21 @@
 ---
-config:
+compute:
+  log_level: "debug"
+  progress_bar: true
+  threads: 4
 
-  dataloaders:
-    source_dataset:
+dataloaders:
+  loaders:
+    - name: source_dataset
       type: parquet
       path: tests/integration/fixtures/data/completeness.parquet
       batch_size: 10000
-      memory_limit: 1GB
-      threads: 2
 
-  metrics_processor:
-    completeness:
+metrics:
+  processors:
+    - name: completeness
       type: completeness
-
-      input_columns: [column_1, column_3, column_6, column_9]
-
-      include_per_column: true    # column completeness scores
-      include_overall: true       # overall dataset completeness score
-
-      # custom output column mappings
-      output_metrics:
-        overall_completeness: completeness_overall
-        completeness_column_1: completeness_column_1
-        completeness_column_3: completeness_column_3
-        completeness_column_6: completeness_column_6
-        completeness_column_9: completeness_column_9
-
-
-  outputs:
-    metrics:
-      type: parquet
-      path_pattern:
-      columns: [
-        completeness_overall,
-        completeness_column_1,
-        completeness_column_3,
-        completeness_column_6,
-        completeness_column_9
-      ]
-      compression: snappy
+      columns:
+        input: [column_1, column_3, column_6, column_9]
+      include_per_column: true
+      include_overall: true

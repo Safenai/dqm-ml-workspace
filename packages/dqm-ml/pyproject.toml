@@ -29,11 +29,14 @@ classifiers = [
 notebooks = [
     "jupyter>=1.0.0",
     "plotly>=5.0.0",
+    "matplotlib>=3.10.9",
+    "matplotlib-inline>=0.2.2",
+    "tabulate>=0.10.0",
 ]
 
-job = [ "dqm-ml-job>=2.0.0rc0"]
-pytorch = [ "dqm-ml-images>=2.0.0rc0"]
-images = [ "dqm-ml-images>=2.0.0rc0"]
+job = [ "dqm-ml-job"]
+pytorch = [ "dqm-ml-images"]
+images = [ "dqm-ml-images"]
 
 all = [
      "dqm-ml[notebooks, job, pytorch, images]",

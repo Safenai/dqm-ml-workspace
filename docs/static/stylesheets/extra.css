@@ -92,3 +92,8 @@
 [data-md-color-scheme="slate"] .jp-RenderedHTMLCommon {
     color: #d4d4d4 !important;
 }
+
+/* Clipboard button support for pymdownx.highlight (uses .highlight class) */
+.highlight > .pre {
+    position: relative;
+}

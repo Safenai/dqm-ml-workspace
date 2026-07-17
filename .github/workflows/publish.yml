@@ -1,0 +1,74 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+
+jobs:
+  check-main:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      is_on_main: ${{ steps.check.outputs.is_on_main }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check if tag commit is on main
+        id: check
+        run: |
+          git fetch origin +refs/heads/main:refs/remotes/origin/main --depth=1
+          if git merge-base --is-ancestor "${{ github.sha }}" origin/main; then
+            echo "is_on_main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_on_main=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish-pypi:
+    needs: check-main
+    if: needs.check-main.outputs.is_on_main == 'true'
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup
+
+      - name: Validate tag format
+        run: |
+          TAG="${{ github.ref_name }}"
+          if ! echo "$TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-?(rc|a)[0-9]+)?$'; then
+            echo "Invalid tag format: $TAG"
+            echo "Allowed: X.Y.Z, X.Y.Z[-](rc|a)D"
+            exit 1
+          fi
+
+      - name: Build packages
+        run: |
+          uv build packages/dqm-ml-core
+          uv build packages/dqm-ml-images
+          uv build packages/dqm-ml-job
+          uv build packages/dqm-ml-pytorch
+          uv build packages/dqm-ml
+
+      - name: Publish dqm-ml-core
+        run: uv publish dist/dqm_ml_core-*
+
+      - name: Publish dqm-ml-images
+        run: uv publish dist/dqm_ml_images-*
+
+      - name: Publish dqm-ml-job
+        run: uv publish dist/dqm_ml_job-*
+
+      - name: Publish dqm-ml-pytorch
+        run: uv publish dist/dqm_ml_pytorch-*
+
+      - name: Publish dqm-ml
+        run: uv publish dist/dqm_ml-*

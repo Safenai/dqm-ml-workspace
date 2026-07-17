@@ -30,13 +30,15 @@ dqm-ml-workspace/
 
 ## Plugin System
 
-Three plugin groups via Python `[project.entry-points]`:
+Five plugin groups via Python `[project.entry-points]`:
 
-| Entry Point Group | Registration Location |
-|---|---|
-| `dqm_ml.metrics` | Each metric package's `pyproject.toml` |
-| `dqm_ml.dataloaders` | `packages/dqm-ml-job/pyproject.toml:32` |
-| `dqm_ml.outputwriter` | `packages/dqm-ml-job/pyproject.toml:37` |
+| Entry Point Group | Purpose | Registration Location |
+|---|---|---|
+| `dqm_ml.metrics` | Metrics Processors (Completeness, Representativeness, Diversity) | `packages/dqm-ml-core/pyproject.toml` |
+| `dqm_ml.features` | Features Processors (VisualFeatures, ImageEmbedding) | `packages/dqm-ml-images/pyproject.toml`, `packages/dqm-ml-pytorch/pyproject.toml` |
+| `dqm_ml.gap` | Gap Processors (DomainGap) | `packages/dqm-ml-pytorch/pyproject.toml` |
+| `dqm_ml.dataloaders` | Data Loaders (Parquet, CSV) | `packages/dqm-ml-job/pyproject.toml` |
+| `dqm_ml.outputwriter` | Output Writers (Parquet) | `packages/dqm-ml-job/pyproject.toml` |
 
 ## CLI
 

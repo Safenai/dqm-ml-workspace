@@ -9,10 +9,9 @@ import shlex
 from timeit import default_timer as timer
 from typing import Any
 
+from dqm_ml_job.cli import execute
 import pyarrow.parquet as pq
 import pytest
-
-from dqm_ml_job.cli import execute
 
 
 @pytest.mark.parametrize(
@@ -23,6 +22,8 @@ from dqm_ml_job.cli import execute
         "representativeness_batch",
         "representativeness_normal_distribution",
         "representativeness_uniform_distribution",
+        "representativeness_normal_distribution_custom_interpretations",
+        "representativeness_normal_distribution_shannon_threshold",
     ],
 )
 def test_representativeness(
@@ -71,8 +72,8 @@ def test_representativeness(
             print("**************************")
             print(f"{metric} - {col}")
 
-            column_value = metric + "_" + col + "_" + value
-            column_interpretation = metric + "_" + col + "_interpretation"
+            column_value = col + "_" + metric + "_" + value
+            column_interpretation = col + "_" + metric + "_interpretation"
 
             table = pq.read_table(Path(output_path) / output_filename)
 

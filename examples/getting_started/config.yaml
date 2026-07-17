@@ -1,0 +1,14 @@
+metrics:
+  outputs:
+    path: output_metrics.parquet
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [name, age, score]
+
+dataloaders:
+  loaders:
+    - name: my_data
+      type: csv
+      path: data.csv

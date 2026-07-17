@@ -1,36 +1,20 @@
 ---
-config:
+compute:
+  log_level: "debug"
+  progress_bar: true
+  threads: 4
 
-  dataloaders:
-    source_dataset:
+dataloaders:
+  loaders:
+    - name: source_dataset
       type: parquet
       path: tests/integration/fixtures/data/diversity.parquet
       batch_size: 10000
-      memory_limit: 1GB
-      threads: 2
 
-  metrics_processor:
-    diversity:
+metrics:
+  processors:
+    - name: diversity
       type: diversity
-      input_columns: [column_2, column_4, column_6]
+      columns:
+        input: [column_2, column_4, column_6]
       metrics: [simpson, gini, shannon, richness]
-
-  outputs:
-    metrics:
-      type: parquet
-      path_pattern:
-      columns: [
-        column_2_simpson,
-        column_2_gini,
-        column_2_shannon,
-        column_2_richness,
-        column_4_simpson,
-        column_4_gini,
-        column_4_shannon,
-        column_4_richness,
-        column_6_simpson,
-        column_6_gini,
-        column_6_shannon,
-        column_6_richness,
-      ]
-      compression: snappy

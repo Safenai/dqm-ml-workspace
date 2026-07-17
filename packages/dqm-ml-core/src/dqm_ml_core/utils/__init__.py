@@ -2,11 +2,11 @@
 
 This package contains utility classes and functions used across
 the DQM ML Core package, including:
-- MetricRunner: Orchestrator for executing metrics on DataFrames
+- ProcessorRunner: Orchestrator for executing metrics on DataFrames
 - PluginLoadedRegistry: Registry for dynamically loaded plugins
 """
 
-from dqm_ml_core.utils.metric_runner import MetricRunner
+from dqm_ml_core.utils.processor_runner import ProcessorRunner
 from dqm_ml_core.utils.registry import PluginLoadedRegistry
 
-__all__ = ["MetricRunner", "PluginLoadedRegistry"]
+__all__ = ["PluginLoadedRegistry", "ProcessorRunner"]

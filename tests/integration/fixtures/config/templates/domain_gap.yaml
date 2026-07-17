@@ -1,27 +1,27 @@
 ---
-config:
+compute:
+  log_level: "debug"
+  progress_bar: true
+  threads: 4
 
-  dataloaders:
-    source_dataset:
+dataloaders:
+  loaders:
+    - name: source_dataset
       type: parquet
       path:
       batch_size: 50
-      memory_limit: 2GB
-      threads: 4
 
-    target_dataset:
+    - name: target_dataset
       type: parquet
       path:
       batch_size: 50
-      memory_limit: 2GB
-      threads: 4
 
-  metrics_processor:
-    image_embedding:
-      type: image_embedding
-      data:
-        image_column: image_path
-        mode: path
+features:
+  processors:
+    - name: image_embedding
+      type: features_embeddings
+      columns:
+        input: [image_path]
       model:
         arch: resnet18
         n_layer_feature: -2
@@ -33,18 +33,11 @@ config:
         norm_mean: [0.485, 0.456, 0.406]
         norm_std: [0.229, 0.224, 0.225]
 
-    domain_gap:
+gap:
+  processors:
+    - name: domain_gap
       type: domain_gap
-      input:
-        embedding_col: embedding
-      delta:
+      columns:
+        input: [image_path_embedding]
+      distance:
         metric:
-
-  compute_delta: True
-
-  outputs :
-
-    delta_metrics:
-      type: parquet
-      path_pattern:
-      columns: []

@@ -32,8 +32,6 @@ theme:
     # GitHub specific.
     repo: fontawesome/brands/github
   favicon: static/math-integral-box.png
-  mermaid:
-    version: 9.4.0
   features:
     - content.code.annotate
     - content.code.copy
@@ -61,8 +59,18 @@ markdown_extensions:
   - footnotes
   - pymdownx.details
   - pymdownx.keys
-  - pymdownx.highlight
-  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
   - pymdownx.tabbed:
       alternate_style: true
       slugify: !!python/object/apply:pymdownx.slugs.slugify
@@ -83,11 +91,15 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_pre_build: "docs.hooks:pre_build"
+        on_page_markdown: "docs.hooks:page_markdown"
   - search
   - offline:
       enabled: !ENV [MKDOCS_MATERIAL_OFFLINE, false]
   - mermaid2:
-      version: "9.4.0"
+      version: 11.16.0
+      arguments:
+        securityLevel: loose
+        htmlLabels: false
   - mkdocstrings:
       handlers:
         python:
@@ -127,17 +139,25 @@ repo_url: https://github.com/Safenai/dqm-ml-workspace
 edit_uri: edit/main/docs/user_guide/docs/
 nav:
   - Home: index.md
+  - Concepts: formal_concepts.md
   - Getting Started:
     - Quick Start: quickstart.md
     - Why a dqm-ml V2: dqm-ml-v2.md
     - Overview: dqm-ml-overview.md
   - User Guide:
     - CLI Reference: cli.md
-    - Configuration: configuration.md
-    - YAML Basics: yaml_basics.md
-    - Data Loaders: dataloaders.md
-    - Metrics Computation: metrics_computation.md
-    - Direct Call: TBD1.md
+    - Configuration:
+      - Overview: configuration/overview.md
+      - Interfaces: configuration/interfaces.md
+      - Processors: configuration/processors.md
+      - Features: configuration/features.md
+      - Metrics: configuration/metrics.md
+      - Gap: configuration/gap.md
+      - Data Selection: configuration/data_selection.md
+      - Global: configuration/global.md
+      - JSON Schema: schema/schema.md
+      - YAML Basics: yaml_basics.md
+    - Release Notes: RELEASE.md
   - Metrics: 
     - Overview: metrics.md
     - Completeness : metrics/completeness.md
@@ -146,21 +166,40 @@ nav:
     - Representativeness : metrics/representativeness.md
     - Visual features : metrics/visual_features.md
   - Tutorials and Examples:
-    - Direct usage with Notebook: examples/multiple_metrics_tests_v2.ipynb
+    - Fictive Scenario:
+      - Overview: examples/overview.md
+      - Config by Metric:
+        - Completeness: examples/scenario/completeness.md
+        - Diversity: examples/scenario/diversity.md
+        - Representativeness: examples/scenario/representativeness.md
+        - Visual Features: examples/scenario/visual_features.md
+        - Embeddings: examples/scenario/embeddings.md
+      - Domain Gap:
+        - With Split: examples/scenario/domain_gap_split.md
+        - With Filter: examples/scenario/domain_gap_filter.md
+        - With Split + Filter: examples/scenario/domain_gap_split_filter.md
+      - Full Pipeline: examples/scenario/full_story.md
+      - Notebook with run: examples/notebooks/scenario_individual_steps.ipynb
+      - Notebook with classes: examples/notebooks/scenario_full_pipeline.ipynb
+    - Industrial Scenario:
+      - Overview: TBD2.md
+      - Notebook: examples/notebooks/multiple_metrics_tests_v2.ipynb
   # TODO: Uncomment when this documentation exists
   #   - Welding Challenge: tutorials/welding_challenge.md
   - Developer Guide:
     - What to consider: developer.md
     - Contributing: contributing.md
+    - Testing: testing.md
+    - Packaging Tests: packaging-tests.md
     - Roadmap: ROADMAP.md
+    - Changelog: CHANGELOG.md
     - Packages:
       - Core: packages/dqm-ml-core.md
       - Job: packages/dqm-ml-job.md
       - Images: packages/dqm-ml-images.md
       - PyTorch: packages/dqm-ml-pytorch.md
       - CLI: packages/dqm-ml.md
-    - Test Reports:
-      - Results: reports/pytest/pytest_report.html
-      - Coverage: reports/htmlcov/coverage_report.html
-      - Performance Report: TBD2.md
+    - Pytest Report: reports/pytest/pytest_report.html
+    - Coverage: reports/htmlcov/coverage_report.html
+    - Performance: TBD1.md
 

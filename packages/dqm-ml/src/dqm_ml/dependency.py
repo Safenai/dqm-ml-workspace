@@ -59,6 +59,14 @@ def display_list_of(arg_list: list[str] | None = None) -> None:
     for key, value in PluginLoadedRegistry.get_metrics_registry().items():
         print(f"- {key} - {value}")
 
+    print("Available data features_registry")
+    for key, value in PluginLoadedRegistry.get_features_registry().items():
+        print(f"- {key} - {value}")
+
+    print("Available data gap_registry")
+    for key, value in PluginLoadedRegistry.get_gap_registry().items():
+        print(f"- {key} - {value}")
+
     print("Available data loaders")
     for key, value in PluginLoadedRegistry.get_dataloaders_registry().items():
         print(f"- {key} - {value}")
