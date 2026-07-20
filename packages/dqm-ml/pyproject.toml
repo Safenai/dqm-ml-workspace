@@ -34,16 +34,11 @@ notebooks = [
     "tabulate>=0.10.0",
 ]
 
-job = [ "dqm-ml-job"]
-pytorch = [ "dqm-ml-images"]
-images = [ "dqm-ml-images"]
+job = ["dqm-ml-job"]
+pytorch = ["dqm-ml-pytorch"]
+images = ["dqm-ml-images"]
 
-all = [
-     "dqm-ml[notebooks, job, pytorch, images]",
- ]
-
-
-
+all = ["dqm-ml[notebooks, job, pytorch, images]"]
 
 [project.urls]
 Homepage = "https://irt-systemx.github.io/dqm-ml"

@@ -20,23 +20,25 @@ Installing `dqm-ml-images` should **not** pull in `torch` or `torchvision` unles
 
 ## Test Scripts
 
-Four shell scripts cover different package sources. Each runs all 9 scenarios (or a single one by number).
+Four shell scripts cover different package sources. Each runs all 13 scenarios (or a single one by number).
 
 | Script | Package Source | When to Use |
 |--------|---------------|-------------|
 | `scripts/packaging/test_local.sh` | Locally built wheels | Before PR — tests your local changes |
-| `scripts/packaging/test_pypi_prerelease.sh` | PyPI pre-release | After push to dev — tests rc/alpha from PyPI |
 | `scripts/packaging/test_testpypi_prerelease.sh` | test.pypi.org pre-release | After push to dev — tests rc/alpha from test-pypi |
 | `scripts/packaging/test_pypi_release.sh` | PyPI release | After release — tests stable version |
 
 ### Usage
 
 ```bash
-# Run all 9 scenarios
+# Run all 13 scenarios
 scripts/packaging/test_local.sh
 
 # Run a single scenario (e.g., scenario 3: dqm-ml-core + dqm-ml-job)
 scripts/packaging/test_local.sh 3
+
+# Run a meta-package scenario (e.g., scenario 10: dqm-ml[job])
+scripts/packaging/test_local.sh 10
 ```
 
 All scripts:
@@ -60,6 +62,10 @@ All scripts:
 | 7 | PyTorch + Job | dqm-ml-core, dqm-ml-pytorch, dqm-ml-job | smoke_pytorch.py | Embeddings and gap metrics through YAML config |
 | 8 | All | dqm-ml-core, dqm-ml-images, dqm-ml-pytorch, dqm-ml-job | smoke_all.py | All metric types: completeness, visual, embeddings, gap |
 | 9 | Notebooks | dqm-ml-core, dqm-ml-images, dqm-ml-pytorch, dqm-ml-job, dqm-ml[notebooks] | smoke_notebooks.py | All packages + notebook dependencies (jupyter, plotly, matplotlib) |
+| 10 | Meta Job | dqm-ml[job] | smoke_core_job.py | dqm-ml-job + dqm-ml-core via optional dependency |
+| 11 | Meta PyTorch | dqm-ml[pytorch] | smoke_embeddings.py | dqm-ml-pytorch + dqm-ml-core via optional dependency |
+| 12 | Meta Images | dqm-ml[images] | smoke_images.py | dqm-ml-images + dqm-ml-core via optional dependency |
+| 13 | Meta All | dqm-ml[all] | smoke_notebooks.py | dqm-ml-job + dqm-ml-core + dqm-ml-images + dqm-ml-pytorch + jupyter + plotly + matplotlib + tabulate |
 
 ## CI/CD Lifecycle
 
@@ -119,6 +125,16 @@ PYPI_FLAGS="--prerelease=allow --extra-index-url https://download.pytorch.org/wh
 uv venv --python 3.12 ./tmp/test-gap
 uv pip install --python ./tmp/test-gap/bin/python $PYPI_FLAGS dqm-ml-core dqm-ml-pytorch
 ./tmp/test-gap/bin/python scripts/packaging/smoke/smoke_gap.py
+
+# Scenario 10: dqm-ml[job] (meta-package extra)
+uv venv --python 3.12 ./tmp/test-meta-job
+uv pip install --python ./tmp/test-meta-job/bin/python --pre "dqm-ml[job]"
+./tmp/test-meta-job/bin/python scripts/packaging/smoke/smoke_core_job.py
+
+# Scenario 13: dqm-ml[all] (full meta-package)
+uv venv --python 3.12 ./tmp/test-meta-all
+uv pip install --python ./tmp/test-meta-all/bin/python --pre "dqm-ml[all]"
+./tmp/test-meta-all/bin/python scripts/packaging/smoke/smoke_notebooks.py
 
 # Cleanup
 rm -rf ./tmp

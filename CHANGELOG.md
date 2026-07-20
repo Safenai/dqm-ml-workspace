@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.1 (2026-07-20) — Fix pytorch extra, add meta-package scenarios
+
+* **Fix:** `pytorch` extra in `pyproject.toml` incorrectly depended on `dqm-ml-images` instead of `dqm-ml-pytorch`
+* **Added:** Meta-package test scenarios (10–13) exercising `dqm-ml[job]`, `[pytorch]`, `[images]`, and `[all]` extras end-to-end
+* **Removed:** `test_pypi_prerelease.sh` — temporary script used while test.pypi.org configuration was not ready; now superseded by `test_testpypi_prerelease.sh`
+* **Improved:** `test_pypi_release.sh` now uses explicit `--index-url` for PyPI resolution
+* **Updated:** Packaging documentation to reflect 13 scenarios and script removal
+
+## 2.0.0 (2026-07-17) Release
+
+* merged in main
+* tagged 2.0.0
+
 ## 2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds
 
 This release addresses review feedback from 2.0.0-rc3, enhancing ProcessorRunner with direct image-to-domain-gap support, adding package isolation smoke tests, and introducing configurable test seeds.

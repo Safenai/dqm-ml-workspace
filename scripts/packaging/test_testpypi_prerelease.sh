@@ -2,7 +2,7 @@
 # Test packaging scenarios with pre-release packages from test.pypi.org.
 #
 # Usage:
-#   scripts/packaging/test_testpypi_prerelease.sh        # run all 9 scenarios
+#   scripts/packaging/test_testpypi_prerelease.sh        # run all 13 scenarios
 #   scripts/packaging/test_testpypi_prerelease.sh 3      # run scenario 3 only
 
 set -euo pipefail
@@ -33,5 +33,5 @@ run() {
     summary
 }
 
-scenario=$(parse_scenario_arg "${1:-0}" 9)
+scenario=$(parse_scenario_arg "${1:-0}" 13)
 run "$scenario"
