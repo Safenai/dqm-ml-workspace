@@ -109,6 +109,10 @@ run_scenarios() {
     if [[ "$scenario" == "0" || "$scenario" == "7" ]]; then run_scenario "7_pytorch_job"     "smoke_pytorch.py"    "$CORE" "$PYTORCH" "$JOB"; fi
     if [[ "$scenario" == "0" || "$scenario" == "8" ]]; then run_scenario "8_all"             "smoke_all.py"        "$CORE" "$IMAGES" "$PYTORCH" "$JOB"; fi
     if [[ "$scenario" == "0" || "$scenario" == "9" ]]; then run_scenario "9_notebooks"       "smoke_notebooks.py"  "$CORE" "$IMAGES" "$PYTORCH" "$JOB" "dqm-ml[notebooks]"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "10" ]]; then run_scenario "10_meta_job"      "smoke_core_job.py"      "dqm-ml[job]"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "11" ]]; then run_scenario "11_meta_pytorch"  "smoke_embeddings.py"    "dqm-ml[pytorch]"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "12" ]]; then run_scenario "12_meta_images"   "smoke_images.py"        "dqm-ml[images]"; fi
+    if [[ "$scenario" == "0" || "$scenario" == "13" ]]; then run_scenario "13_meta_all"      "smoke_notebooks.py"     "dqm-ml[all]"; fi
 }
 
 # parse_scenario_arg <arg> <total>
