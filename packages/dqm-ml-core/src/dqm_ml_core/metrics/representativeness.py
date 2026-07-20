@@ -100,7 +100,7 @@ class RepresentativenessProcessor(MetricsProcessor):
         if compute_seed is not None:
             self._rng = np.random.default_rng(compute_seed)
         else:
-            self._rng = np.random.default_rng()
+            self._rng = np.random.default_rng(42)
 
         self._bin_edges: dict[str, np.ndarray] = {}
         self._bin_params: dict[str, dict[str, float]] = {}  # caching for _compute_expected_counts
@@ -318,7 +318,7 @@ class RepresentativenessProcessor(MetricsProcessor):
             sample_data = np.array([0.0])
         if self.distribution == "normal":
             mean, std = self._get_normal_init_params(col, sample_data)
-            edges = self._bin_edges_normal(mean, std, self.bins, sample_data)
+            edges = self._bin_edges_normal(mean, std, self.bins)
             self._bin_params[col] = {"mean": mean, "std": std}
         else:
             min_val, max_val = self._get_uniform_init_params(col, sample_data)
@@ -718,7 +718,7 @@ class RepresentativenessProcessor(MetricsProcessor):
 
     # utils methods for bin edge calculation
 
-    def _bin_edges_normal(self, mean: float, std: float, bins: int, data: np.ndarray) -> np.ndarray:
+    def _bin_edges_normal(self, mean: float, std: float, bins: int) -> np.ndarray:
         """Calculate bin edges using the PPF of a Normal distribution.
 
         This ensures bins represent equal probability mass under the

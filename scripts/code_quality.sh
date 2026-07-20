@@ -7,11 +7,11 @@ exec > >(tee "$(dirname "$0")/../logs/code_quality_${timestamp}.log") 2>&1
 
 CI_MODE="${CI:-false}"
 
-uv sync
+uv sync --frozen
 
 if [[ "$CI_MODE" != "true" ]]; then
-    uv run nox -s fmt
+    uv run --frozen nox -s fmt
 fi
 
-uv run nox -s lint
-uv run nox -s type_check
+uv run --frozen nox -s lint
+uv run --frozen nox -s type_check
