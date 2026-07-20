@@ -1,19 +1,19 @@
 name: CI
 
 on:
-  push:
-    branches:
-    - main
-    - dev
   pull_request:
     branches:
     - main
     - dev
   workflow_dispatch:
 
+# Cancel in-progress runs when a newer commit is pushed to the same PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  
 
 jobs:
   quality:
