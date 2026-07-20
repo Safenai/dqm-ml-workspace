@@ -1444,6 +1444,7 @@ dependencies = [
 all = [
     { name = "dqm-ml-images" },
     { name = "dqm-ml-job" },
+    { name = "dqm-ml-pytorch" },
     { name = "jupyter" },
     { name = "matplotlib" },
     { name = "matplotlib-inline" },
@@ -1464,7 +1465,7 @@ notebooks = [
     { name = "tabulate" },
 ]
 pytorch = [
-    { name = "dqm-ml-images" },
+    { name = "dqm-ml-pytorch" },
 ]
 
 [package.metadata]
@@ -1472,8 +1473,8 @@ requires-dist = [
     { name = "dqm-ml", extras = ["images", "job", "notebooks", "pytorch"], marker = "extra == 'all'", editable = "packages/dqm-ml" },
     { name = "dqm-ml-core", editable = "packages/dqm-ml-core" },
     { name = "dqm-ml-images", marker = "extra == 'images'", editable = "packages/dqm-ml-images" },
-    { name = "dqm-ml-images", marker = "extra == 'pytorch'", editable = "packages/dqm-ml-images" },
     { name = "dqm-ml-job", marker = "extra == 'job'", editable = "packages/dqm-ml-job" },
+    { name = "dqm-ml-pytorch", marker = "extra == 'pytorch'", editable = "packages/dqm-ml-pytorch" },
     { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.0.0" },
     { name = "matplotlib", marker = "extra == 'notebooks'", specifier = ">=3.10.9" },
     { name = "matplotlib-inline", marker = "extra == 'notebooks'", specifier = ">=0.2.2" },

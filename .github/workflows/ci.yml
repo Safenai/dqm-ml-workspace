@@ -29,7 +29,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libhunspell-dev
 
       - name: Test with Nox
-        run: uv run nox -s ${{ matrix.nox-session }}
+        run: uv run --frozen nox -s ${{ matrix.nox-session }}
 
   compatibility:
     runs-on: ubuntu-24.04
@@ -43,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compatibility with Nox
-        run: TQDM_DISABLE=1 uv run nox -s compatibility-${{ matrix.python-version }}
+        run: TQDM_DISABLE=1 uv run --frozen nox -s compatibility-${{ matrix.python-version }}
 
   test:
     runs-on: ubuntu-24.04
@@ -61,7 +61,7 @@ jobs:
           key: dqm-test-resnet
 
       - name: Test with Nox
-        run: TQDM_DISABLE=1 uv run nox -s test-${{ matrix.python-version }}
+        run: TQDM_DISABLE=1 uv run --frozen nox -s test-${{ matrix.python-version }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -109,6 +109,6 @@ jobs:
           path: docs/reports/htmlcov
 
       - name: Publish Docs
-        run: uv run nox -s docs_github_pages
+        run: uv run --frozen nox -s docs_github_pages
 
 
