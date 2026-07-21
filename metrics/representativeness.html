@@ -1,0 +1,2766 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="domain_gap.html">
+      
+      
+        <link rel="next" href="visual_features.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../static/math-integral-box.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Representativeness - DQM-ML V2</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../static/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#representativeness-metric" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="DQM-ML V2" class="md-header__button md-logo" aria-label="DQM-ML V2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-3.1 3.9s-.7-.3-1-.3c-.6-.1-1 .1-1.2 1.1L12 16.8c-.2.8-.5 1.4-1 1.8-.4.3-.8.4-1.3.4-.8 0-2-.5-2-.5l.5-1.4s.8.3 1 .3c.3.1.5 0 .7-.1s.3-.4.4-.7l1.6-9.2c.1-.8.5-1.4 1-1.9.6-.4 1.3-.5 2.1-.4.7.1 1.5.5 1.5.5z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DQM-ML V2
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Representativeness
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Safenai/dqm-ml-workspace" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dqm-ml-workspace
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../index.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../formal_concepts.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Concepts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../quickstart.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../cli.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../metrics.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Metrics
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/overview.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorials and Examples
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../developer.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/dqm_ml_core/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="DQM-ML V2" class="md-nav__button md-logo" aria-label="DQM-ML V2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-3.1 3.9s-.7-.3-1-.3c-.6-.1-1 .1-1.2 1.1L12 16.8c-.2.8-.5 1.4-1 1.8-.4.3-.8.4-1.3.4-.8 0-2-.5-2-.5l.5-1.4s.8.3 1 .3c.3.1.5 0 .7-.1s.3-.4.4-.7l1.6-9.2c.1-.8.5-1.4 1-1.9.6-.4 1.3-.5 2.1-.4.7.1 1.5.5 1.5.5z"/></svg>
+
+    </a>
+    DQM-ML V2
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Safenai/dqm-ml-workspace" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dqm-ml-workspace
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formal_concepts.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../quickstart.html" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../cli.html" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Metrics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="completeness.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Completeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="diversity.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diversity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="domain_gap.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Representativeness
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="representativeness.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Representativeness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-measures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Measures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What It Measures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available-statistical-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Statistical Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processor-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processor Information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#top-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#histogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        histogram
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shannon" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shannon
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        grte
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected_counts_method-optional-default-cdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        expected_counts_method (optional, default: "cdf")
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distribution_params-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        distribution_params (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mean_std_estimation-optional-default-from_first_batch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mean_std_estimation (optional, default: "from_first_batch")
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-effect-of-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Effect of Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Practical Effect of Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distribution-normal-vs-uniform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        distribution: normal vs uniform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#histogrambins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        histogram.bins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alpha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        alpha
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grte-threshold-and-scaling_factor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GRTE: threshold and scaling_factor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shannonthreshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shannon.threshold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ks-sampling-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KS sampling parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interpretation-rules-of-thumb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interpretation Rules of Thumb
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interpretation Rules of Thumb">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chi-square-and-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chi-square and KS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shannon-entropy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shannon Entropy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grte_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GRTE
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveats-and-practical-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveats and Practical Limitations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Caveats and Practical Limitations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-chi-square-over-power-at-large-sample-sizes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Chi-square over-power at large sample sizes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ks-test-stochasticity-at-default-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. KS test stochasticity at default settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sensitivity-mismatch-grte-vs-chi-square-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sensitivity mismatch: GRTE vs chi-square / KS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-shannon-entropy-measures-expected-diversity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Shannon entropy measures expected diversity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-chi-square-blind-spot-within-bin-distribution-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Chi-square blind spot: within-bin distribution changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-configuration-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Configuration Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="YAML Configuration Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-check-all-numeric-columns-against-normal-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal — check all numeric columns against normal distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-all-parameters-customized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full — all parameters customized
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validating-synthetic-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validating synthetic data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checking-min-max-scaling-uniform-expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking min-max scaling (uniform expected)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="visual_features.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visual features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../examples/overview.html" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials and Examples
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../developer.html" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../reference/dqm_ml_core/index.html" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../index.html" class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../metrics.html" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Metrics
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="representativeness-metric">Representativeness Metric</h1>
+<p>The Representativeness <strong>Metric</strong> checks whether individual feature columns in your dataset match a specified reference distribution (Normal or Uniform). It is used to validate feature health, preprocessing correctness, and synthetic data quality — feature by feature.</p>
+<p>Unlike <strong>Domain Gap</strong> (which compares two datasets globally), Representativeness works on a single <strong>Sample Selection</strong> and tells you whether each column "looks right" for its expected distribution.</p>
+<blockquote>
+<p><strong>See also:</strong> <a href="../formal_concepts.html">Concepts</a> for definitions of <strong>Metric</strong>, <strong>Domain Gap</strong>, <strong>Sample Selection</strong>, and related terminology.</p>
+</blockquote>
+<h2 id="what-it-measures">What It Measures</h2>
+<p>Representativeness answers: <em>"Does this feature column follow the distribution I expect?"</em></p>
+<h3 id="available-statistical-tests">Available Statistical Tests</h3>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>What It Computes</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Chi-Square (χ²)</strong></td>
+<td>Goodness-of-fit between observed binned frequencies and expected frequencies</td>
+<td>p-value &lt; alpha → feature <strong>does not</strong> follow the distribution</td>
+</tr>
+<tr>
+<td><strong>Kolmogorov-Smirnov (KS)</strong></td>
+<td>Maximum distance between empirical and theoretical CDFs</td>
+<td>p-value &lt; alpha → feature <strong>does not</strong> follow the distribution (uses random sampling)</td>
+</tr>
+<tr>
+<td><strong>Shannon Entropy</strong></td>
+<td>Information diversity of the binned distribution</td>
+<td>Higher values → more spread across bins; lower → concentrated in few bins</td>
+</tr>
+<tr>
+<td><strong>GRTE</strong></td>
+<td>Granular Relative Theoretical Entropy — exponential gap between observed and theoretical entropy</td>
+<td>Higher values → more representative; lower → poorly representative</td>
+</tr>
+</tbody>
+</table>
+<h3 id="use-cases">Use Cases</h3>
+<p><strong>1. Sanity-check preprocessing</strong></p>
+<p>After scaling, you expect each feature to match a known distribution:</p>
+<table>
+<thead>
+<tr>
+<th>Transformation</th>
+<th>Expected distribution</th>
+<th>Representativeness config</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard scaling (z-score)</td>
+<td>Normal(0,1)</td>
+<td><code>distribution: normal</code></td>
+</tr>
+<tr>
+<td>Min-max scaling</td>
+<td>Uniform(0,1)</td>
+<td><code>distribution: uniform</code></td>
+</tr>
+<tr>
+<td>Quantile transformation</td>
+<td>Uniform(0,1)</td>
+<td><code>distribution: uniform</code></td>
+</tr>
+<tr>
+<td>Box-Cox / Yeo-Johnson</td>
+<td>Approximately normal</td>
+<td><code>distribution: normal</code></td>
+</tr>
+</tbody>
+</table>
+<p>If a feature fails the test after preprocessing, it signals a problem — constant column, extreme outlier, or incorrect transformation.</p>
+<p><strong>2. Validating synthetic tabular features</strong></p>
+<p>When augmenting with synthetic data (GAN, VAE, oversampling), each generated feature should match the real distribution. Representativeness pinpoints <em>which specific features</em> deviate — unlike Domain Gap which gives a single global score.</p>
+<ul>
+<li>If all features pass → synthetic data is distributionally faithful.</li>
+<li>If a few features fail → those features need better modelling or post-processing.</li>
+<li>If many features fail → the synthetic data is unlikely to help training.</li>
+</ul>
+<p><strong>3. Feature selection for model compatibility</strong></p>
+<p>Some models perform better when features follow certain distributions:</p>
+<table>
+<thead>
+<tr>
+<th>Model family</th>
+<th>Prefers</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linear / Logistic regression, LDA</td>
+<td>Normal</td>
+<td>Assumes normally distributed predictors</td>
+</tr>
+<tr>
+<td>SVM with RBF kernel</td>
+<td>Normal or near-normal</td>
+<td>Sensitive to feature scale and skew</td>
+</tr>
+<tr>
+<td>k-NN, distance-based</td>
+<td>Uniform (after scaling)</td>
+<td>Avoids distance domination by skewed features</td>
+</tr>
+<tr>
+<td>Tree-based (RF, GBM)</td>
+<td>No assumption</td>
+<td>Robust to any distribution</td>
+</tr>
+</tbody>
+</table>
+<p>Run Representativeness across your feature set to decide which features to keep or transform for your chosen model.</p>
+<p><strong>4. Checking feature engineering outputs</strong></p>
+<p>After applying custom transformations (log, polynomial features, interactions, binning), verify the output matches expectation:</p>
+<ul>
+<li>Log-transform of a positive feature should produce roughly normal (if original was log-normal).</li>
+<li>Interaction features (product of two normals) follow a more complex distribution — but you can check against a uniform reference after rank-based scaling.</li>
+</ul>
+<p><strong>5. Detecting acquisition artifacts across data sources</strong></p>
+<p>When your dataset is assembled from multiple sources, the same feature may behave differently per source. Compare Representativeness results per-source:</p>
+<ul>
+<li>Source A: feature follows normal → healthy</li>
+<li>Source B: same feature fails the test → likely acquisition artifact (sensor difference, clipping, saturation)</li>
+</ul>
+<p>This helps decide whether to re-collect, re-normalize, or drop a source for specific features.</p>
+<h2 id="processor-information">Processor Information</h2>
+<ul>
+<li><strong>Class</strong>: <code>RepresentativenessProcessor</code></li>
+<li><strong>Package</strong>: <code>dqm-ml-core</code></li>
+<li><strong>Type Name</strong>: <code>representativeness</code></li>
+</ul>
+<h2 id="configuration-parameters">Configuration Parameters</h2>
+<h3 id="columns"><code>columns</code></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input</code></td>
+<td>list[string]</td>
+<td>—</td>
+<td>Column name patterns (fnmatch) to analyze</td>
+</tr>
+<tr>
+<td><code>exclude</code></td>
+<td>list[string]</td>
+<td><code>None</code></td>
+<td>Column patterns to exclude</td>
+</tr>
+<tr>
+<td><code>rename</code></td>
+<td>list[dict]</td>
+<td><code>None</code></td>
+<td>Rename output columns (<code>from</code> → <code>to</code>)</td>
+</tr>
+<tr>
+<td><code>prefix</code></td>
+<td>string</td>
+<td><code>None</code></td>
+<td>Prefix prepended to output column names</td>
+</tr>
+<tr>
+<td><code>suffix</code></td>
+<td>string</td>
+<td><code>None</code></td>
+<td>Suffix appended to output column names</td>
+</tr>
+</tbody>
+</table>
+<h3 id="top-level">Top-level</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>distribution</code></td>
+<td>string</td>
+<td><code>"normal"</code></td>
+<td>Reference distribution: <code>"normal"</code> or <code>"uniform"</code></td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td>list[string]</td>
+<td>all four</td>
+<td>Which tests to run: <code>chi-square</code>, <code>kolmogorov-smirnov</code>, <code>shannon-entropy</code>, <code>grte</code></td>
+</tr>
+<tr>
+<td><code>alpha</code></td>
+<td>float</td>
+<td><code>0.05</code></td>
+<td>Significance threshold for chi-square and KS p-values</td>
+</tr>
+<tr>
+<td><code>epsilon</code></td>
+<td>float</td>
+<td><code>1e-9</code></td>
+<td>Numerical stability constant (rarely needs tuning)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="histogram"><code>histogram</code></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bins</code></td>
+<td>int</td>
+<td><code>10</code></td>
+<td>Number of bins for histogram-based tests</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shannon"><code>shannon</code></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>threshold</code></td>
+<td>float</td>
+<td><code>2.0</code></td>
+<td>Entropy above this → "high diversity"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> Shannon entropy is computed from <strong>expected</strong> counts (the theoretical target distribution), not observed data. With PPF-based bins (normal target) or user-provided params, expected counts are always equal across bins, yielding <code>H = log₂(bins)</code>. For the default 10 bins, <code>H ≈ 3.32 ≥ 2.0</code>, so the interpretation is always <code>"high_diversity"</code> regardless of input data. See <a href="#4-shannon-entropy-measures-expected-diversity">Shannon entropy measures expected diversity</a>.</p>
+<h3 id="grte"><code>grte</code></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>threshold</code></td>
+<td>float</td>
+<td><code>0.5</code></td>
+<td>GRTE above this → "high representativeness"</td>
+</tr>
+<tr>
+<td><code>scaling_factor</code></td>
+<td>float</td>
+<td><code>-2.0</code></td>
+<td>Controls how sharply GRTE penalizes entropy gaps</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ks"><code>ks</code></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sample_size</code></td>
+<td>int</td>
+<td><code>500</code></td>
+<td>Max per-batch samples for KS test</td>
+</tr>
+<tr>
+<td><code>min_sample_size</code></td>
+<td>int</td>
+<td><code>50</code></td>
+<td>Min per-batch samples for KS test</td>
+</tr>
+<tr>
+<td><code>sample_divisor</code></td>
+<td>int</td>
+<td><code>20</code></td>
+<td>Batch size ÷ divisor = target samples per batch</td>
+</tr>
+</tbody>
+</table>
+<h3 id="expected_counts_method-optional-default-cdf"><code>expected_counts_method</code> (optional, default: <code>"cdf"</code>)</h3>
+<p>Controls how expected bin counts are computed for chi-square, GRTE, and Shannon entropy.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Behaviour</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cdf</code></td>
+<td>Exact expected counts via the CDF of the reference distribution. Deterministic — same result regardless of batch size or RNG seed.</td>
+<td><strong>Default.</strong> Recommended for all use cases. Enables batch-invariance testing.</td>
+</tr>
+<tr>
+<td><code>monte_carlo</code></td>
+<td>Draws <code>total_count</code> random samples from the reference distribution and histograms them. Stochastic — varies with batch size and RNG state.</td>
+<td>Legacy behaviour. May be useful for comparing against previous results.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="distribution_params-optional"><code>distribution_params</code> (optional)</h3>
+<p>Per-column list of explicit distribution parameters used when <code>mean_std_estimation</code> is set to <code>"user_provided"</code>:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">distribution_params</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature_x</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">std</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature_y</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">min</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</span></code></pre></div>
+<p>Each entry supports fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Applicable distribution</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>column</code></td>
+<td>both</td>
+<td>Column name this entry applies to (required).</td>
+</tr>
+<tr>
+<td><code>mean</code></td>
+<td>normal</td>
+<td>Mean of the reference normal distribution.</td>
+</tr>
+<tr>
+<td><code>std</code></td>
+<td>normal</td>
+<td>Standard deviation of the reference normal distribution.</td>
+</tr>
+<tr>
+<td><code>min</code></td>
+<td>uniform</td>
+<td>Lower bound of the reference uniform distribution.</td>
+</tr>
+<tr>
+<td><code>max</code></td>
+<td>uniform</td>
+<td>Upper bound of the reference uniform distribution.</td>
+</tr>
+</tbody>
+</table>
+<p>Omit to auto-estimate from data (default behaviour).</p>
+<h3 id="mean_std_estimation-optional-default-from_first_batch"><code>mean_std_estimation</code> (optional, default: <code>"from_first_batch"</code>)</h3>
+<p>Controls how distribution parameters (mean/std for normal, min/max for uniform) are estimated for generating expected counts in the chi-square test. Expected counts are then computed using the method specified by <a href="#expected_counts_method-optional-default-cdf"><code>expected_counts_method</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Behaviour</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_first_batch</code></td>
+<td>Estimate from the first batch's data and reuse for all batches of the same selection. Bin edges and expected distribution are always consistent.</td>
+<td><strong>Default.</strong> Safe for most workloads. Recommended when feature variance is stable across the dataset.</td>
+</tr>
+<tr>
+<td><code>per_batch</code></td>
+<td>Re-estimate from each batch's KS-sampled data.</td>
+<td>High-variance data or streaming scenarios where the first batch is not representative of the whole. ⚠️ Risks <code>insufficient_bins</code> / NaN when per-batch feature variance is very low (bin edges don't match the re-estimated distribution).</td>
+</tr>
+<tr>
+<td><code>user_provided</code></td>
+<td>Use the explicit per-column parameters from <code>distribution_params</code>.</td>
+<td>Known reference distribution (e.g. standard-scaled Normal(0,1)). Eliminates data-dependent estimation entirely. See <a href="#distribution_params-optional"><code>distribution_params</code></a> for format.</td>
+</tr>
+<tr>
+<td><code>from_all_data</code></td>
+<td>Estimate from the full dataset (requires two passes or materialized features).</td>
+<td>⏳ Not yet implemented — raises <code>NotImplementedError</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="practical-effect-of-parameters">Practical Effect of Parameters</h2>
+<h3 id="distribution-normal-vs-uniform"><code>distribution</code>: normal vs uniform</h3>
+<p>This is the foundational choice — it changes binning strategy, reference generation, and what "passing" means.</p>
+<table>
+<thead>
+<tr>
+<th>distribution</th>
+<th>Bin edges</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"normal"</code></td>
+<td>Quantile-based (equal-probability bins from normal PPF)</td>
+<td>Standard-scaled features, residuals, biological measurements, any naturally Gaussian process</td>
+</tr>
+<tr>
+<td><code>"uniform"</code></td>
+<td>Linear-spaced across the data range</td>
+<td>Min-max scaled features, rank-transformed features, categorical encodings, controlled parameters</td>
+</tr>
+</tbody>
+</table>
+<p><em>Tip:</em> If you're unsure, run both. If a feature passes both tests, it is well-behaved. If it passes normal but not uniform (or vice versa), the pattern tells you something about the data generation process.</p>
+<h3 id="histogrambins"><code>histogram.bins</code></h3>
+<p>Controls the granularity of all histogram-based tests.</p>
+<table>
+<thead>
+<tr>
+<th>bins</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5–10 (default: 10)</td>
+<td>Coarse — reliable with fewer samples, but may miss subtle deviations</td>
+</tr>
+<tr>
+<td>15–30</td>
+<td>Good balance for 500–5000 samples</td>
+</tr>
+<tr>
+<td>50+</td>
+<td>Fine-grained — requires many samples (&gt;10k) to avoid sparse bins and unreliable chi-square p-values</td>
+</tr>
+</tbody>
+</table>
+<p><em>Heuristic:</em> <code>bins ≈ sqrt(n_samples) / 2</code> is a common starting point. For 1000 samples, <code>bins ≈ 16</code>. For 10000 samples, <code>bins ≈ 50</code>.</p>
+<p><strong>⚠️ Warning for large datasets.</strong> At very large n (&gt; 50k), the heuristic gives &gt;100 bins, which produces many sparse bins. Cap bins at 50–100 for n &gt; 100k. Conversely, too <em>few</em> bins at large n inflates chi-square sensitivity (see <a href="#alpha"><code>alpha</code></a> caveat).</p>
+<p><strong>Effect on specific metrics:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Effect of more bins</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chi-square</td>
+<td>More degrees of freedom → requires more samples per bin for reliable p-values</td>
+</tr>
+<tr>
+<td>Shannon entropy</td>
+<td>Maximum possible entropy increases (log₂(bins)) — a threshold of 2.0 at 10 bins means something different than at 50 bins</td>
+</tr>
+<tr>
+<td>GRTE</td>
+<td>More bins → finer entropy comparison → potentially larger gaps</td>
+</tr>
+</tbody>
+</table>
+<p><em>Tip:</em> Double bins and re-run. If pass/fail decisions change, you needed more resolution. If they stay the same, bin count is adequate.</p>
+<h3 id="alpha"><code>alpha</code></h3>
+<p>The significance threshold for chi-square and KS p-values. Standard statistical convention, but with two practical twists for dataset building:</p>
+<p><strong>1. Multiple-testing correction.</strong> Testing many features increases false positives — with 100 features at alpha=0.05, expect ~5 false failures by chance.</p>
+<p><strong>2. Sample-size correction.</strong> Chi-square power grows with sample size. At large n, the test detects <em>tiny</em> deviations (often noise, not signal) as statistically significant:</p>
+<table>
+<thead>
+<tr>
+<th>Sample size</th>
+<th>Observed behavior with perfectly healthy N(0,1)</th>
+<th>Recommended alpha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≤ 1,000</td>
+<td>False positive rate ≈ alpha</td>
+<td>0.05 (default)</td>
+</tr>
+<tr>
+<td>1,000 – 10,000</td>
+<td>Slightly inflated</td>
+<td>0.01</td>
+</tr>
+<tr>
+<td>10,000 – 100,000</td>
+<td>p ≈ 0.04 at alpha=0.05 (false positive)</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>&gt; 100,000</td>
+<td>Nearly always p &lt; 0.05</td>
+<td>Fewer bins, or use statistic directly</td>
+</tr>
+</tbody>
+</table>
+<p>At n=100k with 10 bins (~10k expected/bin), perfectly healthy N(0,1) data produces χ² ≈ 18 with p ≈ 0.036 — a false positive. This is not a bug; it is correct statistical behavior. The test is powerful enough to detect the tiny sampling noise that always exists. The issue is that at large n, <em>statistical significance</em> diverges from <em>practical significance</em>.</p>
+<p>These two effects compound: with 100 features at 100k samples, expect far more false failures than the nominal alpha.</p>
+<p><strong>Recommendation:</strong> when using <code>user_provided</code> distribution params (known reference), scale alpha inversely with √n. Or use fewer bins (see <a href="#histogrambins"><code>histogram.bins</code></a>). Or track the chi-square statistic directly for trend monitoring — it is less sample-size-dependent than the p-value.</p>
+<h3 id="grte-threshold-and-scaling_factor">GRTE: <code>threshold</code> and <code>scaling_factor</code></h3>
+<p>GRTE is a custom metric unique to this framework. It converts the gap between observed entropy and expected entropy into a 0–1-ish score:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>GRTE = exp(scaling_factor × |h_obs - h_exp|)
+</span></code></pre></div>
+<p><strong><code>scaling_factor</code></strong> (default: <code>-2.0</code>):</p>
+<table>
+<thead>
+<tr>
+<th>scaling_factor</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-1.0</code></td>
+<td>Gentle penalty — moderate entropy gaps still score ~0.37</td>
+</tr>
+<tr>
+<td><code>-2.0</code> (default)</td>
+<td>Moderate — entropy gap of 1.0 → GRTE ≈ 0.14</td>
+</tr>
+<tr>
+<td><code>-4.0</code></td>
+<td>Aggressive — even small gaps produce near-zero scores</td>
+</tr>
+</tbody>
+</table>
+<p>A negative value means larger entropy gaps produce smaller GRTE scores (approaching 0). The more negative, the more aggressively small gaps are penalized.</p>
+<p><em>Tip:</em> If you find all features score very high or very low with little discrimination, adjust <code>scaling_factor</code>. Make it more negative (-4.0) to spread scores apart, or less negative (-1.0) to compress them.</p>
+<p><strong><code>threshold</code></strong> (default: <code>0.5</code>):</p>
+<table>
+<thead>
+<tr>
+<th>threshold</th>
+<th>Classifies as "high_representativeness" when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.3</td>
+<td>Lenient — most features pass</td>
+</tr>
+<tr>
+<td>0.5 (default)</td>
+<td>Balanced</td>
+</tr>
+<tr>
+<td>0.7</td>
+<td>Strict — only very close matches pass</td>
+</tr>
+</tbody>
+</table>
+<p><em>Tip:</em> Calibrate on a known-good feature (one you trust) and a known-bad feature (e.g. a constant column). Set <code>threshold</code> between their GRTE scores.</p>
+<h3 id="shannonthreshold"><code>shannon.threshold</code></h3>
+<p>The Shannon entropy threshold depends on the number of bins. Maximum entropy for a distribution with <code>b</code> equal-probability bins is <code>log₂(b)</code>:</p>
+<table>
+<thead>
+<tr>
+<th>bins</th>
+<th>Max entropy</th>
+<th><code>threshold=2.0</code> means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td>~3.32 bits</td>
+<td>Above mid-range — accepts reasonably spread distributions</td>
+</tr>
+<tr>
+<td>20</td>
+<td>~4.32 bits</td>
+<td>Below mid-range — stricter</td>
+</tr>
+<tr>
+<td>50</td>
+<td>~5.64 bits</td>
+<td>Quite strict — only well-spread distributions pass</td>
+</tr>
+</tbody>
+</table>
+<p><em>Tip:</em> If you change <code>bins</code>, adjust <code>threshold</code> proportionally. A common heuristic: <code>threshold ≈ log₂(bins) × 0.6</code>.</p>
+<h3 id="ks-sampling-parameters">KS sampling parameters</h3>
+<p>The KS test uses random sampling per batch to stay efficient on large datasets. Three parameters control the tradeoff:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sample_size</code></td>
+<td>500</td>
+<td>Upper bound — larger = more accurate KS, slower</td>
+</tr>
+<tr>
+<td><code>min_sample_size</code></td>
+<td>50</td>
+<td>Lower bound for small batches</td>
+</tr>
+<tr>
+<td><code>sample_divisor</code></td>
+<td>20</td>
+<td>Per-batch target = max(50, batch_size ÷ 20), capped at 500</td>
+</tr>
+</tbody>
+</table>
+<p>For a batch of 100,000 rows: <code>max(50, 100000÷20=5000)</code> capped at 500 → 500 samples per batch.</p>
+<p>Only needs tuning if KS p-values are unstable across runs — increase <code>sample_size</code> to 2000–5000 for more stable estimates.</p>
+<p><strong>⚠️ Stochasticity warning.</strong> At the default 500 samples, the KS D-statistic has a standard error of ~1.36/√500 ≈ 0.06. Small distributional shifts (e.g., 5% contamination) produce D-changes &lt; 0.02, which are swamped by sampling noise. The KS test may not reliably distinguish subtle DQ issues at default settings. Consider increasing <code>sample_size</code> to 5000–10000 when stable results are critical.</p>
+<h2 id="interpretation-rules-of-thumb">Interpretation Rules of Thumb</h2>
+<h3 id="chi-square-and-ks">Chi-square and KS</h3>
+<table>
+<thead>
+<tr>
+<th>p-value vs alpha</th>
+<th>Interpretation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p ≥ alpha</td>
+<td>Follows the distribution</td>
+<td>Feature is healthy for its expected distribution</td>
+</tr>
+<tr>
+<td>p &lt; alpha</td>
+<td>Does not follow the distribution</td>
+<td>Investigate — preprocessing issue, artifact, or genuinely non-conforming feature</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shannon-entropy">Shannon Entropy</h3>
+<table>
+<thead>
+<tr>
+<th>Entropy vs threshold</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; threshold</td>
+<td>High diversity — feature values are well spread across bins</td>
+</tr>
+<tr>
+<td>≤ threshold</td>
+<td>Low diversity — feature values concentrate in few bins (potentially constant or skewed)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="grte_1">GRTE</h3>
+<table>
+<thead>
+<tr>
+<th>GRTE vs threshold</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; threshold</td>
+<td>High representativeness — observed distribution closely matches expected</td>
+</tr>
+<tr>
+<td>≤ threshold</td>
+<td>Low representativeness — observed distribution deviates meaningfully from expected</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Important:</strong> Thresholds (alpha=0.05, shannon=2.0, grte=0.5, bins=10) are defaults that work for many cases but should be calibrated on your specific data. Always confirm with a known-good feature from your own pipeline.</p>
+</blockquote>
+<h2 id="caveats-and-practical-limitations">Caveats and Practical Limitations</h2>
+<h3 id="1-chi-square-over-power-at-large-sample-sizes">1. Chi-square over-power at large sample sizes</h3>
+<p>As noted in the <a href="#alpha"><code>alpha</code> section</a>, chi-square power grows with sample size.
+At large n, <em>statistical significance</em> diverges from <em>practical significance</em> — a feature
+may fail the chi-square test even though it is perfectly healthy.</p>
+<p><strong>Example from controlled testing</strong> (100k samples, 10 bins, normal target):</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>χ² statistic</th>
+<th>p-value</th>
+<th>Interpretation at α=0.05</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>N(0, 1)</code> — perfectly healthy</td>
+<td>18.0</td>
+<td>0.036</td>
+<td>❌ does_not_follow_distribution</td>
+</tr>
+<tr>
+<td><code>N(0.2, 1)</code> — slight mean shift</td>
+<td>3,935</td>
+<td>≈ 0</td>
+<td>❌ does_not_follow_distribution</td>
+</tr>
+<tr>
+<td><code>N(0, 1.5)</code> — wrong variance</td>
+<td>23,940</td>
+<td>≈ 0</td>
+<td>❌ does_not_follow_distribution</td>
+</tr>
+</tbody>
+</table>
+<p>The first row is a <strong>false positive</strong> — the data <em>is</em> N(0,1), but the test flags it anyway.</p>
+<p><strong>Recommendations:</strong></p>
+<ul>
+<li>Scale alpha inversely with √n (see alpha recommendations table).</li>
+<li>Or cap bins at a lower number (see <a href="#histogrambins"><code>histogram.bins</code></a>).</li>
+<li>Or track the chi-square <em>statistic</em> as a trend metric — it is less affected by sample
+  size than the p-value. A sudden jump in the statistic between runs is more meaningful
+  than the absolute p-value at any single run.</li>
+<li>When possible, include a known-good control feature to calibrate what "passing" looks
+  like at your dataset's sample size.</li>
+</ul>
+<h3 id="2-ks-test-stochasticity-at-default-settings">2. KS test stochasticity at default settings</h3>
+<p>The KS test uses random subsampling (default: 500 samples per batch). At this sample size:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>SE(D) ≈ 1.36 / √500 ≈ 0.06
+</span></code></pre></div>
+<p>From controlled testing, two mild contamination levels (5% vs 10% corrupted data) produce
+D-statistics within ~0.002 of each other — well inside the noise floor. The KS test cannot
+differentiate them at default settings.</p>
+<p><strong>Recommendations:</strong></p>
+<ul>
+<li>Increase <code>ks.sample_size</code> to 5000–10000 for stable estimates when KS results inform
+  critical decisions.</li>
+<li>Use chi-square for primary DQ screening — it is deterministic and uses all data.</li>
+<li>Compare KS D-statistics as trends over time rather than as absolute pass/fail signals.</li>
+</ul>
+<h3 id="3-sensitivity-mismatch-grte-vs-chi-square-ks">3. Sensitivity mismatch: GRTE vs chi-square / KS</h3>
+<p>GRTE measures entropy gaps, not exact distribution fit. It is intentionally less sensitive
+to small deviations:</p>
+<table>
+<thead>
+<tr>
+<th>Contamination level</th>
+<th>Chi-square</th>
+<th>KS</th>
+<th>GRTE (threshold 0.5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean N(0,1)</td>
+<td>✅ pass</td>
+<td>✅ pass</td>
+<td>✅ 1.00 — high_representativeness</td>
+</tr>
+<tr>
+<td>5% corrupted</td>
+<td>❌ p ≈ 0</td>
+<td>❌ p &lt; 0.05 (if enough KS samples)</td>
+<td>✅ 0.98 — still high_representativeness</td>
+</tr>
+<tr>
+<td>20% corrupted</td>
+<td>❌ p ≈ 0</td>
+<td>❌ p &lt; 1e-9</td>
+<td>✅ 0.79 — still high_representativeness</td>
+</tr>
+<tr>
+<td>50% corrupted</td>
+<td>❌ p ≈ 0</td>
+<td>❌ p &lt; 1e-80</td>
+<td>❌ 0.32 — low_representativeness</td>
+</tr>
+</tbody>
+</table>
+<p>GRTE only flags distributions that are ~30%+ contaminated as <code>"low_representativeness"</code>
+at the default scaling factor (-2.0). A feature can fail chi-square and KS while GRTE
+still reports <code>"high_representativeness"</code> — this is <strong>not a contradiction</strong>, it reflects
+that GRTE captures a different property (entropy similarity, not exact distribution match).</p>
+<p><strong>Recommendations:</strong></p>
+<ul>
+<li>Do not expect GRTE and chi-square/KS to agree on marginal DQ issues.</li>
+<li>Calibrate the GRTE threshold on known-good and known-bad features (see
+  <a href="#grte-threshold-and-scaling_factor"><code>threshold and scaling_factor</code></a>).</li>
+<li>Use GRTE for tracking <em>large</em> distributional shifts over time (drift monitoring),
+  not for precise goodness-of-fit checks.</li>
+<li>Lower <code>scaling_factor</code> (e.g., -4.0) to make GRTE more sensitive, or raise it (e.g.,
+  -1.0) to compress scores toward 1.0.</li>
+</ul>
+<h3 id="4-shannon-entropy-measures-expected-diversity">4. Shannon entropy measures expected diversity</h3>
+<p>The <code>shannon-entropy</code> metric computes entropy from <strong>expected</strong> counts (the theoretical
+target distribution), not <strong>observed</strong> counts. With PPF-based binning (normal target)
+or user-provided params, expected counts are always equal across bins:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>H = log₂(n_bins)
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Default (10 bins): H = log₂(10) ≈ 3.32 bits
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Default threshold:  2.0 bits
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>→ Interpretation is always &quot;high_diversity&quot;
+</span></code></pre></div>
+<p>The metric provides no discriminatory information about the observed data in this
+configuration. The interpretation is constant regardless of input data quality.</p>
+<p><strong>Recommendations:</strong></p>
+<ul>
+<li>Disable <code>shannon-entropy</code> in your config if you don't have a specific use for it.</li>
+<li>Or use the <code>monte_carlo</code> expected_counts_method if you want entropy to reflect
+  the stochasticity of sampling (note: this adds noise, not a signal about the data).</li>
+<li>Consider evaluating observed entropy as a separate custom metric if data diversity
+  is a DQ concern.</li>
+<li>The default threshold (2.0) was chosen because <code>log₂(10) &gt; 2.0</code>, ensuring the
+  default interpretation is <code>"high_diversity"</code> — the metric acts as a sanity check
+  that binning is working correctly, not as a data quality discriminator.</li>
+</ul>
+<h3 id="5-chi-square-blind-spot-within-bin-distribution-changes">5. Chi-square blind spot: within-bin distribution changes</h3>
+<p>Chi-square only counts values per bin — it cannot detect changes within a bin.
+This creates a blind spot for certain DQ issues:</p>
+<table>
+<thead>
+<tr>
+<th>DQ issue</th>
+<th>Chi-square (10 bins)</th>
+<th>KS test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clipping at ±1.5 (PPF bins from N(0,1))</td>
+<td>❌ Blind — bin counts unchanged, clipped values stay in outermost bins</td>
+<td>✅ Detects via CDF jump at clip boundaries</td>
+</tr>
+<tr>
+<td>Outliers at ±10</td>
+<td>✅ Detects — mass shifts to outermost bins</td>
+<td>✅ Detects</td>
+</tr>
+<tr>
+<td>Mode collapse (bimodal generator)</td>
+<td>✅ Detects — central bins lose mass</td>
+<td>✅ Detects</td>
+</tr>
+<tr>
+<td>Sensor saturation at boundary</td>
+<td>❌ Blind if boundary is inside outermost bin edge</td>
+<td>✅ Detects</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommendation:</strong> always run KS alongside chi-square. Their blind spots are
+complementary. The configuration example in the next section shows a recommended
+setup with both enabled and tuned parameters.</p>
+<h2 id="yaml-configuration-examples">YAML Configuration Examples</h2>
+<h3 id="minimal-check-all-numeric-columns-against-normal-distribution">Minimal — check all numeric columns against normal distribution</h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">metrics</span><span class="p">:</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">processors</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repr_check</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">representativeness</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="nt">columns</span><span class="p">:</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="nt">input</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;*&quot;</span><span class="p p-Indicator">]</span>
+</span></code></pre></div>
+<h3 id="full-all-parameters-customized">Full — all parameters customized</h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">metrics</span><span class="p">:</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">processors</span><span class="p">:</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">repr_check</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">representativeness</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">      </span><span class="nt">columns</span><span class="p">:</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">        </span><span class="nt">input</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;feat_*&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;score_*&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">        </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;feat_id&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">      </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normal</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">      </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;chi-square&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kolmogorov-smirnov&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;shannon-entropy&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;grte&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">      </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">      </span><span class="nt">histogram</span><span class="p">:</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">        </span><span class="nt">bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">      </span><span class="nt">shannon</span><span class="p">:</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">        </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.0</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">      </span><span class="nt">grte</span><span class="p">:</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">        </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.6</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">        </span><span class="nt">scaling_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-2.5</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">      </span><span class="nt">ks</span><span class="p">:</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">        </span><span class="nt">sample_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">        </span><span class="nt">min_sample_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">        </span><span class="nt">sample_divisor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</span></code></pre></div>
+<h3 id="validating-synthetic-data">Validating synthetic data</h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">metrics</span><span class="p">:</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">processors</span><span class="p">:</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">synthetic_check</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">representativeness</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="nt">columns</span><span class="p">:</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">        </span><span class="nt">input</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;*&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normal</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;chi-square&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;grte&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">      </span><span class="nt">histogram</span><span class="p">:</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">        </span><span class="nt">bins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">      </span><span class="nt">grte</span><span class="p">:</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">        </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+</span></code></pre></div>
+<h3 id="checking-min-max-scaling-uniform-expected">Checking min-max scaling (uniform expected)</h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">metrics</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">processors</span><span class="p">:</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scaling_check</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">representativeness</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">columns</span><span class="p">:</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">        </span><span class="nt">input</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;*&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">distribution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uniform</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;chi-square&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;kolmogorov-smirnov&quot;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">      </span><span class="nt">alpha</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+</span></code></pre></div>
+<h2 id="output">Output</h2>
+<p>For each input column <code>X</code> and each enabled metric, the processor produces:</p>
+<table>
+<thead>
+<tr>
+<th>Output column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>X_chi-square_p_value</code></td>
+<td>float</td>
+<td>Chi-square p-value</td>
+</tr>
+<tr>
+<td><code>X_chi-square_statistic</code></td>
+<td>float</td>
+<td>Chi-square test statistic</td>
+</tr>
+<tr>
+<td><code>X_chi-square_interpretation</code></td>
+<td>string</td>
+<td>"follows_distribution" or "does_not_follow_distribution"</td>
+</tr>
+<tr>
+<td><code>X_kolmogorov-smirnov_p_value</code></td>
+<td>float</td>
+<td>KS p-value</td>
+</tr>
+<tr>
+<td><code>X_kolmogorov-smirnov_statistic</code></td>
+<td>float</td>
+<td>KS test statistic</td>
+</tr>
+<tr>
+<td><code>X_kolmogorov-smirnov_interpretation</code></td>
+<td>string</td>
+<td>"follows_distribution" or "does_not_follow_distribution"</td>
+</tr>
+<tr>
+<td><code>X_shannon-entropy_entropy</code></td>
+<td>float</td>
+<td>Shannon entropy in bits</td>
+</tr>
+<tr>
+<td><code>X_shannon-entropy_interpretation</code></td>
+<td>string</td>
+<td>"high_diversity" or "low_diversity"</td>
+</tr>
+<tr>
+<td><code>X_grte_grte_value</code></td>
+<td>float</td>
+<td>GRTE score</td>
+</tr>
+<tr>
+<td><code>X_grte_interpretation</code></td>
+<td>string</td>
+<td>"high_representativeness" or "low_representativeness"</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="domain_gap.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Domain gap">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Domain gap
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="visual_features.html" class="md-footer__link md-footer__link--next" aria-label="Next: Visual features">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Visual features
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; SafenAI
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Safenai/dqm-ml-workspace" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "content.tooltips", "navigation.indexes", "navigation.footer", "navigation.instant", "navigation.instant.progress", "navigation.top", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate", "navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.prune"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

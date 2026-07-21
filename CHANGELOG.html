@@ -1,0 +1,1448 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="ROADMAP.html" rel="prev"/>
+<link href="packages/dqm-ml-core.html" rel="next"/>
+<link href="static/math-integral-box.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Changelog - DQM-ML V2</title>
+<link href="assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link href="assets/_mkdocstrings.css" rel="stylesheet"/>
+<link href="static/stylesheets/extra.css" rel="stylesheet"/>
+<script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="default" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#changelog">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="DQM-ML V2" class="md-header__button md-logo" data-md-component="logo" href="index.html" title="DQM-ML V2">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-3.1 3.9s-.7-.3-1-.3c-.6-.1-1 .1-1.2 1.1L12 16.8c-.2.8-.5 1.4-1 1.8-.4.3-.8.4-1.3.4-.8 0-2-.5-2-.5l.5-1.4s.8.3 1 .3c.3.1.5 0 .7-.1s.3-.4.4-.7l1.6-9.2c.1-.8.5-1.4 1-1.9.6-.4 1.3-.5 2.1-.4.7.1 1.5.5 1.5.5z"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            DQM-ML V2
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/Safenai/dqm-ml-workspace" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    dqm-ml-workspace
+  </div>
+</a>
+</div>
+</nav>
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="index.html">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="formal_concepts.html">
+        
+  
+  
+    
+  
+  Concepts
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="quickstart.html">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="cli.html">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="metrics.html">
+          
+  
+  
+    
+  
+  Metrics
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="examples/overview.html">
+          
+  
+  
+    
+  
+  Tutorials and Examples
+
+        </a>
+</li>
+<li class="md-tabs__item md-tabs__item--active">
+<a class="md-tabs__link" href="developer.html">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="reference/dqm_ml_core/index.html">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="DQM-ML V2" class="md-nav__button md-logo" data-md-component="logo" href="index.html" title="DQM-ML V2">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-3.1 3.9s-.7-.3-1-.3c-.6-.1-1 .1-1.2 1.1L12 16.8c-.2.8-.5 1.4-1 1.8-.4.3-.8.4-1.3.4-.8 0-2-.5-2-.5l.5-1.4s.8.3 1 .3c.3.1.5 0 .7-.1s.3-.4.4-.7l1.6-9.2c.1-.8.5-1.4 1-1.9.6-.4 1.3-.5 2.1-.4.7.1 1.5.5 1.5.5z"></path></svg>
+</a>
+    DQM-ML V2
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/Safenai/dqm-ml-workspace" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    dqm-ml-workspace
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="index.html">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="formal_concepts.html">
+<span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="quickstart.html">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="cli.html">
+<span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="metrics.html">
+<span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="examples/overview.html">
+<span class="md-ellipsis">
+    
+  
+    Tutorials and Examples
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="developer.html">
+<span class="md-ellipsis">
+    
+  
+    What to consider
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="contributing.html">
+<span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="testing.html">
+<span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="packaging-tests.html">
+<span class="md-ellipsis">
+    
+  
+    Packaging Tests
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="ROADMAP.html">
+<span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="CHANGELOG.html">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#201-2026-07-20-fix-pytorch-extra-add-meta-package-scenarios">
+<span class="md-ellipsis">
+      
+        2.0.1 (2026-07-20) — Fix pytorch extra, add meta-package scenarios
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#200-2026-07-17-release">
+<span class="md-ellipsis">
+      
+        2.0.0 (2026-07-17) Release
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#200-rc4-2026-07-17-processorrunner-improvements-package-isolation-testing-configurable-seeds">
+<span class="md-ellipsis">
+      
+        2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds
+      
+    </span>
+</a>
+<nav aria-label="2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#processorrunner-enhancements">
+<span class="md-ellipsis">
+      
+        ProcessorRunner Enhancements
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#package-isolation-testing">
+<span class="md-ellipsis">
+      
+        Package Isolation Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#configurable-test-seeds">
+<span class="md-ellipsis">
+      
+        Configurable Test Seeds
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ci-improvements">
+<span class="md-ellipsis">
+      
+        CI Improvements
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#documentation">
+<span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#bug-fixes">
+<span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#200-rc3-2026-06-30-pipeline-dag-pydantic-configs-example-notebooks-and-documentation">
+<span class="md-ellipsis">
+      
+        2.0.0-rc3 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation
+      
+    </span>
+</a>
+<nav aria-label="2.0.0-rc3 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#issue-ticket-number-and-link">
+<span class="md-ellipsis">
+      
+        Issue ticket number and link
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pipeline-refactoring">
+<span class="md-ellipsis">
+      
+        Pipeline Refactoring
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#configuration-models-pydantic">
+<span class="md-ellipsis">
+      
+        Configuration Models (Pydantic)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#domain-gap-improvements">
+<span class="md-ellipsis">
+      
+        Domain Gap Improvements
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#image-embedding">
+<span class="md-ellipsis">
+      
+        Image Embedding
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#representativeness">
+<span class="md-ellipsis">
+      
+        Representativeness
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#documentation-examples">
+<span class="md-ellipsis">
+      
+        Documentation &amp; Examples
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#testing">
+<span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#code-quality">
+<span class="md-ellipsis">
+      
+        Code Quality
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#200-rc2-2026-06-03-s3-support-pipeline-refactoring-new-algorithms-code-quality">
+<span class="md-ellipsis">
+      
+        2.0.0-rc2 (2026-06-03) - S3 support, pipeline refactoring, new algorithms, code quality
+      
+    </span>
+</a>
+<nav aria-label="2.0.0-rc2 (2026-06-03) - S3 support, pipeline refactoring, new algorithms, code quality" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#issue-ticket-number-and-link_1">
+<span class="md-ellipsis">
+      
+        Issue ticket number and link
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#s3-filesystem-support">
+<span class="md-ellipsis">
+      
+        S3 Filesystem Support
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pipeline-refactoring_1">
+<span class="md-ellipsis">
+      
+        Pipeline Refactoring
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#diversity-metrics-new">
+<span class="md-ellipsis">
+      
+        Diversity Metrics (new)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#domain-gap-algorithms-new">
+<span class="md-ellipsis">
+      
+        Domain Gap Algorithms (new)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#agents-refactoring">
+<span class="md-ellipsis">
+      
+        .agents/ Refactoring
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#code-quality-bug-fixes">
+<span class="md-ellipsis">
+      
+        Code Quality &amp; Bug Fixes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#packaging-versioning">
+<span class="md-ellipsis">
+      
+        Packaging &amp; Versioning
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#200-rc-2026-04-10-release-candidate-for-v2">
+<span class="md-ellipsis">
+      
+        2.0.0-rc (2026-04-10) - Release Candidate for V2
+      
+    </span>
+</a>
+<nav aria-label="2.0.0-rc (2026-04-10) - Release Candidate for V2" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#issue-ticket-number-and-link_2">
+<span class="md-ellipsis">
+      
+        Issue ticket number and link
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#breaking-changes">
+<span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#security-fixes-10-vulnerabilities-fixed">
+<span class="md-ellipsis">
+      
+        Security Fixes (10 vulnerabilities fixed)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#new-features">
+<span class="md-ellipsis">
+      
+        New Features
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#documentation-improvements">
+<span class="md-ellipsis">
+      
+        Documentation Improvements
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#documentation-restructuring">
+<span class="md-ellipsis">
+      
+        Documentation Restructuring
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technical-changes">
+<span class="md-ellipsis">
+      
+        Technical Changes
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#new-cli-and-integration-tests">
+<span class="md-ellipsis">
+      
+        New CLI and Integration Tests
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#python-compatibility-issue-61">
+<span class="md-ellipsis">
+      
+        Python Compatibility (Issue #61)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#data-selection-features-issues-25-27-59-60">
+<span class="md-ellipsis">
+      
+        Data Selection Features (Issues #25, #27, #59, #60)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dependencies-updated">
+<span class="md-ellipsis">
+      
+        Dependencies Updated
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#testing_1">
+<span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#116-2026-02-10-upgrade-dependency-and-security-check">
+<span class="md-ellipsis">
+      
+        1.1.6 (2026-02-10) - upgrade dependency and security check
+      
+    </span>
+</a>
+<nav aria-label="1.1.6 (2026-02-10) - upgrade dependency and security check" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#issue-ticket-number-and-link_3">
+<span class="md-ellipsis">
+      
+        Issue ticket number and link
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#other-details-on-several-changes">
+<span class="md-ellipsis">
+      
+        Other details on several changes
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#115-2026-02-09">
+<span class="md-ellipsis">
+      
+        1.1.5 (2026-02-09)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#114-2025-12-18">
+<span class="md-ellipsis">
+      
+        1.1.4 (2025-12-18)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#005-2025-12-17">
+<span class="md-ellipsis">
+      
+        0.0.5 (2025-12-17)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="packages/dqm-ml-core.html">
+<span class="md-ellipsis">
+    
+  
+    Packages
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="reports/pytest/pytest_report.html">
+<span class="md-ellipsis">
+    
+  
+    Pytest Report
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="reports/htmlcov/coverage_report.html">
+<span class="md-ellipsis">
+    
+  
+    Coverage
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="TBD1.html">
+<span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+<a class="md-nav__link" href="reference/dqm_ml_core/index.html">
+<span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<nav aria-label="Navigation" class="md-path">
+<ol class="md-path__list">
+<li class="md-path__item">
+<a class="md-path__link" href="index.html">
+<span class="md-ellipsis">
+    Home
+  </span>
+</a>
+</li>
+<li class="md-path__item">
+<a class="md-path__link" href="developer.html">
+<span class="md-ellipsis">
+    Developer Guide
+  </span>
+</a>
+</li>
+</ol>
+</nav>
+<article class="md-content__inner md-typeset">
+<h1 id="changelog">Changelog</h1>
+<h2 id="201-2026-07-20-fix-pytorch-extra-add-meta-package-scenarios">2.0.1 (2026-07-20) — Fix pytorch extra, add meta-package scenarios</h2>
+<ul>
+<li><strong>Fix:</strong> <code>pytorch</code> extra in <code>pyproject.toml</code> incorrectly depended on <code>dqm-ml-images</code> instead of <code>dqm-ml-pytorch</code></li>
+<li><strong>Added:</strong> Meta-package test scenarios (10–13) exercising <code>dqm-ml[job]</code>, <code>[pytorch]</code>, <code>[images]</code>, and <code>[all]</code> extras end-to-end</li>
+<li><strong>Removed:</strong> <code>test_pypi_prerelease.sh</code> — temporary script used while test.pypi.org configuration was not ready; now superseded by <code>test_testpypi_prerelease.sh</code></li>
+<li><strong>Improved:</strong> <code>test_pypi_release.sh</code> now uses explicit <code>--index-url</code> for PyPI resolution</li>
+<li><strong>Updated:</strong> Packaging documentation to reflect 13 scenarios and script removal</li>
+</ul>
+<h2 id="200-2026-07-17-release">2.0.0 (2026-07-17) Release</h2>
+<ul>
+<li>merged in main</li>
+<li>tagged 2.0.0</li>
+</ul>
+<h2 id="200-rc4-2026-07-17-processorrunner-improvements-package-isolation-testing-configurable-seeds">2.0.0-rc4 (2026-07-17) — ProcessorRunner improvements, package isolation testing, configurable seeds</h2>
+<p>This release addresses review feedback from 2.0.0-rc3, enhancing ProcessorRunner with direct image-to-domain-gap support, adding package isolation smoke tests, and introducing configurable test seeds.</p>
+<h3 id="processorrunner-enhancements">ProcessorRunner Enhancements</h3>
+<ul>
+<li><code>ProcessorRunner.run_gap()</code> now accepts raw images directly via optional <code>features</code> parameter — compute domain gaps from image bytes without manual embedding extraction.</li>
+<li>New <code>_df_to_record_batch()</code> helper for robust DataFrame-to-PyArrow conversion, handling <code>FixedSizeListArray</code> for embeddings.</li>
+<li>Renamed <code>metrics_processors</code> parameter to <code>processors</code> in <code>run()</code> for clarity.</li>
+<li>Separated <code>select_columns</code> intermediate results from final <code>batch_features</code> to avoid metric pollution.</li>
+</ul>
+<h3 id="package-isolation-testing">Package Isolation Testing</h3>
+<ul>
+<li>New <code>tests/packaging/</code> directory with smoke tests for all 5 packages: dqm-ml, dqm-ml-core, dqm-ml-images, dqm-ml-job, dqm-ml-pytorch.</li>
+<li>Smoke scripts verify imports, basic functionality, and YAML-based execution in isolated virtual environments.</li>
+<li>New <code>tests/fixtures/packaging_fixtures.py</code> with <code>isolated_venv</code> and <code>wheels_dir</code> fixtures.</li>
+<li>New <code>docs/packaging-tests.md</code> and <code>docs/testing.md</code> documentation.</li>
+</ul>
+<h3 id="configurable-test-seeds">Configurable Test Seeds</h3>
+<ul>
+<li>New <code>tests/utils/seeds.py</code> with <code>get_test_seed()</code> function reading <code>DQM_ML_TEST_SEED</code> env var (default 42).</li>
+<li>Session-scoped <code>test_seed</code> fixture in <code>tests/conftest.py</code>.</li>
+<li>Updated ~35 test files and YAML templates to use configurable seeds instead of hardcoded values.</li>
+<li>Seeds injected via <code>tests/utils/jobs.py:generate_job()</code> for YAML template generation.</li>
+</ul>
+<h3 id="ci-improvements">CI Improvements</h3>
+<ul>
+<li>tqdm progress bars suppressed in CI via <code>TQDM_DISABLE=1</code> in GitHub Actions and GitLab CI.</li>
+<li><code>noxfile.py</code> now sets <code>DQM_ML_TEST_SEED=42</code> in all test sessions.</li>
+<li><code>.mise.toml</code> exports <code>DQM_ML_TEST_SEED=42</code> for local development.</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>New <code>docs/testing.md</code> with test organization, directory structure, and adding tests guide.</li>
+<li>New <code>docs/packaging-tests.md</code> with package isolation testing documentation.</li>
+<li>Improved READMEs for dqm-ml-core (+134 lines), dqm-ml-images (+100 lines), dqm-ml-pytorch (+252 lines).</li>
+</ul>
+<h3 id="bug-fixes">Bug Fixes</h3>
+<ul>
+<li>S3 support fixes in CLI and processor (<code>dqm_ml_job.cli</code>, <code>dqm_ml_job.utils.s3</code>).</li>
+<li>CI tag regex and PyPI publish workflow fixes.docs/index.md </li>
+</ul>
+<h2 id="200-rc3-2026-06-30-pipeline-dag-pydantic-configs-example-notebooks-and-documentation">2.0.0-rc3 (2026-06-30) — Pipeline DAG, Pydantic configs, example notebooks, and documentation</h2>
+<p>This release introduces a consistent configuration with Pydantic models and validation, adds a topological processor DAG, example notebooks and a user guide, improves domain-gap algorithms and image embedding, and refactors tests to generate synthetic data inline.</p>
+<h3 id="issue-ticket-number-and-link">Issue ticket number and link</h3>
+<ul>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/13">#13</a> - Example Notebooks</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/10">#10</a> - User guide</li>
+</ul>
+<h3 id="pipeline-refactoring">Pipeline Refactoring</h3>
+<ul>
+<li>Topological sort for processor DAG — generators before consumers — with configurable execution order via <code>DatasetJob.execute()</code> → <code>topological_sort()</code>.</li>
+<li>Accumulate-then-flush mode for single-path output patterns.</li>
+<li>Memory-threshold parsing and configurable <code>compute_max_memory</code>.</li>
+</ul>
+<h3 id="configuration-models-pydantic">Configuration Models (Pydantic)</h3>
+<ul>
+<li>New <code>dqm_ml_core.models</code> package with Pydantic models for processor, output, dataloader, and global configs.</li>
+<li>Refactored parquet output writer to use Pydantic config with column exclude list, S3 path-prefix fallback, and <code>FixedSizeListArray</code> metric filtering.</li>
+<li>Refactored S3 filesystem with <code>StorageConfig</code> model, retry strategies, role-based access, env-var fallback, and checksum validation.</li>
+</ul>
+<h3 id="domain-gap-improvements">Domain Gap Improvements</h3>
+<ul>
+<li>KLMVN variance-eps dampening and FID epsilon regularization.</li>
+<li>PAD with <code>CalibratedClassifierCV</code>.</li>
+<li>CMD multi-channel spatial moments.</li>
+<li>Wildcard embedding column patterns and per-selection path-prefix injection.</li>
+<li>New <code>dqm_ml_core.utils.matching</code> with include/exclude pattern resolution.</li>
+</ul>
+<h3 id="image-embedding">Image Embedding</h3>
+<ul>
+<li>Multi-input-column support, lazy model loading, auto device resolution.</li>
+<li>Column prefix/suffix, S3 per-column path prefixes, configurable failure handling with rate thresholds.</li>
+</ul>
+<h3 id="representativeness">Representativeness</h3>
+<ul>
+<li>Mean-std estimation, expected-counts method, per-column distribution parameters, improved model validation, path-prefix for sample paths.</li>
+</ul>
+<h3 id="documentation-examples">Documentation &amp; Examples</h3>
+<ul>
+<li>Restructured docs: flat files → <code>docs/configuration/*.md</code>, new metrics documentation, formal concepts page.</li>
+<li>Added scenario example configs, debug pipeline script, and example notebooks for each metric.</li>
+<li>Updated user guide in README with installation, metrics, configuration, and usage sections.</li>
+<li>Schema generation utilities and <code>docs/schema/config.json</code>.</li>
+<li>Google-format docstrings across source packages and test files.</li>
+</ul>
+<h3 id="testing">Testing</h3>
+<ul>
+<li>New integration tests: batch invariance, pipeline ordering, pipeline scenarios, path prefix, output columns, pipeline data flow, full story, features embeddings.</li>
+<li>New unit tests: matching, registry, representativeness, error policy, output configs, job, pandas loader, embedding edge cases, visual feature columns, domain gap processor, domain gap synthetic ordering.</li>
+<li>New property-based tests: diversity, domain gap, representativeness, and visual features properties, plus visual features stress.</li>
+<li>Stress image fixtures, expanded expected output YAML.</li>
+<li>Updated config templates and benchmark stability improvements.</li>
+</ul>
+<h3 id="code-quality">Code Quality</h3>
+<ul>
+<li>Tests refactored to reduce cognitive complexity</li>
+<li>Synthetic data generated by tests at runtime, replacing 36 stale LFS-tracked test data files (parquet + JPGs).</li>
+<li>Type checking improvments.</li>
+<li>Removed LFS caching steps from CI workflows.</li>
+<li>Cleaned up legacy CLI tests, stale example configs, and outdated documentation.</li>
+</ul>
+<h2 id="200-rc2-2026-06-03-s3-support-pipeline-refactoring-new-algorithms-code-quality">2.0.0-rc2 (2026-06-03) - S3 support, pipeline refactoring, new algorithms, code quality</h2>
+<p>This release adds S3 filesystem support, refactors the metric pipeline with dependency ordering, introduces diversity metrics and 4 new domain gap algorithms, and improves code quality.</p>
+<h3 id="issue-ticket-number-and-link_1">Issue ticket number and link</h3>
+<ul>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/18">#18</a> - Integrate lexical and visual diversity metrics to v2</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/17">#17</a> - Integrate categorical data diversity metric to v2</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/16">#16</a> - Integrate Domain Gap metric MMD to v2</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/15">#15</a> - Integrate Domain Gap metric PAD to v2</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/14">#14</a> - Integrate Domain Gap metric CMD to v2</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/4">#4</a> - Computed values differ between V1.1.2 and new implementation proposed for domain gap</li>
+</ul>
+<h3 id="s3-filesystem-support">S3 Filesystem Support</h3>
+<ul>
+<li>Shared S3 utility (<code>dqm_ml_job.utils.s3.get_s3_filesystem</code>) with env-var and dict-based configuration.</li>
+<li>S3 support in Parquet data loading, output writing, image embedding, and visual features processors.</li>
+<li><code>region</code> parameter for providers like OVH S3.</li>
+<li>Image loading improvements: S3-first fallback, Parquet-to-Pillow <code>BytesIO</code> fix.</li>
+</ul>
+<h3 id="pipeline-refactoring_1">Pipeline Refactoring</h3>
+<ul>
+<li>Topological sort for processor ordering (generators before consumers).</li>
+<li>Delta metrics rewritten with PyArrow <code>concat_tables</code> instead of manual dict merging.</li>
+<li>Accumulate-then-flush mode for single-path output patterns.</li>
+<li>Dataloader column injection in feature outputs.</li>
+</ul>
+<h3 id="diversity-metrics-new">Diversity Metrics (new)</h3>
+<ul>
+<li>New <code>DiversityProcessor</code> with streaming batch-level computation.</li>
+<li>Four indices: Simpson, Gini-Simpson, Shannon, and Richness.</li>
+<li>Integration test fixtures and synthetic data generators.</li>
+</ul>
+<h3 id="domain-gap-algorithms-new">Domain Gap Algorithms (new)</h3>
+<ul>
+<li>4 new delta metrics: <strong>MMD-RBF</strong>, <strong>MMD-Poly</strong>, <strong>PAD</strong>, <strong>CMD</strong> with multi-layer support.</li>
+<li>Image embedding refactoring and visual_features simplification for domain gap pipeline.</li>
+<li>Updated representativeness processor for compatibility.</li>
+<li>New domain gap benchmark suite and expanded integration fixtures.</li>
+<li>Updated configuration templates and documentation.</li>
+</ul>
+<h3 id="agents-refactoring">.agents/ Refactoring</h3>
+<ul>
+<li>Replaced 364-line inline <code>AGENTS.md</code> with a shim pointing to <code>.agents/AGENTS.md</code>.</li>
+<li>7 standalone agent files: architecture, code style, git workflow, testing, project docs, and agent guidelines.</li>
+</ul>
+<h3 id="code-quality-bug-fixes">Code Quality &amp; Bug Fixes</h3>
+<ul>
+<li>Renamed cryptic variables (<code>self.fx</code> → <code>self.feature_extractor</code>, <code>vec</code> → <code>sum_fixed_to_vector</code>, etc.).</li>
+<li>Fixed h1/h2 variable-shadowing bug in Wasserstein loop (was using only first histogram dimension).</li>
+<li>Fixed RepresentativenessProcessor double-count bug (<code>exp_probs * total_count</code> squaring total).</li>
+<li>Reduced cognitive complexity below 15 in 5 modules by extracting focused helper methods (diversity, visual_features, domain_gap, image_embedding, job).</li>
+<li>Replaced legacy <code>np.random.*</code> calls with seeded <code>default_rng()</code> Generator API for reproducible results.</li>
+<li>Fixed type/security issues: missing <code>gamma="auto"</code> in SVC, <code>logger.error</code> → <code>logger.exception</code>, hardcoded <code>/tmp</code> → <code>tempfile.gettempdir()</code>.</li>
+<li>Fixed <code>dataset_root_path</code> being set to string <code>"None"</code> instead of Python <code>None</code>.</li>
+<li>Consolidated duplicate string literals into module constants; fixed shellcheck <code>[</code> → <code>[[</code>.</li>
+<li>Added missing docstrings; corrected error message grammar; translated French comments.</li>
+<li>Removed unused Dockerfile and container CI workflow.</li>
+</ul>
+<h3 id="packaging-versioning">Packaging &amp; Versioning</h3>
+<ul>
+<li>Removed pinned version requirements for workspace-level setuptools-scm.</li>
+<li>Fixed package discovery in <code>pyproject.toml</code>.</li>
+<li>Configured PyTorch UV index for CPU torch downloads.</li>
+</ul>
+<h2 id="200-rc-2026-04-10-release-candidate-for-v2">2.0.0-rc (2026-04-10) - Release Candidate for V2</h2>
+<p>This release is the V2.0.0 release candidate, featuring major refactoring, security fixes, and documentation improvements.</p>
+<h3 id="issue-ticket-number-and-link_2">Issue ticket number and link</h3>
+<ul>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/61">#61</a> - Python 3.10/3.11 compatibility</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/60">#60</a> - Fix parquet dataloader with image_path column</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/59">#59</a> - Data selection tests for CLI</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/41">#41</a> - Security warnings addressed</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/31">#31</a> - Test package dependencies upgraded</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/29">#29</a> - dqm-ml-pipeline renamed to dqm-ml-job</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/28">#28</a> - Tests moved to workspace root</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/27">#27</a> - Multi data selection configuration</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/26">#26</a> - Domain gap computation for multiple selections</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/25">#25</a> - Multiple data selection in same job</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/24">#24</a> - Progress messages during post-processing</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/22">#22</a> - Output folder auto-creation</li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/11">#11</a> - MkDocs documentation generation</li>
+</ul>
+<h3 id="breaking-changes">Breaking Changes</h3>
+<ul>
+<li><strong>Package rename</strong>: <code>dqm-ml-v2</code> → <code>dqm-ml</code> (CLI entry point)</li>
+<li><strong>CLI command</strong>: <code>dqm-ml-v2</code> → <code>dqm-ml</code></li>
+<li><strong>Legacy removal</strong>: Removed dependency on legacy <code>dqm-ml</code> submodule</li>
+</ul>
+<h3 id="security-fixes-10-vulnerabilities-fixed">Security Fixes (10 vulnerabilities fixed)</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Old Version</th>
+<th>New Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strawberry-graphql</td>
+<td>0.287.3</td>
+<td>0.314.3</td>
+</tr>
+<tr>
+<td>tornado</td>
+<td>6.5.4</td>
+<td>6.5.5</td>
+</tr>
+<tr>
+<td>cryptography</td>
+<td>46.0.4</td>
+<td>46.0.7</td>
+</tr>
+<tr>
+<td>requests</td>
+<td>-</td>
+<td>2.33.0</td>
+</tr>
+<tr>
+<td>pygments</td>
+<td>-</td>
+<td>2.20.0</td>
+</tr>
+</tbody>
+</table>
+<p>CVEs addressed: CVE-2026-35526, CVE-2026-35523, CVE-2026-31958, CVE-2025-47287, CVE-2026-26007, CVE-2026-34073, CVE-2026-37990, CVE-2026-25645</p>
+<h3 id="new-features">New Features</h3>
+<ul>
+<li><strong>Test Strategy Documentation</strong>: Comprehensive testing docs in <code>contributing.md</code> with mermaid diagrams</li>
+<li><strong>Git LFS Guide</strong>: Added to <code>quickstart.md</code> for development setup</li>
+<li><strong>Test Fixtures</strong>: Session-scoped fixtures (<code>coco_data</code>, <code>normal_dist</code>, <code>uniform_dist</code>, etc.)</li>
+<li><strong>Test Utils</strong>: New <code>tests/utils/</code> with helpers for files, jobs, plots</li>
+<li><strong>tqdm dependency added</strong>: Added to <code>dqm-ml-job</code> for progress display</li>
+</ul>
+<h3 id="documentation-improvements">Documentation Improvements</h3>
+<ul>
+<li><strong>AGENTS.md</strong>: New contribution guidelines for AI agents</li>
+<li><strong>Test Strategy</strong>: Complete testing documentation with diagrams</li>
+<li><strong>Git LFS Section</strong>: Added to quickstart for large file handling</li>
+<li><strong>TODO/ROADMAP Sync</strong>: Aligned V1 metrics lists and version references</li>
+<li><strong>Mermaid Diagrams</strong>: Fixed dependency direction (core ← job, not →)</li>
+<li><strong>All docs updated</strong>: Replaced <code>dqm-ml-v2</code> references with <code>dqm-ml</code></li>
+</ul>
+<h3 id="documentation-restructuring">Documentation Restructuring</h3>
+<ul>
+<li><strong>New CLI Reference</strong>: <code>docs/cli.md</code></li>
+<li><strong>New YAML Basics</strong>: <code>docs/yaml_basics.md</code></li>
+<li><strong>New Data Loaders</strong>: <code>docs/dataloaders.md</code></li>
+<li><strong>New Metrics Computation</strong>: <code>docs/metrics_computation.md</code></li>
+<li><strong>New Python Compatibility</strong>: <code>docs/python_compatibility.md</code></li>
+<li><strong>Mermaid diagrams</strong>: Config structure visualization</li>
+<li><strong>Navigation</strong>: Organized into separate pages in mkdocs.yml</li>
+</ul>
+<h3 id="technical-changes">Technical Changes</h3>
+<ul>
+<li>Pinned <code>mkdocs-jupyter&lt;0.26</code> to fix api-autonav compatibility</li>
+<li>Refactored <code>conftest.py</code> - restructured fixtures</li>
+<li>Added deprecation warning filters for strawberry and fiftyone</li>
+</ul>
+<h3 id="new-cli-and-integration-tests">New CLI and Integration Tests</h3>
+<ul>
+<li>Test domain gap matrix between class pairs</li>
+<li>Test quickstart examples with completeness config</li>
+<li>New test fixtures and config files in <code>tests/fixtures/getting_started/</code></li>
+<li>Test data: COCO dataset with class information (102+ classes)</li>
+<li>18 tests added (unit + CLI)</li>
+</ul>
+<h3 id="python-compatibility-issue-61">Python Compatibility (Issue #61)</h3>
+<ul>
+<li><strong>Python 3.10/3.11 support added</strong></li>
+<li>Fixed <code>typing.override</code> import: Changed from <code>typing</code> to <code>typing_extensions</code> in 9 package files</li>
+<li>Fixed fiftyone lazy import in test fixtures (glob2 SyntaxError workaround)</li>
+<li>Fixed domain gap delta metrics: Handle both pa.Array and scalar returns from compute_delta</li>
+<li>Added <code>_to_pa_array</code> helper for robust type conversion in job.py</li>
+<li>CI now tests: Python 3.10, 3.11, 3.12, 3.13</li>
+<li>New documentation: <code>docs/python_compatibility.md</code></li>
+</ul>
+<h3 id="data-selection-features-issues-25-27-59-60">Data Selection Features (Issues #25, #27, #59, #60)</h3>
+<ul>
+<li><strong>split_by configuration</strong>: Create multiple selections from single dataloader based on column values</li>
+<li><strong>split_values</strong>: Specify values to create selections (e.g., split_by: class, split_values: [dog, cat])</li>
+<li><strong>filter configuration</strong>: Filter rows by column values</li>
+<li>Fixed parquet dataloader with image_path column handling</li>
+<li>New fixtures: <code>coco_classes</code>, <code>bird</code>, <code>elephant</code> for domain gap testing</li>
+<li>Example configs: <code>domain_gap_split_2classes.yaml</code>, <code>domain_gap_split_top10.yaml</code>, <code>domain_gap_matrix.yaml</code></li>
+</ul>
+<h3 id="dependencies-updated">Dependencies Updated</h3>
+<ul>
+<li>fiftyone: 1.14.1 → 1.13.0</li>
+<li>torch: 2.10.0 → 2.11.0</li>
+<li>torchvision: 0.25.0 → 0.26.0</li>
+<li>Many other transitive dependencies upgraded</li>
+</ul>
+<h3 id="testing_1">Testing</h3>
+<ul>
+<li>72 tests passing (18 new tests)</li>
+<li>Integration test fixtures for real data testing</li>
+<li>CLI end-to-end tests</li>
+<li>Test coverage reports available in <code>docs/reports/</code></li>
+<li>Python compatibility tests: 3.10, 3.11, 3.12, 3.13</li>
+</ul>
+<h2 id="116-2026-02-10-upgrade-dependency-and-security-check">1.1.6 (2026-02-10) - upgrade dependency and security check</h2>
+<p>This release is dedicated to rename dqm-ml-pipeline as sqm-ml-job, correct security issues detected by github, as well as initiated template for issues, feature and merge request</p>
+<h3 id="issue-ticket-number-and-link_3">Issue ticket number and link</h3>
+<ul>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/42">#42</a></li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/31">#31</a></li>
+<li>fix: <a href="https://github.com/Safenai/dqm-ml-workspace/issues/31">#31</a></li>
+</ul>
+<h3 id="other-details-on-several-changes">Other details on several changes</h3>
+<ul>
+<li>Security warning regarding dependency used in uv.lock as reference package version</li>
+<li><code>urllib3 "2.6.2" =&gt; "2.6.3"</code> : Decompression-bomb safeguards bypassed when following HTTP redirects (streaming API) High</li>
+<li><code>torch 2.7.1 =&gt; 2.10.0</code> : PyTorch Improper Resource Shutdown or Release vulnerability Moderate</li>
+<li><code>filelock "3.20.1" =&gt; "3.20.3"</code> : filelock Time-of-Check-Time-of-Use (TOCTOU) Symlink Vulnerability in SoftFileLock Moderate</li>
+<li><code>pynacl "1.6.1" =&gt; "1.6.2"</code> : libsodium has Incomplete List of Disallowed Inputs Moderate</li>
+<li>
+<p><code>virtualenv "20.35.4" =&gt; "20.36.1"</code> : virtualenv Has TOCTOU Vulnerabilities in Directory Creation Moderate</p>
+</li>
+<li>
+<p>As <code>fiftyone</code> use a deprecated version of <code>strawberry-graphql</code> we pin the version to "<code>strawberry-graphql==0.287.3</code></p>
+</li>
+<li>
+<p>Other version change associate to uv sync --upgrade</p>
+</li>
+<li>
+<p>default package version used for development and test upgraded, but without increasing min value dependencies</p>
+</li>
+<li>
+<p>Remove dependency needed for test from default installation, only install when targetted nox command are executed</p>
+</li>
+<li>
+<p>github-code-quality[bot] findings</p>
+</li>
+<li>SECURITY.md update</li>
+<li>
+<p><code>Unkow comand</code>=&gt; <code>Unknown command</code> miss spelling</p>
+</li>
+<li>
+<p>add default issues template to github workflow</p>
+</li>
+<li>
+<p>documentation presentation improvment</p>
+</li>
+<li>Add light/dark mode</li>
+<li>Add dynamic horizontal size for content</li>
+<li>Disable expand by default in navigation</li>
+<li>Add navigation tab</li>
+<li>
+<p>Add navigation path</p>
+</li>
+<li>
+<p>connection to sonarqube for code quality</p>
+</li>
+</ul>
+<h2 id="115-2026-02-09">1.1.5 (2026-02-09)</h2>
+<ul>
+<li>Quality correction / ci improvements <strong>Fixed</strong></li>
+<li><code>noxfile.py</code>: Added a <code>docs</code> session to build the documentation. (Fixes #6)</li>
+<li><code>noxfile.py</code>: The <code>format</code> nox session now runs independently from the <code>lint</code> session. (Fixes #8)</li>
+<li><code>dqm_ml_job/outputwriter/parquet.py</code>: Ensured output directory is created if it does not exist, preventing crashes. (Fixes #22)  </li>
+<li>
+<p><code>.github\ci.yml</code> : adjust security permissions and other code quality checks</p>
+</li>
+<li>
+<p>Repository organization changes :</p>
+</li>
+<li>Fixes : #28 : test moves to root of the workspace, and cover improved to 80%</li>
+<li>
+<p>fixes : #11 #12 : publication of mkdocs content document integrated</p>
+</li>
+<li>
+<p>Documentation :</p>
+</li>
+<li>
+<p>First documentation structure proposed, to be upgraded with feedback, it integrate fixes for #9 and #10</p>
+</li>
+<li>
+<p>Conceptual change:</p>
+</li>
+<li>Notion of data selection introduced, and metrics are computed on a data selection, not a data loader.</li>
+<li>
+<p>delta metrics are compare between all dataselection available in the data selection.</p>
+</li>
+<li>
+<p>Configuration changes</p>
+</li>
+<li>parquet data loader  (fix : #27)</li>
+<li>comparison of multiple data selection metrics fix : #25 and fix : #26</li>
+<li>
+<p>progression bar (optional) has been added to follow computation in the cli (fix : #24)</p>
+</li>
+<li>
+<p>Limitations not delivered in v1.1.5</p>
+</li>
+<li>Change of dml-ml-pipeline to dqm-ml-job in future release for consistency #29</li>
+</ul>
+<h2 id="114-2025-12-18">1.1.4 (2025-12-18)</h2>
+<ul>
+<li>github ci</li>
+<li>add changelog</li>
+<li>initiate release note and roadmap</li>
+<li>match of dqm-ml version number</li>
+</ul>
+<h2 id="005-2025-12-17">0.0.5 (2025-12-17)</h2>
+<p>Version use to check compatibility with legacy dqm-ml, after this we will match for this repository the versions with dqm-ml
+Version content :</p>
+<ul>
+<li>dqm-ml-core : API proposal for future generic V2 api to allow generic usage of API</li>
+<li>dqm-ml-images : beta version of feature computation for images in order to simplify computation on features computed</li>
+<li>dqm-ml-pytorch : beta implementation of 3 of existing domain gap metrics relying on pytorch</li>
+<li>dqm-ml-job : beta implementation of of metric computation cli from files, with grouping strategy (see roadmap)</li>
+</ul>
+<p>This version allow use to generate metrics on welding uses case to demonstrate values of such an structural evolution</p>
+</article>
+</div>
+<script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<nav aria-label="Footer" class="md-footer__inner md-grid">
+<a aria-label="Previous: Roadmap" class="md-footer__link md-footer__link--prev" href="ROADMAP.html">
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</div>
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Previous
+              </span>
+<div class="md-ellipsis">
+                Roadmap
+              </div>
+</div>
+</a>
+<a aria-label="Next: Core" class="md-footer__link md-footer__link--next" href="packages/dqm-ml-core.html">
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Next
+              </span>
+<div class="md-ellipsis">
+                Core
+              </div>
+</div>
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+</div>
+</a>
+</nav>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+<div class="md-copyright__highlight">
+      Copyright © SafenAI
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/Safenai/dqm-ml-workspace" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<div class="md-progress" data-md-component="progress" role="progressbar"></div>
+<script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "content.tooltips", "navigation.indexes", "navigation.footer", "navigation.instant", "navigation.instant.progress", "navigation.top", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate", "navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.prune"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+</body>
+</html>

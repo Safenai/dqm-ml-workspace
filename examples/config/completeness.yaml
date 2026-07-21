@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=../../docs/schema/config.json
+## Completeness — check every sample for missing values
+##
+## Scenario: we have quality-score columns (brightness, contrast, etc.)
+## generated with ~5 % nulls. Completeness tells us which columns are
+## complete and flags potential data-acquisition issues.
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/completeness.yaml
+##
+## See also: docs/metrics/completeness.md
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/data/large_test_2m.parquet
+      batch_size: 10000
+
+metrics:
+  outputs:
+    path: examples/outputs/completeness.parquet
+  processors:
+    - name: completeness
+      type: completeness
+      columns:
+        input: [sample_id, blur_score, contrast, quality_score]
+      include_per_column: true
+      include_overall: true
