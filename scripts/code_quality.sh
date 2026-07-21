@@ -7,6 +7,7 @@ exec > >(tee "$(dirname "$0")/../logs/code_quality_${timestamp}.log") 2>&1
 
 CI_MODE="${CI:-false}"
 
+# S8541: --frozen locks dependency resolution; --no-build breaks editable installs
 uv sync --frozen
 
 if [[ "$CI_MODE" != "true" ]]; then
