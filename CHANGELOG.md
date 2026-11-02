@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.2 — Python 3.11 minimum, Python 3.14 support, dependency refresh
+## 2.0.2 — Python 3.11 minimum, Python 3.14 support, dependency refresh
 
 ### Breaking Changes
 
