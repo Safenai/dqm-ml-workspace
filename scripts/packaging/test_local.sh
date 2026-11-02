@@ -52,7 +52,10 @@ install_packages() {
             *) echo "Unknown package: $base" >&2; return 1 ;;
         esac
     done
-    uv pip install --python "$python" --extra-index-url https://download.pytorch.org/whl/cpu "${install_args[@]}" 1>&2
+    uv pip install --python "$python" \
+        --index-strategy unsafe-best-match \
+        --extra-index-url https://download.pytorch.org/whl/cpu \
+        "${install_args[@]}" 1>&2
 }
 
 run() {

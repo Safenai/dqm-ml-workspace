@@ -22,6 +22,7 @@ install_packages() {
     local python="$venv_dir/bin/python"
     uv pip install --python "$python" \
         --index-url https://pypi.org/simple/ \
+        --index-strategy unsafe-best-match \
         --extra-index-url https://download.pytorch.org/whl/cpu \
         "${packages[@]}" 1>&2
 }
