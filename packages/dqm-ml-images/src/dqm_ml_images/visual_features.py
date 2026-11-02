@@ -19,7 +19,7 @@ from PIL import Image
 import pyarrow as pa
 from scipy import signal
 
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+# COMPATIBILITY : from typing import Any, override # When support of 3.11 will be removed
 from typing_extensions import override
 
 logger = logging.getLogger(__name__)

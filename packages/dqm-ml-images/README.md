@@ -66,8 +66,8 @@ processor = VisualFeaturesProcessor(
         "features": ["luminosity", "contrast", "blur", "entropy"],
         "grayscale": True,
         "normalize": True,
-        "laplacian_kernel": "3x3"
-    }
+        "laplacian_kernel": "3x3",
+    },
 )
 
 # Run using ProcessorRunner (high-level API)

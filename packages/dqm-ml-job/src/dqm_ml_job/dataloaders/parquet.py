@@ -15,7 +15,7 @@ import pyarrow.compute as pc
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
 
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+# COMPATIBILITY : from typing import Any, override # When support of 3.11 will be removed
 from typing_extensions import override
 
 from dqm_ml_job.dataloaders.proto import DataSelection
@@ -312,6 +312,75 @@ class ParquetDataLoader:
                 path = f"{bucket_name}/{path}"
         return path
 
+    def _read_split_values(self, path: str) -> list[str]:
+        """Read the distinct values of the split column.
+
+        Args:
+            path: Resolved path to the Parquet file or directory.
+
+        Returns:
+            List of non-null split values as strings.
+        """
+        table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)
+        return [str(value) for value in pc.unique(table.column(0)).to_pylist() if value is not None]
+
+    def _resolve_split_values(self, path: str) -> list[str]:
+        """Resolve split values, expanding wildcards and applying exclusions.
+
+        Args:
+            path: Resolved path to the Parquet file or directory.
+
+        Returns:
+            The resolved list of split values.
+        """
+        values = self.split_values
+        if values is None:
+            logger.info(f"Discovering unique values for split_by='{self.split_by}' in {path}")
+            values = self._read_split_values(path)
+        elif any(has_pattern(value) for value in values):
+            logger.info(f"Expanding wildcard values for split_by='{self.split_by}' in {path}")
+            values = resolve_patterns(values, self._read_split_values(path))
+
+        if self.split and self.split.exclude:
+            values = resolve_include_exclude(None, self.split.exclude, values)
+        return values
+
+    def _make_selection(self, name: str, path: str, filters_dict: dict[str, Any]) -> ParquetDataSelection:
+        """Build a ParquetDataSelection for this loader.
+
+        Args:
+            name: Selection name.
+            path: Resolved path to the Parquet file or directory.
+            filters_dict: Filters to apply to the selection.
+
+        Returns:
+            The configured selection.
+        """
+        return ParquetDataSelection(
+            name=name,
+            path=path,
+            batch_size=self.batch_size,
+            threads=self.threads,
+            filters_dict=filters_dict,
+            filesystem=self.filesystem,
+            sample_path=self.sample_path,
+            transforms=self.transforms,
+        )
+
+    def _make_split_selection(self, value: str, path: str) -> ParquetDataSelection:
+        """Build a selection for one split value.
+
+        Args:
+            value: Split column value.
+            path: Resolved path to the Parquet file or directory.
+
+        Returns:
+            The configured selection with the split filter merged in.
+        """
+        merged_filters = dict(self.filters_dict or {})
+        merged_filters[self.split_by] = value
+        return self._make_selection(f"{self.name}_{value}", path, merged_filters)
+
     def get_selections(self) -> list[DataSelection]:
         """Create one or more ParquetDataSelection instances based on configuration.
 
@@ -323,58 +392,7 @@ class ParquetDataLoader:
         path = self._resolve_selection_path()
 
         if not self.split_by:
-            # Single selection
-            return [
-                ParquetDataSelection(
-                    name=self.name,
-                    path=path,
-                    batch_size=self.batch_size,
-                    threads=self.threads,
-                    filters_dict=self.filters_dict,
-                    filesystem=self.filesystem,
-                    sample_path=self.sample_path,
-                    transforms=self.transforms,
-                )
-            ]
+            return [self._make_selection(self.name, path, self.filters_dict)]
 
-        # Splitting logic
-        values = self.split_values
-        if values is None:
-            # Automatic discovery if split_values not provided
-            logger.info(f"Discovering unique values for split_by='{self.split_by}' in {path}")
-            table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)
-            values = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]
-        else:
-            # Expand wildcard patterns in values against available data
-            if any(has_pattern(v) for v in values):
-                logger.info(f"Expanding wildcard values for split_by='{self.split_by}' in {path}")
-                table = pq.read_table(path, columns=[self.split_by], filesystem=self.filesystem)
-                available = [str(v) for v in pc.unique(table.column(0)).to_pylist() if v is not None]
-                values = resolve_patterns(values, available)
-
-        # Apply split.exclude (including wildcard patterns)
-        if self.split and self.split.exclude:
-            values = resolve_include_exclude(None, self.split.exclude, values)
-
-        selections: list[DataSelection] = []
-        for val in values:
-            selection_name = f"{self.name}_{val}"
-            # Merge existing filters with the split filter
-            merged_filters = (self.filters_dict or {}).copy()
-            # TODO: filters shouldn't be on the same column than split by
-            # raise error here ? or add this check in pydantic model ? is it possible ?
-            merged_filters[self.split_by] = val
-
-            selections.append(
-                ParquetDataSelection(
-                    name=selection_name,
-                    path=path,
-                    batch_size=self.batch_size,
-                    threads=self.threads,
-                    filters_dict=merged_filters,
-                    filesystem=self.filesystem,
-                    sample_path=self.sample_path,
-                    transforms=self.transforms,
-                )
-            )
-        return selections
+        values = self._resolve_split_values(path)
+        return [self._make_split_selection(value, path) for value in values]

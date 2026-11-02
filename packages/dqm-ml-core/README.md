@@ -60,11 +60,7 @@ df = pd.read_parquet("data/core_metrics.parquet")  # columns: col_a, col_b, feat
 # Configure processor with columns to analyze
 processor = CompletenessProcessor(
     name="my_check",
-    config={
-        "columns": {"input": ["col_a", "col_b"]},
-        "include_per_column": True,
-        "include_overall": True
-    }
+    config={"columns": {"input": ["col_a", "col_b"]}, "include_per_column": True, "include_overall": True},
 )
 
 # Run using ProcessorRunner (high-level API)
@@ -96,8 +92,8 @@ processor = RepresentativenessProcessor(
         "columns": {"input": ["feature"]},
         "distribution": "normal",
         "metrics": ["chi-square", "kolmogorov-smirnov"],
-        "mean_std_estimation": "from_first_batch"
-    }
+        "mean_std_estimation": "from_first_batch",
+    },
 )
 
 # Process data through pipeline (direct API)

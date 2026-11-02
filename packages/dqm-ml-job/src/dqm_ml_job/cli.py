@@ -304,68 +304,17 @@ def run(config: dict[str, Any]) -> None:
     gap_registry = PluginLoadedRegistry.get_gap_registry()
     outputs_registry = PluginLoadedRegistry.get_outputwriter_registry()
 
-    # Initialize dataloaders from list format
-    dataloader_dicts = [loader.model_dump() for loader in validated.dataloaders.loaders]
     compute = _resolve_compute_config(validated)
-    dl_storage = validated.dataloaders.storage.model_dump() if validated.dataloaders.storage else None
-    for dl in dataloader_dicts:
-        dl["threads"] = compute.threads
-        if dl_storage and not dl.get("storage"):
-            dl["storage"] = dl_storage
-    dataloaders = _init_components_from_list(dataloader_dicts, dataloaders_registry, "dataloader")
-
-    # Resolve storage config: interface override takes precedence over job-level
-    def _resolve_storage(interface: Any) -> dict[str, Any] | None:
-        if interface and interface.storage:
-            result: dict[str, Any] = interface.storage.model_dump()
-            return result
-        if validated.storage:
-            result = validated.storage.model_dump()
-            return result
-        return None
-
-    # Initialize processors from all interfaces
-    features_processors = _init_processors_from_interface(
-        validated.features,
+    dataloaders = _init_dataloaders(validated, compute, dataloaders_registry)
+    features_processors, metrics_processors, gap_processors = _init_all_processors(
+        validated,
         features_registry,
-        _resolve_storage(validated.features),
-    )
-    metrics_processors = _init_processors_from_interface(
-        validated.metrics,
         metrics_registry,
-        _resolve_storage(validated.metrics),
-    )
-    gap_processors = _init_processors_from_interface(
-        validated.gap,
         gap_registry,
-        _resolve_storage(validated.gap),
     )
+    features_output, metrics_output, delta_output = _init_all_outputs(validated, outputs_registry)
 
-    # Initialize output writers from interfaces
-    features_output = _init_interface_outputs(
-        validated.features,
-        outputs_registry,
-        "features",
-        _resolve_storage(validated.features),
-    )
-    metrics_output = _init_interface_outputs(
-        validated.metrics,
-        outputs_registry,
-        "metrics",
-        _resolve_storage(validated.metrics),
-    )
-    delta_output = _init_interface_outputs(
-        validated.gap,
-        outputs_registry,
-        "delta",
-        _resolve_storage(validated.gap),
-    )
-
-    # Configure logging based on compute.log_level
-    if compute.log_level:
-        log_level = compute.log_level.upper()
-        level = getattr(logging, log_level)
-        logging.basicConfig(level=level)
+    _configure_logging(compute)
 
     job = DatasetJob(
         dataloaders=dataloaders,
@@ -382,13 +331,163 @@ def run(config: dict[str, Any]) -> None:
     )
 
     dataselection_metrics_list, delta_metrics_table = job.run()
+    _write_job_outputs(
+        validated,
+        metrics_output,
+        delta_output,
+        dataselection_metrics_list,
+        delta_metrics_table,
+    )
 
+
+def _resolve_storage(interface: Any, validated: JobConfig) -> dict[str, Any] | None:
+    """Resolve storage config for an interface.
+
+    Interface-level storage takes precedence over job-level storage.
+
+    Args:
+        interface: The interface config or ``None``.
+        validated: The validated job configuration.
+
+    Returns:
+        Storage config dict or ``None``.
+    """
+    if interface and interface.storage:
+        result: dict[str, Any] = interface.storage.model_dump()
+        return result
+    if validated.storage:
+        result = validated.storage.model_dump()
+        return result
+    return None
+
+
+def _init_dataloaders(
+    validated: JobConfig,
+    compute: ComputeConfig,
+    dataloaders_registry: dict[str, Any],
+) -> dict[str, Any]:
+    """Initialize dataloaders from the validated configuration.
+
+    Args:
+        validated: The validated job configuration.
+        compute: Resolved compute configuration.
+        dataloaders_registry: Registry of dataloader classes.
+
+    Returns:
+        Dict mapping dataloader names to initialized instances.
+    """
+    dataloader_dicts = [loader.model_dump() for loader in validated.dataloaders.loaders]
+    dl_storage = validated.dataloaders.storage.model_dump() if validated.dataloaders.storage else None
+    for dl in dataloader_dicts:
+        dl["threads"] = compute.threads
+        if dl_storage and not dl.get("storage"):
+            dl["storage"] = dl_storage
+    return _init_components_from_list(dataloader_dicts, dataloaders_registry, "dataloader")
+
+
+def _init_all_processors(
+    validated: JobConfig,
+    features_registry: dict[str, Any],
+    metrics_registry: dict[str, Any],
+    gap_registry: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Initialize processors from all interfaces.
+
+    Args:
+        validated: The validated job configuration.
+        features_registry: Features processor registry.
+        metrics_registry: Metrics processor registry.
+        gap_registry: Gap processor registry.
+
+    Returns:
+        Tuple of (features_processors, metrics_processors, gap_processors).
+    """
+    features_processors = _init_processors_from_interface(
+        validated.features,
+        features_registry,
+        _resolve_storage(validated.features, validated),
+    )
+    metrics_processors = _init_processors_from_interface(
+        validated.metrics,
+        metrics_registry,
+        _resolve_storage(validated.metrics, validated),
+    )
+    gap_processors = _init_processors_from_interface(
+        validated.gap,
+        gap_registry,
+        _resolve_storage(validated.gap, validated),
+    )
+    return features_processors, metrics_processors, gap_processors
+
+
+def _init_all_outputs(
+    validated: JobConfig,
+    outputs_registry: dict[str, Any],
+) -> tuple[OutputWriter | None, OutputWriter | None, OutputWriter | None]:
+    """Initialize output writers from all interfaces.
+
+    Args:
+        validated: The validated job configuration.
+        outputs_registry: Output writer registry.
+
+    Returns:
+        Tuple of (features_output, metrics_output, delta_output).
+    """
+    features_output = _init_interface_outputs(
+        validated.features,
+        outputs_registry,
+        "features",
+        _resolve_storage(validated.features, validated),
+    )
+    metrics_output = _init_interface_outputs(
+        validated.metrics,
+        outputs_registry,
+        "metrics",
+        _resolve_storage(validated.metrics, validated),
+    )
+    delta_output = _init_interface_outputs(
+        validated.gap,
+        outputs_registry,
+        "delta",
+        _resolve_storage(validated.gap, validated),
+    )
+    return features_output, metrics_output, delta_output
+
+
+def _configure_logging(compute: ComputeConfig) -> None:
+    """Configure logging based on compute configuration.
+
+    Args:
+        compute: Resolved compute configuration.
+    """
+    if compute.log_level:
+        log_level = compute.log_level.upper()
+        level = getattr(logging, log_level)
+        logging.basicConfig(level=level)
+
+
+def _write_job_outputs(
+    validated: JobConfig,
+    metrics_output: OutputWriter | None,
+    delta_output: OutputWriter | None,
+    dataselection_metrics_list: dict[Any, dict[str, Any]],
+    delta_metrics_table: pa.Table | None,
+) -> None:
+    """Write job outputs to configured output writers.
+
+    Args:
+        validated: The validated job configuration.
+        metrics_output: Metrics output writer or ``None``.
+        delta_output: Delta output writer or ``None``.
+        dataselection_metrics_list: Metrics per selection.
+        delta_metrics_table: Delta metrics table or ``None``.
+    """
     if metrics_output:
         metrics_output.write_metrics_dict(dataselection_metrics_list)
         _safe_flush(metrics_output)
 
     if delta_output and delta_metrics_table:
-        delta_data = {col: delta_metrics_table.column(col) for col in delta_metrics_table.column_names}
+        delta_data: dict[str, Any] = {col: delta_metrics_table.column(col) for col in delta_metrics_table.column_names}
         _enrich_delta_with_pairwise(validated, delta_data, delta_metrics_table)
         delta_output.write_table("delta", delta_data)
         _safe_flush(delta_output)

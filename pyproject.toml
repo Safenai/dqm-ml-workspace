@@ -3,15 +3,15 @@
 [project]
 name = "dqm-workspace"
 dynamic = ["version"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "dqm-ml>=2.0.0rc0",
-    "dqm-ml-core>=2.0.0rc0",
-    "dqm-ml-images>=2.0.0rc0",
-    "dqm-ml-job>=2.0.0rc0",
-    "dqm-ml-pytorch>=2.0.0rc0",
-    "pre-commit>=4.5.0",
-    "pycocotools>=2.0.10",
+    "dqm-ml>=2.0.0",
+    "dqm-ml-core>=2.0.0",
+    "dqm-ml-images>=2.0.0",
+    "dqm-ml-job>=2.0.0",
+    "dqm-ml-pytorch>=2.0.0",
+    "pre-commit>=4.7.0",
+    "pycocotools>=2.0.11",
     "ruamel-yaml>=0.19.1",
 ]
 
@@ -62,34 +62,35 @@ members = ["packages/*"]
 
 # Session runner for all CI/dev tasks defined in noxfile.py.
 nox = [
-    "nox-uv",
+    "nox-uv>=0.8.0",
 ]
 
 # Run tests with pytest, coverage, and reporting plugins.
 test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-randomly",
+    # pytest-sugar 1.1.1 is not yet compatible with pytest 9 (report.fspath is a str).
+    "pytest>=8.4.2,<9",
+    "pytest-cov>=7.1.0",
+    "pytest-randomly>=5.0.0",
     # Plugin to generate a HTML report for test results
-    "pytest-html",
+    "pytest-html>=4.2.0",
     # Plugin to show failures and errors instantly, add a progress bar,
     # improve the test results, and make the output look better
-    "pytest-sugar",
-    "pytest-timeout",
+    "pytest-sugar>=1.1.1",
+    "pytest-timeout>=2.4.0",
     # to download open source datasets
-    "fiftyone",
-    "strawberry-graphql>=0.312.3" # Security: CVE-2026-35526, CVE-2026-35523
+    "fiftyone>=1.22.0",
+    "strawberry-graphql>=0.315.7" # Security: CVE-2026-35526, CVE-2026-35523
 ]
 
 type_check = [
-    "mypy",
+    "mypy>=2.4.1",
     # Add "types-" stub packages as needed: https://github.com/python/typeshed/tree/main/stubs
-    "types-PyYAML",
+    "types-PyYAML>=6.0.12.20261030",
 ]
 
 # Lint and auto-format Python code.
 lint = [
-    "ruff",
+    "ruff>=0.17.3",
 ]
 
 # Spell-check source and documentation files.
@@ -98,29 +99,29 @@ spell = [
 ]
 
 docs = [
-    "mkdocs-material",
-    "mkdocs-htmlproofer-plugin",
-    "markdown-callouts",
+    "mkdocs-material>=9.8.0",
+    "mkdocs-htmlproofer-plugin>=1.6.0",
+    "markdown-callouts>=0.4.0",
 
     # Python API documentation (not necessary for applications).
-    "mkdocstrings[python]",
+    "mkdocstrings[python]>=1.0.8",
     # Autodoc.
-    "mkdocs-api-autonav",
+    "mkdocs-api-autonav>=0.4.0",
     "mkdocs-jupyter<0.26",  # Pin to <0.26 to avoid abs_src_path=None bug with api-autonav
-    "mkdocs-simple-hooks",
+    "mkdocs-simple-hooks>=0.1.5",
     # Markdown extensions for mermaid and more
-    "pymdown-extensions",
-    "mkdocs-mermaid2-plugin"
+    "pymdown-extensions>=12.3",
+    "mkdocs-mermaid2-plugin>=1.2.3"
 ]
 
 # Report third-party package licenses.
 licenses = [
-    "pip-licenses-cli",
+    "pip-licenses-cli>=4.1.0",
 ]
 
 # Measure code complexity (cyclomatic, cognitive).
 complexity = [
-    "complexipy>=5.5.0",
+    "complexipy>=8.3.0",
 ]
 
 ####################################################################################

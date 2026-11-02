@@ -15,18 +15,20 @@ test_cases = [
     ("version", f"DQML version : {version}"),  # no args
     [
         "list",
-        "Available data metrics_registry\n"
-        "- completeness - <class 'dqm_ml_core.metrics.completeness.CompletenessProcessor'>\n"
-        "- diversity - <class 'dqm_ml_core.metrics.diversity.DiversityProcessor'>\n"
-        "- representativeness - <class 'dqm_ml_core.metrics.representativeness.RepresentativenessProcessor'>\n"
-        "- image_features - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
-        "- domain_gap - <class 'dqm_ml_pytorch.domain_gap.DomainGapProcessor'>\n"
-        "- features_embeddings - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
-        "Available data loaders\n"
-        "- csv - <class 'dqm_ml_job.dataloaders.pandas.PandasDataLoader'>\n"
-        "- parquet - <class 'dqm_ml_job.dataloaders.parquet.ParquetDataLoader'>\n"
-        "Available outputs writers\n"
-        "- parquet - <class 'dqm_ml_job.outputwriter.parquet.ParquetOutputWriter'>",
+        (
+            "Available data metrics_registry\n"
+            "- completeness - <class 'dqm_ml_core.metrics.completeness.CompletenessProcessor'>\n"
+            "- diversity - <class 'dqm_ml_core.metrics.diversity.DiversityProcessor'>\n"
+            "- representativeness - <class 'dqm_ml_core.metrics.representativeness.RepresentativenessProcessor'>\n"
+            "- image_features - <class 'dqm_ml_images.visual_features.VisualFeaturesProcessor'>\n"
+            "- domain_gap - <class 'dqm_ml_pytorch.domain_gap.DomainGapProcessor'>\n"
+            "- features_embeddings - <class 'dqm_ml_pytorch.image_embedding.ImageEmbeddingProcessor'>\n"
+            "Available data loaders\n"
+            "- csv - <class 'dqm_ml_job.dataloaders.pandas.PandasDataLoader'>\n"
+            "- parquet - <class 'dqm_ml_job.dataloaders.parquet.ParquetDataLoader'>\n"
+            "Available outputs writers\n"
+            "- parquet - <class 'dqm_ml_job.outputwriter.parquet.ParquetOutputWriter'>"
+        ),
     ],
 ]
 command_list = {"version": None}

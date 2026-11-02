@@ -55,7 +55,7 @@ def save(path, cells):
                 "language": "python",
                 "name": "python3",
             },
-            "language_info": {"name": "python", "version": "3.10.0"},
+            "language_info": {"name": "python", "version": "3.12.0"},
         },
         "nbformat": 4,
         "nbformat_minor": 4,

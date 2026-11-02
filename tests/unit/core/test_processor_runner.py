@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 from dqm_ml_core.api.gap_processor import GapProcessor
 from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.utils.processor_runner import ProcessorRunner
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 
@@ -20,6 +21,56 @@ def test_processor_runner_run_empty_df():
     metrics = []
     result = runner.run(df, metrics)
     assert result == {}
+
+
+def test_df_to_record_batch_preserves_scalar_columns():
+    """Verify scalar DataFrame columns survive conversion unchanged."""
+    df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+
+    batch = ProcessorRunner._df_to_record_batch(df)
+
+    assert batch.schema.names == ["a", "b"]
+    assert batch.column("a").to_pylist() == [1, 2]
+    assert batch.column("b").to_pylist() == ["x", "y"]
+
+
+def test_df_to_record_batch_converts_uniform_embeddings():
+    """Verify uniform numpy-array columns become FixedSizeListArray."""
+    df = pd.DataFrame(
+        {
+            "emb": [
+                np.array([1.0, 2.0]),
+                np.array([3.0, 4.0]),
+            ]
+        }
+    )
+
+    batch = ProcessorRunner._df_to_record_batch(df)
+
+    array = batch.column("emb")
+    assert isinstance(array, pa.FixedSizeListArray)
+    assert array.type.list_size == 2
+    assert array.to_pylist() == [[1.0, 2.0], [3.0, 4.0]]
+
+
+def test_uniform_ndarray_dim_rejects_non_uniform_columns():
+    """Verify non-array and ragged columns are not treated as embeddings."""
+    assert ProcessorRunner._uniform_ndarray_dim(pd.Series([1, 2])) is None
+    assert ProcessorRunner._uniform_ndarray_dim(pd.Series([], dtype=object)) is None
+    assert ProcessorRunner._uniform_ndarray_dim(pd.Series([np.array([1.0, 2.0]), np.array([1.0, 2.0, 3.0])])) is None
+
+
+def test_uniform_ndarray_dim_rejects_object_non_array():
+    """Verify object columns whose first value is not an ndarray are rejected."""
+    assert ProcessorRunner._uniform_ndarray_dim(pd.Series([1, 2], dtype=object)) is None
+
+
+def test_compute_features_returns_original_when_empty():
+    """Verify _compute_features leaves the DataFrame unchanged without processors."""
+    runner = ProcessorRunner()
+    df = pd.DataFrame({"a": [1, 2]})
+    result = runner._compute_features(df, [])
+    pd.testing.assert_frame_equal(result, df)
 
 
 def test_processor_runner_run_with_mock_metric(sample_dataframe):

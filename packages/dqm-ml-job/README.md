@@ -156,7 +156,7 @@ class JsonLinesDataSelection(DataSelection):
         if self._lines is None:
             return
         for i in range(0, len(self._lines), self.batch_size):
-            yield pa.RecordBatch.from_pylist(self._lines[i:i + self.batch_size])
+            yield pa.RecordBatch.from_pylist(self._lines[i : i + self.batch_size])
 
 
 class JsonLinesDataLoader:

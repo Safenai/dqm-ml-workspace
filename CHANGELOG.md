@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.0.2 — Python 3.11 minimum, Python 3.14 support, dependency refresh
+
+### Breaking Changes
+
+* **Dropped:** Python 3.10 support (end-of-life October 2026). Minimum is now Python 3.11.
+* **Raised:** Minimum versions for core dependencies (NumPy, Pandas, SciPy, PyArrow, Pydantic, Pillow, torch, torchvision, scikit-learn).
+* **Raised:** `dqm-ml` and related packages now require `dqm-ml-core>=2.0.0`.
+
+### Added
+
+* **Added:** Python 3.14 support in compatibility CI and nox sessions.
+
+### Changed
+
+* **Updated:** Refreshed `uv.lock` and development tooling dependencies.
+* **Updated:** Replaced `str, Enum` with `StrEnum` for `TransformType`.
+* **Removed:** Legacy Python <3.11 entry-point fallback in the plugin registry.
+* **Fixed:** Implicit string concatenation bugs in test error messages.
+
+### Fixed
+
+* **Pinned:** `pytest<9` until `pytest-sugar` supports pytest 9.
+
 ## 2.0.1 (2026-07-20) — Fix pytorch extra, add meta-package scenarios
 
 * **Fix:** `pytorch` extra in `pyproject.toml` incorrectly depended on `dqm-ml-images` instead of `dqm-ml-pytorch`
