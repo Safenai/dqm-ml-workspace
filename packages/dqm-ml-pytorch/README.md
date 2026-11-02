@@ -44,12 +44,12 @@ processor = ImageEmbeddingProcessor(
         "model": {
             "arch": "resnet18",
             "n_layer_feature": -2,  # layer index (second to last)
-            "device": "cpu"
+            "device": "cpu",
         },
         "infer": {
             "batch_size": 2,
-        }
-    }
+        },
+    },
 )
 
 # Run using ProcessorRunner (high-level API)
@@ -82,14 +82,17 @@ images = []
 classes = ["cat", "dog", "bird", "car"] * 4
 for c in classes:
     img = Image.fromarray(rng.integers(0, 255, (32, 32, 3), dtype=np.uint8))
-    buf = io.BytesIO(); img.save(buf, format="PNG")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
     images.append(buf.getvalue())
 
-table = pa.table({
-    "sample_id": np.arange(16, dtype=np.int64),
-    "class_name": classes,
-    "image_bytes": images,
-})
+table = pa.table(
+    {
+        "sample_id": np.arange(16, dtype=np.int64),
+        "class_name": classes,
+        "image_bytes": images,
+    }
+)
 pq.write_table(table, "test_images.parquet")
 print("Created test_images.parquet (16 rows, 4 classes)")
 ```
@@ -149,13 +152,15 @@ rng = np.random.default_rng(42)
 source_images = []
 for _ in range(8):
     img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
-    buf = io.BytesIO(); img.save(buf, format="PNG")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
     source_images.append(buf.getvalue())
 
 target_images = []
 for _ in range(8):
     img = Image.fromarray(rng.integers(0, 255, (224, 224, 3), dtype=np.uint8))
-    buf = io.BytesIO(); img.save(buf, format="PNG")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
     target_images.append(buf.getvalue())
 
 source_df = pd.DataFrame({"image_bytes": source_images})
@@ -164,7 +169,8 @@ target_df = pd.DataFrame({"image_bytes": target_images})
 # Compute embeddings + gap in one call
 runner = ProcessorRunner()
 result = runner.run_gap(
-    source_df, target_df,
+    source_df,
+    target_df,
     DomainGapProcessor(
         name="gap",
         config={
@@ -201,7 +207,8 @@ target_df = pd.DataFrame({"embedding": list(rng.standard_normal((100, 128)).asty
 
 runner = ProcessorRunner()
 result = runner.run_gap(
-    source_df, target_df,
+    source_df,
+    target_df,
     DomainGapProcessor(
         name="gap",
         config={
@@ -293,6 +300,7 @@ def _cosine_distance(src_emb: np.ndarray, tgt_emb: np.ndarray) -> float:
     norm_tgt = tgt_emb / np.maximum(np.linalg.norm(tgt_emb, axis=1, keepdims=True), 1e-12)
     cos_sim = (norm_src @ norm_tgt.T).mean()
     return float(1.0 - cos_sim)
+
 
 def _compute_delta_cosine(self, source: dict[str, pa.Array], target: dict[str, pa.Array]) -> dict[str, pa.Array]:
     if "__emb__" not in source or "__emb__" not in target:

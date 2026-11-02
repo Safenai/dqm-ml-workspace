@@ -7,22 +7,14 @@ functionality for metrics, dataloaders, and output writers.
 from importlib.metadata import EntryPoint
 from unittest.mock import MagicMock, patch
 
-from dqm_ml_core.api.metrics_processor import MetricsProcessor
 from dqm_ml_core.utils.registry import PluginLoadedRegistry, load_registered_plugins
 
 
 class TestLoadRegisteredPlugins:
     """Tests for the load_registered_plugins function.
 
-    Covers error handling for old Python versions, filtering of non-subclass entry points,
-    and logging of ignored plugins.
+    Covers filtering of non-subclass entry points and logging of ignored plugins.
     """
-
-    def test_old_python_version(self):
-        """Verify load_registered_plugins returns empty dict on TypeError (old Python)."""
-        with patch("dqm_ml_core.utils.registry.entry_points", side_effect=TypeError("old version")):
-            result = load_registered_plugins("dqm_ml.metrics", MetricsProcessor)
-        assert result == {}
 
     def test_entry_point_not_subclass_ignored(self, caplog):
         """Verify entry points not subclassing the base class are ignored and logged.

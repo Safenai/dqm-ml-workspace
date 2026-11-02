@@ -10,7 +10,7 @@ import logging
 from typing import Any
 
 import numpy as np
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import pyarrow as pa
 
 from dqm_ml_core.api.gap_processor import GapProcessor
@@ -38,26 +38,61 @@ class ProcessorRunner:
         self.config = config or {}
 
     @staticmethod
+    def _uniform_ndarray_dim(series: Series) -> int | None:
+        """Return the vector length when every value is a same-shape 1-D ndarray.
+
+        Args:
+            series: Pandas Series to inspect.
+
+        Returns:
+            The shared vector length, or ``None`` when the column does not hold
+            uniform-size numpy arrays.
+        """
+        if series.dtype != object or series.empty:
+            return None
+        first = series.iloc[0]
+        if not isinstance(first, np.ndarray):
+            return None
+        dim = int(first.shape[0])
+        if all(isinstance(value, np.ndarray) and value.shape == (dim,) for value in series):
+            return dim
+        return None
+
+    @staticmethod
+    def _series_to_pyarrow_array(series: Series) -> pa.Array:
+        """Convert one DataFrame column to a PyArrow array.
+
+        Uniform-size numpy arrays (e.g. embeddings) are converted to
+        ``FixedSizeListArray``, which is required by processors like
+        ``DomainGapProcessor``.
+
+        Args:
+            series: Pandas Series to convert.
+
+        Returns:
+            The converted PyArrow array.
+        """
+        dim = ProcessorRunner._uniform_ndarray_dim(series)
+        if dim is None:
+            return pa.Array.from_pandas(series)
+        flat = np.vstack(series.values).astype(np.float64)
+        return pa.FixedSizeListArray.from_arrays(pa.array(flat.flatten().tolist()), dim)
+
+    @staticmethod
     def _df_to_record_batch(df: DataFrame) -> pa.RecordBatch:
         """Convert a pandas DataFrame to a pyarrow RecordBatch.
 
         Handles conversion of object columns containing uniform-size numpy
         arrays (e.g. embeddings) to FixedSizeListArray, which is required
         by processors like DomainGapProcessor.
+
+        Args:
+            df: DataFrame to convert.
+
+        Returns:
+            A single RecordBatch containing all rows of the DataFrame.
         """
-        arrays: list[pa.Array] = []
-        for col_name in df.columns:
-            series = df[col_name]
-            if series.dtype == object and len(series) > 0:
-                first = series.iloc[0]
-                if isinstance(first, np.ndarray):
-                    dim = first.shape[0]
-                    if all(isinstance(v, np.ndarray) and v.shape == (dim,) for v in series):
-                        flat = np.vstack(series.values).astype(np.float64)
-                        arr = pa.FixedSizeListArray.from_arrays(pa.array(flat.flatten().tolist()), dim)
-                        arrays.append(arr)
-                        continue
-            arrays.append(pa.Array.from_pandas(series))
+        arrays = [ProcessorRunner._series_to_pyarrow_array(df[column]) for column in df.columns]
         table = pa.table(dict(zip(df.columns, arrays, strict=True)))
         return table.to_batches()[0]
 

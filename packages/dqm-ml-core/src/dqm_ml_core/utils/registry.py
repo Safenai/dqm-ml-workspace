@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from importlib.metadata import EntryPoints, entry_points
 import logging
-import sys
 from typing import Any
 
 from dqm_ml_core.api.processor import Processor
@@ -29,13 +28,7 @@ def load_registered_plugins(plugin_group: str, base_class: Any, base_name: str =
     Returns:
         A dictionary mapping plugin names to their loaded classes.
     """
-    try:
-        # python 3.10+
-        plugin_entry_points: EntryPoints = entry_points(group=plugin_group)
-    except TypeError:
-        # Old version for older python version
-        logger.warning(f"Old python version not supported: {sys.version_info}")
-        return {}
+    plugin_entry_points: EntryPoints = entry_points(group=plugin_group)
 
     registry = {}
     for v in plugin_entry_points:

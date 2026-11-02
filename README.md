@@ -17,7 +17,7 @@
 
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 [size-badge]: https://img.shields.io/github/repo-size/Safenai/dqm-ml-workspace
-[python-badge]: https://img.shields.io/badge/python-3.12%20|%203.13-blue.svg
+[python-badge]: https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13%20|%203.14-blue.svg
 
 [github-actions-badge]: https://github.com/Safenai/dqm-ml-workspace/actions/workflows/ci.yml/badge.svg
 [uv-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json

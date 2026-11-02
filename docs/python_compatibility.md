@@ -6,56 +6,58 @@ This document describes the Python version compatibility of DQM-ML.
 
 | Python Version | Support Status | Notes |
 |----------------|---------------|-------|
-| 3.10 | ✓ Full | Tested in CI |
-| 3.11 | ✓ Full | Tested in CI |
+| 3.11 | ✓ Full | Minimum supported version, tested in CI |
 | 3.12 | ✓ Full | Primary version |
 | 3.13 | ✓ Full | Tested in CI |
+| 3.14 | ✓ Full | Tested in CI |
+
+Python 3.10 is no longer supported (end-of-life in October 2026).
 
 ## Compatibility Notes
 
-### Python 3.10/3.11 Limitations
+### typing.override
 
-Some test fixtures have limitations on older Python versions:
+`typing.override` is available in the standard library from Python 3.12.
+Python 3.11 still requires `typing_extensions.override`, so the codebase keeps
+`typing_extensions` as a dependency until Python 3.11 support is dropped.
 
-1. **fiftyone** - Used for COCO dataset downloads in tests
-   - Works: Python 3.12+
-   - Issue: `glob2` package has SyntaxError on 3.10/3.11
-   - Fix: Lazy import to defer loading until needed
+### fiftyone
 
-2. **typing.override** - Used for type hints
-   - Python 3.13+ has `typing.override`
-   - Fix: Use `from typing_extensions import override` for 3.10+
+`fiftyone` is only used by the test dependencies to download the COCO dataset.
+The tests import it lazily, so it does not affect normal library usage.
+Newer `fiftyone` releases no longer depend on the legacy `glob2` package.
 
-### Running Tests by Version
+## Running Tests by Version
 
 ```bash
 # Test all versions
 uv run nox -s compatibility
 
 # Test specific version
-uv run nox -s compatibility-3.10
 uv run nox -s compatibility-3.11
 uv run nox -s compatibility-3.12
 uv run nox -s compatibility-3.13
+uv run nox -s compatibility-3.14
 ```
 
 ## CI Configuration
 
-The GitHub Actions CI pipeline tests on:
+The GitHub Actions CI pipeline tests compatibility on:
 
-- 3.10
 - 3.11
 - 3.12
 - 3.13
+- 3.14
 
-See `.github/workflows/ci.yml` for details.
+The full test suite runs on the primary version, 3.12. See
+`.github/workflows/ci.yml` for details.
 
 ## Package Dependencies
 
 Core packages require:
 
-- `typing_extensions` - For `override` decorator compatibility
-- `pyarrow` - For DataFrame operations, version requirements vary by Python version
+- `typing_extensions` - For the `override` decorator on Python 3.11
+- `pyarrow` - For DataFrame and Parquet operations
 
 ## Related Pages
 

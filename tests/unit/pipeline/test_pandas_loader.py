@@ -190,6 +190,36 @@ def test_iter_yields_filtered_batch(csv_path: Path) -> None:
     assert batches[0].column("category").to_pylist() == ["b", "b"]
 
 
+def test_iter_handles_chunked_string_columns(tmp_path: Path) -> None:
+    """Iteration handles pandas 3 Arrow string columns split into chunks.
+
+    Regression test for ``pa.RecordBatch.from_pandas`` raising
+    ``TypeError: Cannot convert pyarrow.lib.ChunkedArray to pyarrow.lib.Array``
+    when a pandas string column spans multiple Arrow chunks.
+
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory.
+    """
+    csv = tmp_path / "chunked.csv"
+    pd.DataFrame(
+        {
+            "category": ["a", "b", "c", "d"],
+            "value": [1, 2, 3, 4],
+        }
+    ).to_csv(csv, index=False)
+
+    # Reading with chunksize and concatenating preserves multiple Arrow chunks.
+    chunked_df = pd.concat(list(pd.read_csv(csv, chunksize=2)), ignore_index=True)
+    selection = PandasDataSelection(name="test", path=str(csv))
+    selection.data = chunked_df
+
+    batches = list(selection)
+
+    assert len(batches) == 1
+    assert batches[0].num_rows == 4
+    assert batches[0].column("category").to_pylist() == ["a", "b", "c", "d"]
+
+
 def test_bootstrap_applies_filter_with_multiple_values(csv_path: Path) -> None:
     """PandasDataSelection.bootstrap filters rows with multiple values.
 

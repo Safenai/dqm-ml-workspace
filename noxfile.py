@@ -7,12 +7,12 @@ options.sessions = ["lint", "spell", "test", "type_check"]
 
 
 @session(
-    python=["3.10", "3.11", "3.12", "3.13"],
+    python=["3.11", "3.12", "3.13", "3.14"],
     uv_groups=["test"],
 )
 def compatibility(s: Session) -> None:
     """Run core unit tests and CLI tests across Python
-    3.10-3.13 to verify cross-version compatibility."""
+    3.11-3.14 to verify cross-version compatibility."""
     s.env["DQM_ML_TEST_SEED"] = "42"
     s.run(
         "pytest",

@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import pyarrow as pa
 
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+# COMPATIBILITY : from typing import Any, override # When support of 3.11 will be removed
 from typing_extensions import override
 
 from dqm_ml_core.api.metrics_processor import MetricsProcessor

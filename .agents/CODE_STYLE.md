@@ -2,7 +2,7 @@
 
 ## Python Version
 
-Target Python version: >=3.12
+Target Python version: >=3.11
 
 ## Docstrings
 
