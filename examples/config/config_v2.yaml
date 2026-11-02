@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=../../docs/schema/config.json
+
+ # Global: where is your data ?
+storage:
+  type: s3  # or local
+  bucket: my-bucket
+  region: eu-west-par
+  endpoint: https://s3.eu-west-par.io.cloud.ovh.net
+  access_key: <secret>
+  secret_key: <secret>
+  retry:
+    max_attempts: 4 # Max retry attempts on transient failure
+    mode: standard # adaptive | legacy
+  checksum_validation: when_required # Flexible checksum validation mode
+  request_timeout: 5 # Socket read timeout in seconds
+ 
+ # Global: what is your device for computation ?
+compute:
+  device: cuda
+  seed: 42
+  threads: 4
+  max_memory: 16GB
+  progress_bar: true # Show tqdm progress bar during processors computation
+  log_level: warning # debug | info | error
+
+# Global: what happens if your data contains errors ?
+errors:
+  # Set all images and tabular errors
+  default: silent_fail  # fail_fast
+  max_failure_rate: 0.05 # When `silent_fail` and actual rate exceeds this, switches mode to `fail_fast`
+  # Override some parameters
+  tabular:
+    on_file_not_found: fail_fast
+  images:
+    on_unsupported_format: fail_fast
+
+# Data Selection
+dataloaders:
+  loaders:
+    - name: coco_2018
+      type: parquet
+      path: s3-key/coco_2018.parquet # id | class | x: float | y: float | z: float | ok: bool | img_full: str | img_crop: str
+      id_column: id
+      # Split for domain gap
+      split:
+        by: class 
+        values: [cat, dog]
+
+# Track 1: Per Sample Features
+features:
+  outputs:
+    path: s3-key/features.parquet
+    include: [id, class]
+  processors:
+    - name: full_img_visual_features
+      type: image_features
+      features: [contrast, blur]
+      batch_size: 64
+      columns:
+        input: [img_full] 
+      # This processor will add these columns to the output:
+      # img_full_contrast | img_full_blur
+
+    - name: img_crop_visual_features
+      type: image_features
+      features: [entropy, luminosity]
+      batch_size: 64
+      luminosity_weights: bt709  # bt601, bt2020
+      columns:
+          input: [img_crop]
+          rename:
+            - from: luminosity
+              to: lumi
+      # This processor will add these columns to the output:
+      # img_crop_entropy | img_crop_lumi
+
+    - name: crop_embeddings
+      type: features_embeddings
+      model:
+        arch: resnet18
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 64
+        height: 64
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
+      columns:
+        input: [img_crop]
+      # This processor will add these columns to the output:
+      # embedding
+
+# Track 2: Per-Selection Metrics
+metrics:
+  outputs:
+    path: s3-key/metrics.parquet
+  processors:
+    - name: full_representativeness
+      type: representativeness
+      histogram:
+        bins: 10
+      distribution: normal  # uniform
+      columns:
+        input: [x, y, z, img_full_contrast, img_full_blur]
+        # Rename output columns
+        rename:
+          - from: representativeness
+            to: repr
+        # This processor will add these columns to the output:
+        # x_repr | y_repr | z_repr | img_full_cat_contrast_repr | img_full_cat_blur_repr
+
+# Track 3: Pairwise Delta Metrics
+gap:
+  outputs:
+    path: s3-key/gap.parquet # s3-key/gap_fid_crop_cat_and_dog.parquet
+    pairwise: True
+  processors:
+    - name: gap_fid_crop_cat_and_dog
+      type: domain_gap
+      distance:
+        metric: fid
+      summary:
+        collect_sum_outer: true
+      columns:
+        input: [embedding]   
+      # This processor will add these columns to the output (fid value is fictional):
+      # fid    | selection_source | selection_target | source_target
+      # 15.61  | cat              | dog              | cat_dog

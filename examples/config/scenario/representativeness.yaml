@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Representativeness — validate feature distributions
+##
+## Checks whether luminosity, contrast, blur, and entropy follow the
+## expected normal distribution. Anomalies here can signal preprocessing
+## bugs or acquisition artifacts (e.g. a sensor clipping values).
+##
+## Before running, first compute visual features:
+##     dqm-ml process -p examples/config/scenario/visual_features.yaml
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/representativeness.yaml
+##
+## See also: docs/metrics/representativeness.md
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/outputs/story_visual_features.parquet
+      batch_size: 50000
+
+metrics:
+  outputs:
+    path: examples/outputs/story_representativeness.parquet
+  processors:
+    - name: representativeness
+      type: representativeness
+      columns:
+        input: [image_bytes_luminosity, image_bytes_contrast, image_bytes_blur, image_bytes_entropy]
+      metrics: [chi-square, grte, shannon-entropy, kolmogorov-smirnov]
+      distribution: normal
+      histogram:
+        bins: 20

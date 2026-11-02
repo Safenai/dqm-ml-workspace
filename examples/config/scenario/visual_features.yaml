@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Visual Features — extract per-image quality indicators
+##
+## Computes luminosity, contrast, blur, and entropy for every image.
+## The resulting columns can be consumed by Diversity or
+## Representativeness processors downstream.
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/visual_features.yaml
+##
+## See also: docs/metrics/visual_features.md
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/data/samples_with_images.parquet
+      batch_size: 500
+
+features:
+  outputs:
+    path: examples/outputs/story_visual_features.parquet
+    include:
+      - sample_id
+      - class_id
+      - class_name
+      - source
+  processors:
+    - name: visual_features
+      type: image_features
+      columns:
+        input: [image_bytes]
+      features: [luminosity, contrast, blur, entropy]
+      grayscale: true
+      normalize: true
+      histogram:
+        bins: 256
+      laplacian_kernel: 3x3

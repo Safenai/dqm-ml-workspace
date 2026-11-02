@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Embeddings — extract deep feature vectors per image
+##
+## Uses a pre-trained ResNet-18 to produce 512-d embedding vectors.
+## These embeddings are the essential input for Domain Gap metrics
+## (FID, MMD, Wasserstein, etc.).
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/embeddings.yaml
+##
+## See also: docs/metrics/features_embeddings.md
+
+---
+
+dataloaders:
+  loaders:
+    - name: source_dataset
+      type: parquet
+      path: examples/data/samples_with_images.parquet
+      batch_size: 500
+
+features:
+  outputs:
+    path: examples/outputs/story_embeddings.parquet
+    include:
+      - sample_id
+      - class_id
+      - class_name
+      - source
+  processors:
+    - name: embedding_extraction
+      type: features_embeddings
+      columns:
+        input: [image_bytes]
+      model:
+        arch: resnet18
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 64
+        height: 64
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]

@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=../../../docs/schema/config.json
+## Domain Gap with Filter — compare two filtered subsets
+##
+## Uses two dataloaders reading the same source file but filtering on
+## different `source` values. The Domain Gap processor measures MMD-RBF
+## between the resulting selections to quantify the distribution shift
+## between safari and reserve animal images.
+##
+## Before running, generate the data file:
+##     python examples/script/generate_data.py
+##
+## Usage:
+##     dqm-ml process -p examples/config/scenario/domain_gap_with_filter.yaml
+##
+## See also: docs/metrics/domain_gap.md, docs/configuration.md#filter
+
+---
+
+dataloaders:
+  loaders:
+    - name: safari
+      type: parquet
+      path: examples/data/samples_with_images.parquet
+      batch_size: 500
+      filters:
+        - column: source
+          values: [safari]
+
+    - name: reserve
+      type: parquet
+      path: examples/data/samples_with_images.parquet
+      batch_size: 500
+      filters:
+        - column: source
+          values: [reserve]
+
+features:
+  outputs:
+    path: examples/outputs/story_domain_gap_filter_features.parquet
+    include:
+      - sample_id
+      - source
+  processors:
+    - name: embedding
+      type: features_embeddings
+      columns:
+        input: [image_bytes]
+      model:
+        arch: resnet18
+        n_layer_feature: -2
+      infer:
+        batch_size: 32
+        width: 64
+        height: 64
+        norm_mean: [0.485, 0.456, 0.406]
+        norm_std: [0.229, 0.224, 0.225]
+
+gap:
+  outputs:
+    path: examples/outputs/story_gap_filter.parquet
+  processors:
+    - name: mmd_rbf_gap
+      type: domain_gap
+      columns:
+        input: [image_bytes_embedding]
+      distance:
+        metric: mmd_rbf
+        kernel_params:
+          gamma: 1.0
