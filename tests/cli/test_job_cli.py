@@ -9,7 +9,15 @@ import shlex
 import subprocess
 from unittest.mock import MagicMock, mock_open, patch
 
-from dqm_ml_job.cli import _init_components_from_list, _merge_errors, execute, parse_args, run
+from dqm_ml_job.cli import (
+    _configure_logging,
+    _init_components_from_list,
+    _merge_errors,
+    _resolve_storage,
+    execute,
+    parse_args,
+    run,
+)
 import pytest
 from tests.utils.seeds import get_test_seed
 import yaml
@@ -144,3 +152,35 @@ class TestMergeErrors:
         result = _merge_errors(global_errors, interface_errors)
         assert result.default == "fail_fast"
         assert isinstance(result.images, ImageErrorsConfig)
+
+
+class TestResolveStorage:
+    def test_interface_storage_takes_precedence(self):
+        from types import SimpleNamespace
+
+        interface = SimpleNamespace(storage=SimpleNamespace(model_dump=lambda: {"type": "s3"}))
+        validated = SimpleNamespace(storage=SimpleNamespace(model_dump=lambda: {"type": "local"}))
+        assert _resolve_storage(interface, validated) == {"type": "s3"}
+
+    def test_job_level_storage(self):
+        from types import SimpleNamespace
+
+        validated = SimpleNamespace(storage=SimpleNamespace(model_dump=lambda: {"type": "local"}))
+        assert _resolve_storage(None, validated) == {"type": "local"}
+
+    def test_no_storage(self):
+        from types import SimpleNamespace
+
+        validated = SimpleNamespace(storage=None)
+        assert _resolve_storage(None, validated) is None
+
+
+class TestConfigureLogging:
+    def test_configure_logging_sets_level(self):
+        from unittest.mock import patch
+
+        from dqm_ml_core.models.global_ import ComputeConfig
+
+        with patch("dqm_ml_job.cli.logging.basicConfig") as mock_basic:
+            _configure_logging(ComputeConfig(log_level="debug"))
+        mock_basic.assert_called_once()

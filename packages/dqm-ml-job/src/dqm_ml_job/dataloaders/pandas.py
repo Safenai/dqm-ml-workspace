@@ -222,6 +222,62 @@ class PandasDataLoader:
 
                 self.filesystem = get_s3_filesystem(storage_config)
 
+    def _read_split_values(self) -> list[str]:
+        """Read the distinct values of the split column from the CSV file.
+
+        Returns:
+            List of non-null split values as strings, in discovery order.
+        """
+        df = pd.read_csv(self.path, sep=",", usecols=[self.split_by])
+        return [str(value) for value in df[self.split_by].unique() if value is not None]
+
+    def _resolve_split_values(self) -> list[str]:
+        """Resolve split values, expanding wildcards and applying exclusions.
+
+        Returns:
+            The resolved list of split values.
+        """
+        values = self.split_values
+        if values is None:
+            values = self._read_split_values()
+        elif any(has_pattern(value) for value in values):
+            values = resolve_patterns(values, self._read_split_values())
+
+        if self.split and self.split.exclude:
+            values = resolve_include_exclude(None, self.split.exclude, values)
+        return values
+
+    def _make_selection(self, name: str, filters_dict: dict[str, Any]) -> PandasDataSelection:
+        """Build a PandasDataSelection for this loader.
+
+        Args:
+            name: Selection name.
+            filters_dict: Filters to apply to the selection.
+
+        Returns:
+            The configured selection.
+        """
+        return PandasDataSelection(
+            name=name,
+            path=self.path,
+            sample_path=self.sample_path,
+            transforms=self.transforms,
+            filters_dict=filters_dict,
+        )
+
+    def _make_split_selection(self, value: str) -> PandasDataSelection:
+        """Build a selection for one split value.
+
+        Args:
+            value: Split column value.
+
+        Returns:
+            The configured selection with the split filter merged in.
+        """
+        merged_filters = dict(self.filters_dict or {})
+        merged_filters[self.split_by] = value
+        return self._make_selection(f"{self.name}_{value}", merged_filters)
+
     def get_selections(self) -> list[DataSelection]:
         """Create one or more PandasDataSelection instances based on split config.
 
@@ -232,46 +288,7 @@ class PandasDataLoader:
             A list of DataSelection instances.
         """
         if not self.split_by:
-            return [
-                PandasDataSelection(
-                    name=self.name,
-                    path=self.path,
-                    sample_path=self.sample_path,
-                    transforms=self.transforms,
-                    filters_dict=self.filters_dict,
-                )
-            ]
+            return [self._make_selection(self.name, self.filters_dict)]
 
-        # Determine split values
-        values = self.split_values
-        if values is None:
-            # Auto-discover unique values from the CSV
-            df = pd.read_csv(self.path, sep=",", usecols=[self.split_by])
-            values = [str(v) for v in df[self.split_by].unique() if v is not None]
-        else:
-            # Expand wildcard patterns in values against available data
-            if any(has_pattern(v) for v in values):
-                df = pd.read_csv(self.path, sep=",", usecols=[self.split_by])
-                available = [str(v) for v in df[self.split_by].unique() if v is not None]
-                values = resolve_patterns(values, available)
-
-        # Apply split.exclude (including wildcard patterns)
-        if self.split and self.split.exclude:
-            values = resolve_include_exclude(None, self.split.exclude, values)
-
-        # Create one selection per value
-        selections: list[DataSelection] = []
-        for val in values:
-            selection_name = f"{self.name}_{val}"
-            merged_filters = (self.filters_dict or {}).copy()
-            merged_filters[self.split_by] = val
-            selections.append(
-                PandasDataSelection(
-                    name=selection_name,
-                    path=self.path,
-                    sample_path=self.sample_path,
-                    transforms=self.transforms,
-                    filters_dict=merged_filters,
-                )
-            )
-        return selections
+        values = self._resolve_split_values()
+        return [self._make_split_selection(value) for value in values]
