@@ -23,6 +23,7 @@ install_packages() {
     uv pip install --python "$python" \
         --prerelease=allow \
         --index-url https://test.pypi.org/simple/ \
+        --index-strategy unsafe-best-match \
         --extra-index-url https://pypi.org/simple/ \
         --extra-index-url https://download.pytorch.org/whl/cpu \
         "${packages[@]}" 1>&2

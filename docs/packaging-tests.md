@@ -121,7 +121,13 @@ uv pip install --python ./tmp/test-core/bin/python --pre dqm-ml-core
 ./tmp/test-core/bin/python scripts/packaging/smoke/smoke_core.py
 
 # Scenario 6: dqm-ml-core + dqm-ml-pytorch (gap)
-PYPI_FLAGS="--prerelease=allow --extra-index-url https://download.pytorch.org/whl/cpu"
+PYPI_FLAGS="--prerelease=allow --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu"
+
+> **Note:** When installing with `uv` and the PyTorch CPU index, use
+> `--index-strategy unsafe-best-match`. The PyTorch index also publishes an
+> older `tqdm`, and uv's default first-index behavior can otherwise select
+> that older version instead of the newer PyPI release, which would trigger dependency error.
+
 uv venv --python 3.12 ./tmp/test-gap
 uv pip install --python ./tmp/test-gap/bin/python $PYPI_FLAGS dqm-ml-core dqm-ml-pytorch
 ./tmp/test-gap/bin/python scripts/packaging/smoke/smoke_gap.py
