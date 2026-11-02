@@ -12,7 +12,7 @@ from dqm_ml_core.utils.matching import has_pattern, resolve_include_exclude, res
 import pandas as pd
 import pyarrow as pa
 
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+# COMPATIBILITY : from typing import Any, override # When support of 3.11 will be removed
 from typing_extensions import override
 
 from dqm_ml_job.dataloaders.proto import DataSelection
@@ -45,6 +45,21 @@ _PANDAS_TYPE_MAP: dict[str, Any] = {
     "str": "string",
     "categorical": "category",
 }
+
+
+def _to_pyarrow_array(series: pd.Series) -> pa.Array:
+    """Convert a pandas Series to a single, flat PyArrow array.
+
+    ``pa.array`` returns a ``ChunkedArray`` for pandas 3 Arrow-backed string
+    columns that span multiple chunks. ``RecordBatch.from_arrays`` only accepts
+    flat arrays, so combine the chunks first.
+    """
+    array = pa.array(series)
+    if isinstance(array, pa.ChunkedArray):
+        if not array.chunks:
+            return pa.array([], type=array.type)
+        return pa.concat_arrays(array.chunks)
+    return array
 
 
 def _apply_pandas_transforms(df: pd.DataFrame, transforms: list[dict[str, Any]]) -> None:
@@ -138,7 +153,10 @@ class PandasDataSelection(DataSelection):
         if self.data is not None:
             df = self.data.copy() if self.transforms else self.data
             _apply_pandas_transforms(df, self.transforms)
-            yield pa.RecordBatch.from_pandas(df)
+            yield pa.RecordBatch.from_arrays(
+                [_to_pyarrow_array(df[column]) for column in df.columns],
+                names=[str(column) for column in df.columns],
+            )
 
     @override
     def __repr__(self) -> str:

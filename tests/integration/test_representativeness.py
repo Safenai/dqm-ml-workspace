@@ -93,15 +93,15 @@ def test_representativeness(
                 expected_score, abs=epsilon
             ):
                 error_msg = (
-                    f"For {column_value}, the distance between computed value : {computed_score}",
-                    f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}",
+                    f"For {column_value}, the distance between computed value : {computed_score}"
+                    f" and expected one ---> {expected_score} is greater than the accepted tolerance {epsilon}"
                 )
                 error_messages.append(error_msg)
             if computed_interpretation != expected_interpretation:
                 error_msg = (
                     f"For {column_interpretation}, the interpretation differs"
-                    f" between computed: {computed_interpretation}",
-                    f" and expected one ---> {expected_interpretation}",
+                    f" between computed: {computed_interpretation}"
+                    f" and expected one ---> {expected_interpretation}"
                 )
                 error_messages.append(error_msg)
 

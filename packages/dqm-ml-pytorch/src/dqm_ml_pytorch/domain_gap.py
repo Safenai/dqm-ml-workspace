@@ -21,7 +21,7 @@ import numpy as np
 import pyarrow as pa
 import torch
 
-# COMPATIBILITY : from typing import Any, override # When support of 3.10 and 3.11 will be removed
+# COMPATIBILITY : from typing import Any, override # When support of 3.11 will be removed
 from typing_extensions import override
 
 _MISSING_EMB_MSG = "missing __emb__ — set summary.store_embeddings=true"

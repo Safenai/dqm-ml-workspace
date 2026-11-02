@@ -4,7 +4,7 @@ Defines models for filters, path sampling, data splitting, column transformation
 and dataloader configurations for Parquet and CSV sources.
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -48,7 +48,7 @@ class SplitConfig(BaseModel):
     )
 
 
-class TransformType(str, Enum):
+class TransformType(StrEnum):
     """Target data type for column transformations."""
 
     INT32 = "int32"

@@ -82,7 +82,7 @@ The GitHub workflow can be tested locally using [act](https://github.com/nektos/
 
 **Available jobs:**
 - `quality` — Runs lint, spell, type_check (matrix job with 3 variants)
-- `compatibility` — Runs tests on Python 3.12, 3.13 (matrix job)
+- `compatibility` — Runs tests on Python 3.11, 3.12, 3.13, 3.14 (matrix job)
 - `test` — Runs full test suite on Python 3.12
 - `pages` — Builds and deploys documentation
 
